@@ -1,4 +1,5 @@
 📘 MiEscuela 4.0 – Frontend
+
 🚀 Tecnologías principales
 
 React 18 + Vite → base del proyecto (rápido, moderno y con React Compiler activado).
@@ -6,21 +7,22 @@ React 18 + Vite → base del proyecto (rápido, moderno y con React Compiler act
 JavaScript (ES2023) → lenguaje elegido para el frontend.
 
 📦 Dependencias instaladas
-Core
+
+## Core
 
 react y react-dom → librerías principales de React.
 
 vite → bundler y servidor de desarrollo.
 
-Routing
+## Routing
 
 react-router-dom → para la navegación entre páginas (versión 7).
 
-HTTP
+## HTTP
 
 axios → cliente HTTP para conectar con el backend (más simple y escalable que fetch).
 
-Gráficos
+## Gráficos
 
 recharts → librería de gráficos basada en componentes de React (ideal para dashboards académicos).
 
@@ -44,10 +46,14 @@ export const Login = () => {
   );
 };
 
+
 ## 🔧 Guía de instalación y ejecución
 1. Clonar el repositorio
-git clone https://github.com/tu-usuario/frontend-miescuela4.0.git
-cd frontend-miescuela4.0
+git clone:
+
+→ con HTTPS:  https://github.com/psantueno/TF-MiEscuela-Frontend
+
+→ con SSH: git@github.com:psantueno/TF-MiEscuela-Frontend.git
 
 2. Instalar dependencias
 npm install
