@@ -91,8 +91,7 @@ export default function Profile({ user, onUpdateProfile, onLogout }) {
 
   return (
     <>
-      {/* Header compartido */}
-      <HeaderPriv user={user} onLogout={onLogout} />
+   
 
       {/* Contenido del perfil */}
       <Box sx={{ maxWidth: 600, mx: "auto", mt: 4, p: 2 }}>
@@ -157,7 +156,7 @@ export default function Profile({ user, onUpdateProfile, onLogout }) {
           </CardContent>
         </Card>
       </Box>
-      <footer />
+      
     </>
   );
 }

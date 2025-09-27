@@ -1,11 +1,20 @@
 // src/components/Nav.jsx
-import React, { useState } from "react";
+import * as React from "react";
+import { Box, IconButton, Menu, MenuItem } from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
 import { Link } from "react-router-dom";
-import { Button, Menu, MenuItem, ListItemText } from "@mui/material";
 
 export default function Nav() {
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
 
   const menuItems = [
     { label: "Asistencia", path: "/asistencia" },
@@ -18,52 +27,45 @@ export default function Nav() {
     { label: "Ajustes", path: "/ajustes" },
   ];
 
-  const handleClick = (event) => setAnchorEl(event.currentTarget);
-  const handleClose = () => setAnchorEl(null);
-
   return (
-    <>
-      <Button
+    <Box>
+      <IconButton
         onClick={handleClick}
         sx={{
-          backgroundColor: "#061B46",
-          color: "#fff",
-          "&:hover": { backgroundColor: "#0b2a60" },
+          backgroundColor: "#020917",
+          color: "#ffffff",
+          "&:hover": { backgroundColor: "#020917" },
         }}
-        variant="contained"
       >
-        Menú {open ? "✕" : "☰"}
-      </Button>
+        <MenuIcon />
+      </IconButton>
 
       <Menu
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
-        MenuListProps={{
-          "aria-labelledby": "basic-button",
-        }}
         PaperProps={{
           sx: {
-            bgcolor: "#061B46",
-            color: "#fff",
-            mt: 1,
+            backgroundColor: "#020917",
+            color: "#ffffff",
           },
         }}
       >
-        {menuItems.map(({ label, path }) => (
+        {menuItems.map((item) => (
           <MenuItem
-            key={label}
-            onClick={handleClose}
+            key={item.label}
             component={Link}
-            to={path}
+            to={item.path}
+            onClick={handleClose}
             sx={{
-              "&:hover": { backgroundColor: "#0b2a60" },
+              "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
+              color: "#ffffff",
             }}
           >
-            <ListItemText>{label}</ListItemText>
+            {item.label}
           </MenuItem>
         ))}
       </Menu>
-    </>
+    </Box>
   );
 }
