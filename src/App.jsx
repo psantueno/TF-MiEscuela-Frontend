@@ -1,35 +1,73 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+// src/App.jsx
+import * as React from "react";
+import { useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
-function App() {
-  const [count, setCount] = useState(0)
+import { Box, Container } from "@mui/material";
+
+import Home from "./pages/Home.jsx";
+import Login from "./pages/Login.jsx";
+import Profile from "./pages/Profile.jsx";
+
+import Header from "./components/Header.jsx";
+import HeaderPriv from "./components/HeaderPriv.jsx";
+import Footer from "./components/Footer.jsx";
+
+export default function App() {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = ({ email, password }) => {
+    const MOCK_USERS = [
+      { email: "directivo@uni.edu", password: "123456", role: "Directivo", firstName: "Ana", lastName: "Directiva" },
+      { email: "alumno@uni.edu", password: "123456", role: "Alumno", firstName: "Luis", lastName: "Alumno" },
+      { email: "padre@uni.edu", password: "123456", role: "Padre", firstName: "Carlos", lastName: "Padre" },
+      { email: "docente@uni.edu", password: "123456", role: "Docente", firstName: "Pepe", lastName: "Docente" },
+    ];
+
+    const found = MOCK_USERS.find(
+      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+    );
+
+    if (found) {
+      setUser(found);
+      return true;
+    }
+    return false;
+  };
+
+  const handleUpdateProfile = (updated) => setUser((prev) => ({ ...prev, ...updated }));
+  const handleLogout = () => setUser(null);
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <Router>
+      <Box display="flex" flexDirection="column" minHeight="100vh">
+        {/* Header */}
+        {user ? <HeaderPriv user={user} onLogout={handleLogout} /> : <Header />}
 
-export default App
+        {/* Contenido principal */}
+        <Box component="main" flex="1" py={4}>
+          <Container maxWidth="lg">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={user ? <Navigate to="/profile" /> : <Login onLogin={handleLogin} />} />
+
+              {/* Rutas por rol */}
+              <Route path="/alumno" element={user?.role === "Alumno" ? <Profile user={user} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} /> : <Navigate to="/login" />} />
+              <Route path="/docente" element={user?.role === "Docente" ? <Profile user={user} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} /> : <Navigate to="/login" />} />
+              <Route path="/padre" element={user?.role === "Padre" ? <Profile user={user} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} /> : <Navigate to="/login" />} />
+              <Route path="/directivo" element={user?.role === "Directivo" ? <Profile user={user} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} /> : <Navigate to="/login" />} />
+
+              <Route path="/profile" element={user ? <Profile user={user} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} /> : <Navigate to="/login" />} />
+
+              {/* Rutas desconocidas */}
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </Container>
+        </Box>
+
+        {/* Footer */}
+        <Footer />
+      </Box>
+    </Router>
+  );
+}
