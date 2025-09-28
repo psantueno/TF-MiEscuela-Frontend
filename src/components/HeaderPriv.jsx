@@ -15,7 +15,7 @@ export default function HeaderPriv() {
         display="flex"
           alignItems="center"
           gap={1}
-          sx={{ position: "absolute", transform: "translateX(-2300%)" }}>
+          sx={{ position: "absolute", transform: "translateX(-90%)" }}>
           <Nav />
         </Box>
 
