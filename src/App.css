@@ -52,3 +52,16 @@
   margin: 0 !important;
   padding: 0 !important;
 }
+
+/* Excepción para el Dashboard - que ocupe toda la pantalla */
+.dashboard-fullscreen #root {
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
+}
+
+.dashboard-fullscreen body {
+  display: block !important;
+  place-items: unset !important;
+}
