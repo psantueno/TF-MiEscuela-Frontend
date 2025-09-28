@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import './App.css'
-import { MenuPrincipal } from './pages/MenuPrincipal';
+import { Dashboard } from "./pages/Dashboard";
 import { Login } from "./pages/Login";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
@@ -12,7 +12,7 @@ function App() {
     <Router>
       <Routes>
         {/* Ruta inicial */}
-        <Route path="/" element={<MenuPrincipal />} />
+        <Route path="/" element={<Dashboard/>} />
         <Route path="/login" element={<Login />} />
 
         {/* Ejemplo de otras rutas futuras */}
