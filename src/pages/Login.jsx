@@ -5,10 +5,36 @@ import {
   CardContent,
   TextField,
   Typography,
+  Backdrop,
+  CircularProgress
 } from "@mui/material";
 import backgroundImage from "../assets/img/fondo_login.png"; // 👈 poné tu imagen acá
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { login } from "../services/auth";
+import { useNavigate } from "react-router-dom";
 
 export const Login = () => {
+  const { register, handleSubmit, formState: { errors } } = useForm();
+
+  const navigate = useNavigate();
+
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (data) => {
+    setLoading(true);
+
+    const { email, contrasenia } = data;
+    try{
+      await login(email, contrasenia);
+      navigate("/");
+    }catch(error){
+      console.error("Error al iniciar sesión:", error);
+    }finally{
+      setLoading(false);
+    }
+  };
+
   return (
     <Box
       className="login-fullscreen"
@@ -56,17 +82,46 @@ export const Login = () => {
           {/* Inputs */}
           <TextField
             fullWidth
-            label="Usuario"
+            label="Correo electrónico"
             variant="outlined"
             margin="normal"
+            {...register("email", {
+              required: "El correo es obligatorio",
+              pattern: {
+                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                message: "Formato de correo inválido"
+              }
+            })}
           />
+          <Typography
+            variant="body2"
+            align="left"
+            color="error"
+          >
+            {errors.email?.message}
+          </Typography>
+
           <TextField
             fullWidth
             label="Contraseña"
             type="password"
             variant="outlined"
             margin="normal"
+            {...register("contrasenia", {
+              required: "La contraseña es obligatoria",
+              minLength: {
+                value: 8,
+                message: "Debe tener al menos 8 caracteres"
+              }
+            })}
           />
+          <Typography
+            variant="body2"
+            align="left"
+            color="error"
+          >
+            {errors.contrasenia?.message}
+          </Typography>
 
           {/* Botón */}
           <Button
@@ -74,6 +129,7 @@ export const Login = () => {
             fullWidth
             size="large"
             sx={{ mt: 3 }}
+            onClick={handleSubmit(handleLogin)}
           >
             Ingresar
           </Button>
@@ -89,6 +145,14 @@ export const Login = () => {
           </Typography>
         </CardContent>
       </Card>
+
+      {/* Loader con overlay */}
+      <Backdrop
+        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={loading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </Box>
   );
 };
