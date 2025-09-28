@@ -5,31 +5,41 @@ import {
   CardContent,
   TextField,
   Typography,
-  Backdrop,
-  CircularProgress
 } from "@mui/material";
+import { LoaderOverlay } from "../components/LoaderOverlay";
 import backgroundImage from "../assets/img/fondo_login.png"; // 👈 poné tu imagen acá
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { login } from "../services/auth";
+import useUser from "../contexts/UserContext/useUser";
 import { useNavigate } from "react-router-dom";
 
 export const Login = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
 
   const navigate = useNavigate();
+  
+  const [serverError, setServerError] = useState(null);
 
   const [loading, setLoading] = useState(false);
+
+  const { setUser } = useUser();
 
   const handleLogin = async (data) => {
     setLoading(true);
 
     const { email, contrasenia } = data;
+    setServerError(null);
+
     try{
-      await login(email, contrasenia);
+      const res = await login(email, contrasenia);
+      setUser(res.data.user);
+      sessionStorage.setItem("csrf_token", res.data.csrf_token);
+      sessionStorage.setItem("access_token", res.data.access_token);
+      sessionStorage.setItem("refresh_token", res.data.refresh_token);
       navigate("/");
     }catch(error){
-      console.error("Error al iniciar sesión:", error);
+      setServerError(error.response?.data?.message);
     }finally{
       setLoading(false);
     }
@@ -123,6 +133,17 @@ export const Login = () => {
             {errors.contrasenia?.message}
           </Typography>
 
+          {serverError && (
+
+            <Typography
+              variant="body2"
+              align="center"
+              color="error"
+              mt={2}
+            >
+              {serverError}
+            </Typography>
+          )}
           {/* Botón */}
           <Button
             variant="contained"
@@ -146,13 +167,7 @@ export const Login = () => {
         </CardContent>
       </Card>
 
-      {/* Loader con overlay */}
-      <Backdrop
-        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
-        open={loading}
-      >
-        <CircularProgress color="inherit" />
-      </Backdrop>
+      <LoaderOverlay open={loading} />
     </Box>
   );
 };
