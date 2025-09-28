@@ -22,19 +22,17 @@ import {
   SupervisedUserCircle,
   CalendarMonth
 } from '@mui/icons-material';
+import useUser from "../contexts/UserContext/useUser";
+import { logout } from '../services/auth';
+import { useNavigate } from 'react-router-dom';
 
-export const UserMenu = ({ usuario = null }) => {
+export const UserMenu = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
-  // Usuario mock para desarrollo
-  const currentUser = usuario || {
-    nombre: 'John Doremon',
-    email: 'john.doremon@miescuela.com',
-    rol: 'director', // 'alumno', 'docente', 'auxiliar', 'director', 'admin'
-    foto: null, // URL de la foto o null para usar avatar por defecto
-    notificaciones: 3
-  };
+  const { user, setUser } = useUser();
+
+  const navigate = useNavigate();
 
   // Configuración de avatares según rol
   const getRoleConfig = (rol) => {
@@ -68,7 +66,7 @@ export const UserMenu = ({ usuario = null }) => {
     return configs[rol] || configs.alumno;
   };
 
-  const roleConfig = getRoleConfig(currentUser.rol);
+  const roleConfig = getRoleConfig(user.rol);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -90,11 +88,16 @@ export const UserMenu = ({ usuario = null }) => {
     handleClose();
   };
 
-  const handleLogout = () => {
-    if (window.confirm('¿Estás seguro que deseas cerrar sesión?')) {
-      console.log('Cerrar sesión');
-      // Aquí harías logout
-      // navigate('/login');
+  const handleLogout = async () => {
+    if(window.confirm('¿Estás seguro que deseas cerrar sesión?')) {
+      try{
+        await logout(); 
+        setUser(null);
+        sessionStorage.clear();
+        navigate('/login');
+      }catch(error){
+        console.error("Error al cerrar sesión:", error);
+      }
     }
     handleClose();
   };
@@ -119,7 +122,7 @@ export const UserMenu = ({ usuario = null }) => {
 
       {/* Notificaciones */}
       <IconButton size="small" sx={{ color: '#666' }}>
-        <Badge badgeContent={currentUser.notificaciones} color="error">
+        <Badge badgeContent={user.notificaciones} color="error">
           <Notifications />
         </Badge>
       </IconButton>
@@ -140,7 +143,7 @@ export const UserMenu = ({ usuario = null }) => {
         onClick={handleClick}
       >
         <Avatar 
-          src={currentUser.foto} 
+          src={user.foto} 
           sx={{ 
             width: 32, 
             height: 32, 
@@ -149,13 +152,13 @@ export const UserMenu = ({ usuario = null }) => {
             fontSize: '0.9rem'
           }}
         >
-          {currentUser.foto ? null : (
-            currentUser.nombre.split(' ').map(n => n[0]).join('').substring(0, 2)
+          {user.foto ? null : (
+            user.nombre_completo.split(' ').map(n => n[0]).join('').substring(0, 2)
           )}
         </Avatar>
         <Box>
           <Typography variant="body2" sx={{ color: '#333', fontWeight: 500 }}>
-            {currentUser.nombre}
+            {user.nombre_completo}
           </Typography>
           <Typography variant="caption" sx={{ color: '#666', fontSize: '0.7rem' }}>
             {roleConfig.label}
@@ -197,7 +200,7 @@ export const UserMenu = ({ usuario = null }) => {
         <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #e0e0e0' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
             <Avatar 
-              src={currentUser.foto}
+              src={user.foto}
               sx={{ 
                 width: 40, 
                 height: 40, 
@@ -205,14 +208,14 @@ export const UserMenu = ({ usuario = null }) => {
                 backgroundColor: roleConfig.color 
               }}
             >
-              {currentUser.foto ? null : roleConfig.icon}
+              {user.foto ? null : roleConfig.icon}
             </Avatar>
             <Box>
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                {currentUser.nombre}
+                {user.nombre_completo}
               </Typography>
               <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.8rem' }}>
-                {currentUser.email}
+                {user.email}
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
                 <Box 
