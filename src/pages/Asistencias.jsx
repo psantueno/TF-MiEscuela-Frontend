@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import {
     Box,
@@ -41,6 +41,7 @@ import {
     Person as PersonIcon,
 } from "@mui/icons-material";
 import { Loader } from "../components/Loader";
+import { PrimaryButton } from "../components/PrimaryButton";
 
 const API_URL = "http://localhost:6543/api/asistencias";
 const API_ESTADOS = "http://localhost:6543/api/asistencia-estados";
@@ -251,14 +252,12 @@ export const Asistencias = () => {
                         <Typography variant="h6" sx={{ color: "#0A2E75" }}>
                             Registros de Asistencia ({asistenciasFiltradas.length})
                         </Typography>
-                        <Button
-                            variant="contained"
+                        <PrimaryButton
                             startIcon={<AddIcon />}
                             onClick={() => handleOpenDialog("crear")}
-                            sx={{ backgroundColor: "#0A2E75" }}
                         >
                             Nueva Asistencia
-                        </Button>
+                        </PrimaryButton>
                     </Box>
 
                     <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
