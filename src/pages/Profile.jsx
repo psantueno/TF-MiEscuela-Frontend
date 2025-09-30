@@ -1,6 +1,4 @@
-// src/pages/Profile.jsx
 import React, { useState } from "react";
-import HeaderPriv from "../components/HeaderPriv";
 import {
   Box,
   Typography,
@@ -12,7 +10,7 @@ import {
   Stack,
 } from "@mui/material";
 
-export default function Profile({ user, onUpdateProfile, onLogout }) {
+export default function Profile({ user, onUpdateProfile }) {
   if (!user) return <div>Cargando...</div>;
 
   const [firstName, setFirstName] = useState(user.firstName || "");
@@ -33,7 +31,6 @@ export default function Profile({ user, onUpdateProfile, onLogout }) {
     }
   };
 
-  // Subcomponentes específicos según rol
   const renderRoleContent = () => {
     switch (user.role) {
       case "Alumno":
@@ -90,73 +87,62 @@ export default function Profile({ user, onUpdateProfile, onLogout }) {
   };
 
   return (
-    <>
-   
+    <Box sx={{ maxWidth: 600, mx: "auto", mt: 4, p: 2 }}>
+      <Card sx={{ p: 3 }}>
+        <CardContent>
+          <Typography variant="h5" fontWeight="bold" mb={2}>
+            Perfil de {firstName} {lastName}
+          </Typography>
 
-      {/* Contenido del perfil */}
-      <Box sx={{ maxWidth: 600, mx: "auto", mt: 4, p: 2 }}>
-        <Card sx={{ p: 3 }}>
-          <CardContent>
-            <Typography variant="h5" fontWeight="bold" mb={2}>
-              Perfil de {firstName} {lastName}
-            </Typography>
-            <Typography variant="subtitle1" mb={2}>
-              Rol: {user.role}
-            </Typography>
+          {/* Avatar */}
+          <Stack direction="column" alignItems="center" spacing={1} mb={3}>
+            <Avatar
+              src={photo}
+              alt="Avatar"
+              sx={{ width: 96, height: 96, border: "2px solid #020917" }}
+            />
+            <Button
+              variant="contained"
+              component="label"
+              sx={{ bgcolor: "#020917", "&:hover": { bgcolor: "#111111" } }}
+            >
+              Cambiar foto
+              <input type="file" hidden accept="image/*" onChange={handlePhotoChange} />
+            </Button>
+          </Stack>
 
-            {/* Avatar */}
-            <Stack direction="column" alignItems="center" spacing={1} mb={3}>
-              <Avatar
-                src={photo}
-                alt="Avatar"
-                sx={{ width: 96, height: 96, border: "2px solid #020917" }}
-              />
-              <Button variant="contained" component="label" sx={{ bgcolor: "#020917", "&:hover": { bgcolor: "#111111" } }}>
-                Cambiar foto
-                <input type="file" hidden accept="image/*" onChange={handlePhotoChange} />
-              </Button>
-            </Stack>
+          {/* Nombre y apellido */}
+          <Stack direction="row" spacing={2} mb={2}>
+            <TextField
+              label="Nombre"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Apellido"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              fullWidth
+            />
+          </Stack>
 
-            {/* Nombre y apellido */}
-            <Stack direction="row" spacing={2} mb={2}>
-              <TextField
-                label="Nombre"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                fullWidth
-              />
-              <TextField
-                label="Apellido"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                fullWidth
-              />
-            </Stack>
+          {/* Sección dinámica por rol */}
+          {renderRoleContent()}
 
-            {/* Sección dinámica por rol */}
-            {renderRoleContent()}
-
-            {/* Botones */}
-            <Stack direction="row" spacing={2} mt={3}>
-              <Button
-                onClick={handleSave}
-                variant="contained"
-                sx={{ bgcolor: "#020917", "&:hover": { bgcolor: "#111111" }, flex: 1 }}
-              >
-                Guardar
-              </Button>
-              <Button
-                onClick={onLogout}
-                variant="contained"
-                sx={{ bgcolor: "#d32f2f", "&:hover": { bgcolor: "#b71c1c" }, flex: 1 }}
-              >
-                Cerrar sesión
-              </Button>
-            </Stack>
-          </CardContent>
-        </Card>
-      </Box>
-      
-    </>
+          {/* Botones */}
+          <Stack direction="row" spacing={2} mt={3}>
+            <Button
+              onClick={handleSave}
+              variant="contained"
+              sx={{ bgcolor: "#020917", "&:hover": { bgcolor: "#111111" }, flex: 1 }}
+            >
+              Guardar
+            </Button>
+          </Stack>
+        </CardContent>
+      </Card>
+    </Box>
   );
 }
+

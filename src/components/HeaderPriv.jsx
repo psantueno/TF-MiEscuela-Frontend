@@ -1,39 +1,59 @@
-// src/components/HeaderPriv.jsx
 import * as React from "react";
-import { Box, AppBar, Toolbar, InputBase, Avatar, Typography } from "@mui/material";
+import {
+  Box,
+  AppBar,
+  Toolbar,
+  InputBase,
+  Avatar,
+  Typography,
+  Button,
+} from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import Nav from "./Nav";
 import logo from "../img/logo.png";
 
-export default function HeaderPriv() {
+export default function HeaderPriv({ user, onLogout }) {
   return (
-    <AppBar position="sticky" sx={{ backgroundColor: "#020917", backdropFilter: "blur(10px)" }}>
-      <Toolbar sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative" }}>
-
+    <AppBar
+      position="sticky"
+      sx={{
+        backgroundColor: "#020917",
+        backdropFilter: "blur(10px)",
+        px: 2,
+      }}
+    >
+      <Toolbar
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         {/* Menú a la izquierda */}
-        <Box 
-        display="flex"
-          alignItems="center"
-          gap={1}
-          sx={{ position: "absolute", transform: "translateX(-90%)" }}>
-          <Nav />
-        </Box>
+        <Nav />
 
         {/* Logo centrado */}
-        <Box
-          display="flex"
-          alignItems="center"
-          gap={1}
-          sx={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}
-        >
-          <img src={logo} alt="Logo" style={{ height: 40, width: 40, borderRadius: "50%" }} />
-          <Typography variant="h6" sx={{ fontWeight: "bold", color: "#ffffff", fontSize: "1.2rem",whiteSpace: "nowrap" }}>
+        <Box display="flex" alignItems="center" gap={1}>
+          <img
+            src={logo}
+            alt="Logo"
+            style={{ height: 40, width: 40, borderRadius: "50%" }}
+          />
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: "bold",
+              color: "#ffffff",
+              fontSize: "1.2rem",
+              whiteSpace: "nowrap",
+            }}
+          >
             Mi Escuela 4.0
           </Typography>
         </Box>
 
-        {/* Búsqueda + avatar a la derecha */}
-        <Box display="flex" alignItems="center" gap={1} ml="auto"   sx={{ position: "absolute", left: "50%", transform: "translateX(245%)" }}>
+        {/* Búsqueda + avatar + logout a la derecha */}
+        <Box display="flex" alignItems="center" gap={2}>
           <Box
             sx={{
               display: "flex",
@@ -41,7 +61,7 @@ export default function HeaderPriv() {
               backgroundColor: "rgba(255,255,255,0.1)",
               borderRadius: "9999px",
               px: 2,
-              height: 45,
+              height: 40,
               width: 180,
             }}
           >
@@ -52,13 +72,25 @@ export default function HeaderPriv() {
             />
           </Box>
 
+          {/* Avatar dinámico */}
           <Avatar
             alt="User"
-            src="https://i.pravatar.cc/40"
+            src={user?.photo || "/avatar-default.png"}
             sx={{ cursor: "pointer" }}
           />
-        </Box>
 
+          <Button
+            onClick={onLogout}
+            variant="contained"
+            sx={{
+              bgcolor: "#d32f2f",
+              "&:hover": { bgcolor: "#b71c1c" },
+              textTransform: "none",
+            }}
+          >
+            Cerrar sesión
+          </Button>
+        </Box>
       </Toolbar>
     </AppBar>
   );

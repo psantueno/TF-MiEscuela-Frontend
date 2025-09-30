@@ -1,4 +1,3 @@
-// src/App.jsx
 import * as React from "react";
 import { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
@@ -18,10 +17,38 @@ export default function App() {
 
   const handleLogin = ({ email, password }) => {
     const MOCK_USERS = [
-      { email: "directivo@uni.edu", password: "123456", role: "Directivo", firstName: "Ana", lastName: "Directiva" },
-      { email: "alumno@uni.edu", password: "123456", role: "Alumno", firstName: "Luis", lastName: "Alumno" },
-      { email: "padre@uni.edu", password: "123456", role: "Padre", firstName: "Carlos", lastName: "Padre" },
-      { email: "docente@uni.edu", password: "123456", role: "Docente", firstName: "Pepe", lastName: "Docente" },
+      {
+        email: "directivo@uni.edu",
+        password: "123456",
+        role: "Directivo",
+        firstName: "Ana",
+        lastName: "Directiva",
+        photo: "/avatar-default.png",
+      },
+      {
+        email: "alumno@uni.edu",
+        password: "123456",
+        role: "Alumno",
+        firstName: "Luis",
+        lastName: "Alumno",
+        photo: "/avatar-default.png",
+      },
+      {
+        email: "padre@uni.edu",
+        password: "123456",
+        role: "Padre",
+        firstName: "Carlos",
+        lastName: "Padre",
+        photo: "/avatar-default.png",
+      },
+      {
+        email: "docente@uni.edu",
+        password: "123456",
+        role: "Docente",
+        firstName: "Pepe",
+        lastName: "Docente",
+        photo: "/avatar-default.png",
+      },
     ];
 
     const found = MOCK_USERS.find(
@@ -49,15 +76,63 @@ export default function App() {
           <Container maxWidth="lg">
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/login" element={user ? <Navigate to="/profile" /> : <Login onLogin={handleLogin} />} />
+              <Route
+                path="/login"
+                element={user ? <Navigate to="/profile" /> : <Login onLogin={handleLogin} />}
+              />
 
               {/* Rutas por rol */}
-              <Route path="/alumno" element={user?.role === "Alumno" ? <Profile user={user} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} /> : <Navigate to="/login" />} />
-              <Route path="/docente" element={user?.role === "Docente" ? <Profile user={user} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} /> : <Navigate to="/login" />} />
-              <Route path="/padre" element={user?.role === "Padre" ? <Profile user={user} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} /> : <Navigate to="/login" />} />
-              <Route path="/directivo" element={user?.role === "Directivo" ? <Profile user={user} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} /> : <Navigate to="/login" />} />
+              <Route
+                path="/alumno"
+                element={
+                  user?.role === "Alumno" ? (
+                    <Profile user={user} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} />
+                  ) : (
+                    <Navigate to="/login" />
+                  )
+                }
+              />
+              <Route
+                path="/docente"
+                element={
+                  user?.role === "Docente" ? (
+                    <Profile user={user} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} />
+                  ) : (
+                    <Navigate to="/login" />
+                  )
+                }
+              />
+              <Route
+                path="/padre"
+                element={
+                  user?.role === "Padre" ? (
+                    <Profile user={user} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} />
+                  ) : (
+                    <Navigate to="/login" />
+                  )
+                }
+              />
+              <Route
+                path="/directivo"
+                element={
+                  user?.role === "Directivo" ? (
+                    <Profile user={user} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} />
+                  ) : (
+                    <Navigate to="/login" />
+                  )
+                }
+              />
 
-              <Route path="/profile" element={user ? <Profile user={user} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} /> : <Navigate to="/login" />} />
+              <Route
+                path="/profile"
+                element={
+                  user ? (
+                    <Profile user={user} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} />
+                  ) : (
+                    <Navigate to="/login" />
+                  )
+                }
+              />
 
               {/* Rutas desconocidas */}
               <Route path="*" element={<Navigate to="/" />} />
