@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Box, Fade } from '@mui/material';
 import { Asistencias } from './Asistencias';
+import { Usuarios } from './Usuarios';
 import { Sidebar } from '../components/SideBar';
 import { Header } from '../components/Header';
 
@@ -58,6 +59,7 @@ export const Dashboard = () => {
     notificaciones: <ModuloNotificaciones />,
     mensajes: <ModuloMensajes />,
     informes: <ModuloInformes />,
+    usuarios: <Usuarios />
   };
 
   return (

@@ -32,28 +32,49 @@ export const dataProvider = {
 
 
   getList: (resource, params) => {
-    const url = `${API_URL}/${resource}`;
+    const { page, perPage } = params.pagination;
+    const { nombre_completo, id_rol } = params.filter;
+
+    const query = new URLSearchParams({
+        page,
+        perPage,
+        nombre_completo: nombre_completo || '',
+        id_rol: id_rol || '',
+    }).toString();
+
+    const url = `${API_URL}/${resource}?${query}`;
+
     return httpClient(url).then(({ json }) => ({
-      data: json.map(item => ({
-        ...item,
-        id: item.id_curso || item.id_asistencia || item.id_alumno || item.id_docente || item.id_curso || item.id
-      })),
-      total: json.length,
+      data: json.data ? 
+        json.data.map(item => ({
+          ...item,
+          id: item.id_asistencia || item.id_alumno || item.id_docente || item.id_curso || item.id_rol || item.id_usuario || item.id
+        })) : 
+        json.map(item => ({
+          ...item,
+          id: item.id_asistencia || item.id_alumno || item.id_docente || item.id_curso || item.id_rol || item.id_usuario || item.id
+        })), 
+      total: json.total,
     }));
   },
 
   getOne: (resource, params) =>
     httpClient(`${API_URL}/${resource}/${params.id}`).then(({ json }) => ({
-      data: {
-        ...json,
-        id: json.id_asistencia || json.id_alumno || json.id_docente || json.id_curso || json.id
+      data: { 
+        ...json, 
+        id: json.id_asistencia || json.id_alumno || json.id_docente || json.id_curso || json.id_rol || json.id_usuario || json.id 
       },
     })),
 
   getMany: (resource, params) => {
     const query = { filter: JSON.stringify({ id: params.ids }) };
     const url = `${API_URL}/${resource}?${stringify(query)}`;
-    return httpClient(url).then(({ json }) => ({ data: json }));
+    return httpClient(url).then(({ json }) => ({ 
+      data: json.map(item => ({
+        ...item,
+        id: item.id_asistencia || item.id_alumno || item.id_docente || item.id_curso || item.id_rol || item.id_usuario || item.id
+      }))
+    }));
   },
 
   getManyReference: (resource, params) => {
@@ -69,14 +90,17 @@ export const dataProvider = {
       method: 'POST',
       body: JSON.stringify(params.data),
     }).then(({ json }) => ({
-      data: { ...params.data, id: json.id || json.id_asistencia || json.insertId },
+      data: { ...params.data, id: json.id || json.id_asistencia || json.id_usuario || json.insertId },
     })),
 
   update: (resource, params) =>
     httpClient(`${API_URL}/${resource}/${params.id}`, {
       method: 'PUT',
       body: JSON.stringify(params.data),
-    }).then(({ json }) => ({ data: json })),
+    }).then(({ json }) => ({ data: {
+      ...json,
+      id: json.id_asistencia || json.id_alumno || json.id_docente || json.id_curso || json.id_rol || json.id_usuario || json.id
+    } })),
 
   updateMany: (resource, params) =>
     Promise.all(
