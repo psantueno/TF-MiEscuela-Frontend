@@ -6,6 +6,7 @@ import { dataProvider } from './providers/dataProvider';
 import { authProvider } from './providers/authProvider';
 import { theme } from './theme/theme';
 import { CustomLayout } from './layout/CustomLayout';
+import { AsistenciasHoy } from "./resources/asistencias/AsistenciasHoy";
 
 // IMPORTANTE: Importar tu UserProvider
 import UserProvider from './contexts/UserContext/UserProvider';
@@ -14,11 +15,11 @@ import UserProvider from './contexts/UserContext/UserProvider';
 import { Login } from './pages/Login';
 
 // Importar recursos de react-admin
-import { 
-  AsistenciasList, 
-  AsistenciasEdit, 
-  AsistenciasCreate, 
-  AsistenciasShow 
+import {
+  AsistenciasList,
+  AsistenciasEdit,
+  AsistenciasCreate,
+  AsistenciasShow
 } from './resources/asistencias';
 
 import { DashboardPage } from './pages/DashboardPage';
@@ -34,7 +35,7 @@ function App() {
         <Routes>
           {/* Tu login actual */}
           <Route path="/login" element={<Login />} />
-          
+
           {/* React-admin para el resto */}
           <Route
             path="/*"
@@ -67,6 +68,7 @@ function App() {
 
                 {/* Rutas personalizadas para módulos sin CRUD */}
                 <CustomRoutes>
+                  <Route path="/asistencias/hoy" element={<AsistenciasHoy />} />
                   <Route path="/notificaciones" element={<div>Notificaciones</div>} />
                   <Route path="/mensajes" element={<div>Mensajes</div>} />
                   <Route path="/informes" element={<div>Informes</div>} />

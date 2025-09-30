@@ -7,7 +7,7 @@ const httpClient = (url, options = {}) => {
   if (!options.headers) {
     options.headers = new Headers({ Accept: 'application/json' });
   }
-  
+
   const csrfToken = sessionStorage.getItem('csrf_token');
   const accessToken = sessionStorage.getItem('access_token');
   const refreshToken = sessionStorage.getItem('refresh_token');
@@ -23,17 +23,20 @@ const httpClient = (url, options = {}) => {
   }
 
   options.credentials = 'include';
-  
+
   return fetchUtils.fetchJson(url, options);
 };
 
+
 export const dataProvider = {
+
+
   getList: (resource, params) => {
     const url = `${API_URL}/${resource}`;
     return httpClient(url).then(({ json }) => ({
-      data: json.map(item => ({ 
-        ...item, 
-        id: item.id_asistencia || item.id_alumno || item.id_docente || item.id_curso || item.id 
+      data: json.map(item => ({
+        ...item,
+        id: item.id_curso || item.id_asistencia || item.id_alumno || item.id_docente || item.id_curso || item.id
       })),
       total: json.length,
     }));
@@ -41,9 +44,9 @@ export const dataProvider = {
 
   getOne: (resource, params) =>
     httpClient(`${API_URL}/${resource}/${params.id}`).then(({ json }) => ({
-      data: { 
-        ...json, 
-        id: json.id_asistencia || json.id_alumno || json.id_docente || json.id_curso || json.id 
+      data: {
+        ...json,
+        id: json.id_asistencia || json.id_alumno || json.id_docente || json.id_curso || json.id
       },
     })),
 
@@ -98,4 +101,16 @@ export const dataProvider = {
         })
       )
     ).then(responses => ({ data: responses.map(({ json }) => json.id) })),
+
+    getAsistenciaCursoHoy: (id_curso) =>
+    httpClient(`${API_URL}/asistencias/curso/${id_curso}/hoy`)
+      .then(({ json }) => ({
+        data: json.map(item => ({
+          ...item,
+          id: item.id_asistencia,
+        })),
+        total: json.length,
+      })),
+
 };
+
