@@ -1,167 +1,148 @@
 // src/resources/asistencias/AsistenciasHoy.jsx
-import { useEffect, useState } from "react";
-import { useDataProvider, TextField, Datagrid } from "react-admin";
+import { useEffect, useState, useMemo } from "react";
+import { useDataProvider } from "react-admin";
 import {
-  Box,
-  CircularProgress,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Card,
-  Chip,
+  Box, CircularProgress, Typography,
+  FormControl, InputLabel, Select, MenuItem,
+  Card, CardContent, Chip,
+  Table, TableHead, TableRow, TableCell, TableBody
 } from "@mui/material";
 
-// 🔹 Campo personalizado para mostrar el estado con colores
-const EstadoField = ({ record }) => {
-  if (!record) return null;
-  const estado = record.id_estado;
+function hoyAR() {
+  try {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Salta' });
+  } catch {
+    return new Date().toISOString().split('T')[0];
+  }
+}
+
+const EstadoChip = ({ estado }) => {
+  if (!estado) return <Chip label="-" size="small" />;
+  const key = estado.toLowerCase();
   const map = {
-    1: { label: "Presente", color: "success" },
-    2: { label: "Ausente", color: "error" },
-    3: { label: "Tarde", color: "warning" },
+    presente: { label: "Presente", bg: "rgba(76, 175, 80, 0.15)", color: "#2e7d32" },
+    ausente: { label: "Ausente", bg: "rgba(244, 67, 54, 0.15)", color: "#c62828" },
+    tarde: { label: "Tarde", bg: "rgba(255, 193, 7, 0.2)", color: "#ff8f00" },
   };
+  const style = map[key] || { label: estado, bg: "rgba(158,158,158,0.15)", color: "#424242" };
   return (
     <Chip
-      label={map[estado]?.label || "Desconocido"}
-      color={map[estado]?.color || "default"}
+      label={style.label}
       size="small"
+      sx={{ backgroundColor: style.bg, color: style.color, fontWeight: 500 }}
     />
   );
 };
 
 export const AsistenciasHoy = () => {
   const dataProvider = useDataProvider();
+  const fecha = useMemo(() => hoyAR(), []);
+
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [curso, setCurso] = useState("");
   const [cursos, setCursos] = useState([]);
 
-  // cargar cursos al montar
   useEffect(() => {
-    dataProvider.getList("cursos", {}).then(({ data }) => {
-      setCursos(
-        data.map((c) => ({
-          id: c.id_curso,
-          name: `${c.anio_escolar}° ${c.division}`,
-        }))
-      );
+    dataProvider.getList("cursos", {
+      pagination: { page: 1, perPage: 100 },
+      sort: { field: "anio_escolar", order: "ASC" },
+      filter: {},
+    }).then(({ data }) => {
+      setCursos(data.map(c => ({ id: c.id_curso, name: `${c.anio_escolar}° ${c.division}` })));
     });
   }, [dataProvider]);
 
-  // cargar asistencias cuando cambia curso
   useEffect(() => {
-    if (curso) {
-      setLoading(true);
-      dataProvider
-        .getAsistenciaCursoHoy(curso)
-        .then(({ data }) => {
-          setRecords(data);
-          setLoading(false);
-        })
-        .catch(() => {
-          setRecords([]);
-          setLoading(false);
-        });
-    }
-  }, [curso, dataProvider]);
+    if (!curso) return;
+    setLoading(true);
+    dataProvider.getAsistenciaCursoHoy(curso, fecha)
+      .then(({ data }) => { setRecords(data); setLoading(false); })
+      .catch(() => { setRecords([]); setLoading(false); });
+  }, [curso, fecha, dataProvider]);
 
-  // métricas rápidas
   const total = records.length;
-  const presentes = records.filter((r) => r.id_estado === 1).length;
-  const ausentes = records.filter((r) => r.id_estado === 2).length;
-  const tarde = records.filter((r) => r.id_estado === 3).length;
+  const presentes = records.filter(r => r.estado_nombre?.toLowerCase() === "presente").length;
+  const ausentes = records.filter(r => r.estado_nombre?.toLowerCase() === "ausente").length;
+  const tarde = records.filter(r => r.estado_nombre?.toLowerCase() === "tarde").length;
 
-  // helper para tarjetas
-  const metricValue = (value) => (curso ? (value > 0 ? value : "-") : "-");
+  const metricValue = (v) => (curso ? (v > 0 ? v : "-") : "-");
 
   return (
     <Box p={3}>
       <Typography variant="h6" gutterBottom>
-        Asistencias de Hoy por Curso
+        Asistencias del {fecha}
       </Typography>
 
-      {/* Selector de curso */}
       <FormControl sx={{ minWidth: 200, mb: 3 }}>
-        <InputLabel id="curso-select-label">Curso</InputLabel>
-        <Select
-          labelId="curso-select-label"
-          value={curso}
-          onChange={(e) => setCurso(e.target.value)}
-        >
-          {cursos.length > 0 ? (
-            cursos.map((c) => (
-              <MenuItem key={c.id} value={c.id}>
-                {c.name}
-              </MenuItem>
-            ))
-          ) : (
-            <MenuItem disabled>No hay cursos disponibles</MenuItem>
-          )}
+        <InputLabel>Curso</InputLabel>
+        <Select value={curso} onChange={(e) => setCurso(e.target.value)}>
+          {cursos.length > 0 ? cursos.map(c => (
+            <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+          )) : <MenuItem disabled>No hay cursos</MenuItem>}
         </Select>
       </FormControl>
 
-      {/* Loader */}
-      {loading && (
-        <Box textAlign="center" mt={4}>
-          <CircularProgress />
-          <Typography variant="body2" mt={2}>
-            Cargando asistencias...
-          </Typography>
-        </Box>
-      )}
+      {loading && <CircularProgress />}
 
-      {/* Resumen con tarjetas */}
       {!loading && curso && (
-        <Box mb={3} display="flex" gap={2} flexWrap="wrap">
-          <Card sx={{ flex: 1, p: 2 }}>
-            <Typography variant="subtitle1">Total alumnos</Typography>
-            <Typography variant="h5">{metricValue(total)}</Typography>
+        <Box mb={3} display="flex" gap={2}>
+          <Card sx={{ flex: 1, p: 2, backgroundColor: "rgba(76, 175, 80, 0.15)" }}>
+            <CardContent>
+              <Typography variant="subtitle1">Presentes</Typography>
+              <Typography variant="h5" sx={{ color: "#2e7d32" }}>{metricValue(presentes)}</Typography>
+            </CardContent>
           </Card>
-          <Card sx={{ flex: 1, p: 2 }}>
-            <Typography variant="subtitle1">Presentes</Typography>
-            <Typography variant="h5" color="success.main">
-              {metricValue(presentes)}
-            </Typography>
+          <Card sx={{ flex: 1, p: 2, backgroundColor: "rgba(244, 67, 54, 0.15)" }}>
+            <CardContent>
+              <Typography variant="subtitle1">Ausentes</Typography>
+              <Typography variant="h5" sx={{ color: "#c62828" }}>{metricValue(ausentes)}</Typography>
+            </CardContent>
           </Card>
-          <Card sx={{ flex: 1, p: 2 }}>
-            <Typography variant="subtitle1">Ausentes</Typography>
-            <Typography variant="h5" color="error.main">
-              {metricValue(ausentes)}
-            </Typography>
+          <Card sx={{ flex: 1, p: 2, backgroundColor: "rgba(255, 193, 7, 0.2)" }}>
+            <CardContent>
+              <Typography variant="subtitle1">Tarde</Typography>
+              <Typography variant="h5" sx={{ color: "#ff8f00" }}>{metricValue(tarde)}</Typography>
+            </CardContent>
           </Card>
-          <Card sx={{ flex: 1, p: 2 }}>
-            <Typography variant="subtitle1">Tarde</Typography>
-            <Typography variant="h5" color="warning.main">
-              {metricValue(tarde)}
-            </Typography>
+          <Card sx={{ flex: 1, p: 2, backgroundColor: "rgba(33, 150, 243, 0.1)" }}>
+            <CardContent>
+              <Typography variant="subtitle1">Total</Typography>
+              <Typography variant="h5">{metricValue(total)}</Typography>
+            </CardContent>
           </Card>
         </Box>
       )}
 
-      {/* Tabla de asistencias */}
       {!loading && curso && (
-        <Datagrid
-          data={records}
-          resource="asistencias"
-          bulkActionButtons={false}
-          rowClick={false}
-          empty={
-            <Box p={2} textAlign="center">
-              <Typography variant="body1">
-                No hay asistencias cargadas para este curso hoy
-              </Typography>
-            </Box>
-          }
-        >
-          <TextField source="id_asistencia" label="ID" />
-          <TextField source="alumno.nombre_completo" label="Alumno" />
-          <TextField source="curso.anio_escolar" label="Año" />
-          <TextField source="curso.division" label="División" />
-          <EstadoField label="Estado" />
-          <TextField source="fecha" label="Fecha" />
-        </Datagrid>
+        <Card>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>#</TableCell>
+                <TableCell>Alumno</TableCell>
+                <TableCell>Estado</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {records.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} align="center">
+                    No hay asistencias cargadas
+                  </TableCell>
+                </TableRow>
+              ) : (
+                records.map((r, i) => (
+                  <TableRow key={r.id_asistencia || i}>
+                    <TableCell>{i + 1}</TableCell>
+                    <TableCell>{r.alumno_nombre}</TableCell>
+                    <TableCell><EstadoChip estado={r.estado_nombre} /></TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </Card>
       )}
     </Box>
   );

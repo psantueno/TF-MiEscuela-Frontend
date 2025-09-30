@@ -25,14 +25,15 @@ export const CustomLayout = ({ children }) => {
       position: 'fixed',
       top: 0,
       left: 0,
-      width: '100vw',
+      right: 0,
+      width: '100%',
       height: '100vh',
       backgroundColor: '#ffffff',
       overflow: 'hidden'
     }}>
       <Header moduloActivo={moduloActivo} />
 
-      <Box sx={{ display: 'flex', height: '100vh', pt: 8 }}>
+      <Box sx={{ display: 'flex', height: '100vh', pt: 8, maxWidth: '100%' }}>
         <Sidebar moduloActivo={moduloActivo} onModuleChange={setModuloActivo} />
 
         <Box sx={{
@@ -40,7 +41,8 @@ export const CustomLayout = ({ children }) => {
           backgroundColor: '#ffffff',
           height: 'calc(100vh - 64px)',
           overflow: 'auto',
-          p: 3
+          p: 3,
+          maxWidth: '100%'
         }}>
           <Fade in={true} timeout={300}>
             <Box sx={{ height: '100%' }}>
