@@ -22,6 +22,13 @@ import {
   AsistenciasShow
 } from './resources/asistencias';
 
+import {
+  UsuariosList,
+  UsuariosEdit,
+  UsuariosCreate,
+  UsuariosShow
+} from './resources/usuarios';
+
 import { DashboardPage } from './pages/DashboardPage';
 
 // Iconos
@@ -58,6 +65,16 @@ function App() {
                   show={AsistenciasShow}
                   icon={Today}
                   options={{ label: 'Asistencias' }}
+                />
+
+                <Resource
+                  name="usuarios"
+                  list={UsuariosList}
+                  edit={UsuariosEdit}
+                  create={UsuariosCreate}
+                  show={UsuariosShow}
+                  icon={Person}
+                  options={{ label: 'Usuarios' }}
                 />
 
                 {/* Recursos auxiliares (sin vistas, solo para referencias) */}
