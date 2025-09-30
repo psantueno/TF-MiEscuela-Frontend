@@ -136,5 +136,32 @@ export const dataProvider = {
         total: json.length,
       })),
 
+
+ getAlumnosCurso: (cursoId, fecha = hoyAR()) =>
+    httpClient(`${API_URL}/alumnos/curso/${cursoId}?fecha=${fecha}`)
+      .then(({ json }) => ({
+        data: json.map(a => ({
+          ...a,
+          id: a.id_alumno, // react-admin requiere "id"
+        })),
+      })),
+
+  // registrar/editar asistencia
+  registrarAsistenciaCurso: (cursoId, fecha, items) =>
+    httpClient(`${API_URL}/asistencias/curso`, {
+      method: 'POST',
+      body: JSON.stringify({ id_curso: cursoId, fecha, items }),
+    }).then(({ json }) => ({ data: json })),
+
+  // obtener asistencias de un curso en el día
+  getAsistenciaCursoHoy: (cursoId, fecha = hoyAR()) =>
+    httpClient(`${API_URL}/asistencias/curso/${cursoId}/hoy?fecha=${fecha}`)
+      .then(({ json }) => ({
+        data: json.map(a => ({
+          ...a,
+          id: a.id_asistencia || `${a.alumno_id}-${a.fecha}`,
+        })),
+      })),
+
 };
 

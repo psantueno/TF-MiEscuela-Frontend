@@ -33,6 +33,7 @@ import { DashboardPage } from './pages/DashboardPage';
 
 // Iconos
 import { Today, School, Person, Class } from '@mui/icons-material';
+import { RegistrarAsistencia } from './resources/asistencias/RegistrarAsistencia';
 
 function App() {
   return (
@@ -86,6 +87,7 @@ function App() {
                 {/* Rutas personalizadas para módulos sin CRUD */}
                 <CustomRoutes>
                   <Route path="/asistencias/hoy" element={<AsistenciasHoy />} />
+                  <Route path="/asistencias/registrar" element={<RegistrarAsistencia />} />
                   <Route path="/notificaciones" element={<div>Notificaciones</div>} />
                   <Route path="/mensajes" element={<div>Mensajes</div>} />
                   <Route path="/informes" element={<div>Informes</div>} />

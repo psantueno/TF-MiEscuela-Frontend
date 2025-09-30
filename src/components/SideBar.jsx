@@ -153,26 +153,34 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
         </ListItem>
         <Collapse in={openAsistencias} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
+            {/* Submenú: Listado */}
             <ListItemButton
               sx={{ pl: 6, ...getButtonStyle(isActive('/asistencias')) }}
               selected={isActive('/asistencias')}
-              onClick={() => handleItemClick({ id: 'asistencias-list', to: '/asistencias' })}
+              onClick={() => handleItemClick({ id: 'asistencias-listado', to: '/asistencias' })}
             >
               <ListItemText primary="Listado" sx={getTextStyle(isActive('/asistencias'))} />
             </ListItemButton>
+
+            {/* Submenú: Hoy */}
             <ListItemButton
               sx={{ pl: 6, ...getButtonStyle(isActive('/asistencias/hoy')) }}
               selected={isActive('/asistencias/hoy')}
               onClick={() => handleItemClick({ id: 'asistencias-hoy', to: '/asistencias/hoy' })}
             >
-              <ListItemText primary="De Hoy" sx={getTextStyle(isActive('/asistencias/hoy'))} />
+              <ListItemText primary="Ver asistencia del día" sx={getTextStyle(isActive('/asistencias/hoy'))} />
             </ListItemButton>
+
+            {/* Submenú: Registrar/Editar */}
             <ListItemButton
-              sx={{ pl: 6, ...getButtonStyle(isActive('/asistencias/entre-fechas')) }}
-              selected={isActive('/asistencias/entre-fechas')}
-              onClick={() => handleItemClick({ id: 'asistencias-fechas', to: '/asistencias/entre-fechas' })}
+              sx={{ pl: 6, ...getButtonStyle(isActive('/asistencias/registrar')) }}
+              selected={isActive('/asistencias/registrar')}
+              onClick={() => handleItemClick({ id: 'asistencias-registrar', to: '/asistencias/registrar' })}
             >
-              <ListItemText primary="Entre Fechas" sx={getTextStyle(isActive('/asistencias/entre-fechas'))} />
+              <ListItemText
+                primary="Tomar asistenca"
+                sx={getTextStyle(isActive('/asistencias/registrar'))}
+              />
             </ListItemButton>
           </List>
         </Collapse>
