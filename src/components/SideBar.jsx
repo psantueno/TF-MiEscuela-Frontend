@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   List,
@@ -18,7 +19,11 @@ import {
 } from '@mui/icons-material';
 import LogoMiEscuela from "../assets/img/logo_oficial.png"
 
+
 export const Sidebar = ({ moduloActivo, onModuleChange }) => {
+  const navigate = useNavigate();
+
+
   const menuItems = [
     { id: 'general', text: 'Panel General', icon: <Home /> },
     { id: 'alumnos', text: 'Alumnos', icon: <School /> },
@@ -28,6 +33,17 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
     { id: 'mensajes', text: 'Mensajes', icon: <Mail /> },
     { id: 'informes', text: 'Informes', icon: <Assessment /> },
   ];
+
+const handleItemClick = (item) => {
+    onModuleChange(item.id);
+    // Agregar navegación con react-router
+    if (item.id === 'general') {
+      navigate('/');
+    } else {
+      navigate(`/${item.id}`);
+    }
+  };
+
 
   return (
     <Box sx={{
@@ -72,7 +88,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
           <ListItem disablePadding key={item.id}>
             <ListItemButton
               selected={moduloActivo === item.id}
-              onClick={() => onModuleChange(item.id)}
+              onClick={() => handleItemClick(item)}
               sx={{
                 backgroundColor: moduloActivo === item.id ? 'rgba(255,255,255,0.1)' : 'transparent',
                 borderRight: moduloActivo === item.id ? '3px solid #1976d2' : '3px solid transparent',
