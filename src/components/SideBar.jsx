@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   List,
@@ -6,7 +6,8 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Typography
+  Typography,
+  Collapse,
 } from '@mui/material';
 import {
   Home,
@@ -15,35 +16,62 @@ import {
   Notifications,
   Mail,
   Assessment,
-  Today
+  Today,
+  ExpandLess,
+  ExpandMore,
 } from '@mui/icons-material';
-import LogoMiEscuela from "../assets/img/logo_oficial.png"
-
+import { useResourceDefinitions } from 'react-admin';
+import { useState, useEffect } from 'react';
+import LogoMiEscuela from "../assets/img/logo_oficial.png";
 
 export const Sidebar = ({ moduloActivo, onModuleChange }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const resourceDefs = useResourceDefinitions();
 
+  // Abrir/cerrar submenú asistencias
+  const [openAsistencias, setOpenAsistencias] = useState(false);
 
-  const menuItems = [
-    { id: 'general', text: 'Panel General', icon: <Home /> },
-    { id: 'alumnos', text: 'Alumnos', icon: <School /> },
-    { id: 'docentes', text: 'Docentes', icon: <Person /> },
-    { id: 'asistencias', text: 'Asistencias', icon: <Today /> },
-    { id: 'notificaciones', text: 'Notificaciones', icon: <Notifications /> },
-    { id: 'mensajes', text: 'Mensajes', icon: <Mail /> },
-    { id: 'informes', text: 'Informes', icon: <Assessment /> },
-  ];
-
-const handleItemClick = (item) => {
-    onModuleChange(item.id);
-    // Agregar navegación con react-router
-    if (item.id === 'general') {
-      navigate('/');
-    } else {
-      navigate(`/${item.id}`);
+  // Abrir asistencias automáticamente si estoy en esa ruta
+  useEffect(() => {
+    if (location.pathname.startsWith('/asistencias')) {
+      setOpenAsistencias(true);
     }
+  }, [location.pathname]);
+
+  // Recursos declarados en <Resource>, excepto asistencias
+  const resourceItems = Object.values(resourceDefs)
+    .filter(def => def.hasList && def.name !== 'asistencias')
+    .map(def => {
+      const Icon = def.icon || Home;
+      return {
+        id: def.name,
+        text: def.options?.label || def.name,
+        icon: <Icon />,
+        to: `/${def.name}`,
+      };
+    });
+
+  const handleItemClick = (item) => {
+    onModuleChange?.(item.id);
+    navigate(item.to);
   };
 
+  // helper para aplicar estilos activos
+  const isActive = (to) => location.pathname === to;
+
+  // estilo base de los botones
+  const getButtonStyle = (active) => ({
+    backgroundColor: active ? 'rgba(255,255,255,0.1)' : 'transparent',
+    borderRight: active ? '3px solid #1976d2' : '3px solid transparent',
+  });
+
+  const getTextStyle = (active) => ({
+    '& .MuiListItemText-primary': {
+      fontSize: '0.9rem',
+      fontWeight: active ? 600 : 400, // 👈 negrita si activo
+    },
+  });
 
   return (
     <Box sx={{
@@ -54,7 +82,7 @@ const handleItemClick = (item) => {
       overflow: 'auto',
       flexShrink: 0
     }}>
-      {/* Header del sidebar */}
+      {/* Header */}
       <Box sx={{
         p: 3,
         textAlign: 'center',
@@ -70,11 +98,10 @@ const handleItemClick = (item) => {
           justifyContent: 'center',
           margin: '0 auto 12px auto'
         }}>
-          {/* <School sx={{ color: 'white', fontSize: 30 }} /> */}
           <img
             src={LogoMiEscuela}
             alt="Logo oficial"
-            style={{ width: '100%', height: '100%', objectFit: 'contain' , borderRadius: '50%'}}
+            style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '50%' }}
           />
         </Box>
         <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
@@ -82,39 +109,114 @@ const handleItemClick = (item) => {
         </Typography>
       </Box>
 
-      {/* Menu items */}
+      {/* Menu */}
       <List sx={{ pt: 2, px: 1 }}>
-        {menuItems.map((item) => (
+        {/* Panel General */}
+        <ListItem disablePadding>
+          <ListItemButton
+            selected={isActive('/')}
+            onClick={() => handleItemClick({ id: 'general', to: '/' })}
+            sx={getButtonStyle(isActive('/'))}
+          >
+            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+              <Home />
+            </ListItemIcon>
+            <ListItemText primary="Panel General" sx={getTextStyle(isActive('/'))} />
+          </ListItemButton>
+        </ListItem>
+
+        {/* Recursos estándar */}
+        {resourceItems.map((item) => (
           <ListItem disablePadding key={item.id}>
             <ListItemButton
-              selected={moduloActivo === item.id}
+              selected={isActive(item.to)}
               onClick={() => handleItemClick(item)}
-              sx={{
-                backgroundColor: moduloActivo === item.id ? 'rgba(255,255,255,0.1)' : 'transparent',
-                borderRight: moduloActivo === item.id ? '3px solid #1976d2' : '3px solid transparent',
-                borderRadius: 1,
-                mb: 0.5,
-                '&:hover': { backgroundColor: 'rgba(255,255,255,0.05)' },
-                transition: 'all 0.2s ease-in-out',
-              }}
+              sx={getButtonStyle(isActive(item.to))}
             >
               <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
                 {item.icon}
               </ListItemIcon>
-              <ListItemText
-                primary={item.text}
-                sx={{
-                  '& .MuiListItemText-primary': {
-                    fontSize: '0.9rem',
-                    fontWeight: moduloActivo === item.id ? 600 : 400,
-                  }
-                }}
-              />
+              <ListItemText primary={item.text} sx={getTextStyle(isActive(item.to))} />
             </ListItemButton>
           </ListItem>
         ))}
+
+        {/* Bloque Asistencias */}
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => setOpenAsistencias(!openAsistencias)}>
+            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+              <Today />
+            </ListItemIcon>
+            <ListItemText primary="Asistencias" />
+            {openAsistencias ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={openAsistencias} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItemButton
+              sx={{ pl: 6, ...getButtonStyle(isActive('/asistencias')) }}
+              selected={isActive('/asistencias')}
+              onClick={() => handleItemClick({ id: 'asistencias-list', to: '/asistencias' })}
+            >
+              <ListItemText primary="Listado" sx={getTextStyle(isActive('/asistencias'))} />
+            </ListItemButton>
+            <ListItemButton
+              sx={{ pl: 6, ...getButtonStyle(isActive('/asistencias/hoy')) }}
+              selected={isActive('/asistencias/hoy')}
+              onClick={() => handleItemClick({ id: 'asistencias-hoy', to: '/asistencias/hoy' })}
+            >
+              <ListItemText primary="De Hoy" sx={getTextStyle(isActive('/asistencias/hoy'))} />
+            </ListItemButton>
+            <ListItemButton
+              sx={{ pl: 6, ...getButtonStyle(isActive('/asistencias/entre-fechas')) }}
+              selected={isActive('/asistencias/entre-fechas')}
+              onClick={() => handleItemClick({ id: 'asistencias-fechas', to: '/asistencias/entre-fechas' })}
+            >
+              <ListItemText primary="Entre Fechas" sx={getTextStyle(isActive('/asistencias/entre-fechas'))} />
+            </ListItemButton>
+          </List>
+        </Collapse>
+
+        {/* Otros custom */}
+        <ListItem disablePadding>
+          <ListItemButton
+            selected={isActive('/notificaciones')}
+            onClick={() => handleItemClick({ id: 'notificaciones', to: '/notificaciones' })}
+            sx={getButtonStyle(isActive('/notificaciones'))}
+          >
+            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+              <Notifications />
+            </ListItemIcon>
+            <ListItemText primary="Notificaciones" sx={getTextStyle(isActive('/notificaciones'))} />
+          </ListItemButton>
+        </ListItem>
+
+        <ListItem disablePadding>
+          <ListItemButton
+            selected={isActive('/mensajes')}
+            onClick={() => handleItemClick({ id: 'mensajes', to: '/mensajes' })}
+            sx={getButtonStyle(isActive('/mensajes'))}
+          >
+            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+              <Mail />
+            </ListItemIcon>
+            <ListItemText primary="Mensajes" sx={getTextStyle(isActive('/mensajes'))} />
+          </ListItemButton>
+        </ListItem>
+
+        <ListItem disablePadding>
+          <ListItemButton
+            selected={isActive('/informes')}
+            onClick={() => handleItemClick({ id: 'informes', to: '/informes' })}
+            sx={getButtonStyle(isActive('/informes'))}
+          >
+            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+              <Assessment />
+            </ListItemIcon>
+            <ListItemText primary="Informes" sx={getTextStyle(isActive('/informes'))} />
+          </ListItemButton>
+        </ListItem>
       </List>
     </Box>
   );
 };
-
