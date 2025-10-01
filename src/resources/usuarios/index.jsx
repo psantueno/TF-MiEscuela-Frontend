@@ -42,6 +42,7 @@ const usuariosFilters = [
 ];
 
 // Función para obtener el color del rol
+/*
 const getRoleColor = (id_rol) => {
     const roleColors = {
         'Administrador': '#F44336',
@@ -55,6 +56,7 @@ const getRoleColor = (id_rol) => {
 
     return roleColors[id_rol] || '#607D8B';
 };
+*/
 
 // Toolbar personalizado según permisos
 const UsuariosListActions = () => {
@@ -157,6 +159,11 @@ export const UsuariosCreate = () => (
                     }}
                 />
                 <TextInput 
+                    source="legajo"
+                    label="Legajo" 
+                    fullWidth
+                />
+                <TextInput 
                     source="telefono" 
                     label="Teléfono" 
                     fullWidth 
@@ -169,6 +176,11 @@ export const UsuariosCreate = () => (
                 <TextInput 
                     source="fecha_nacimiento" 
                     label="Fecha Nac." 
+                    fullWidth 
+                />
+                <TextInput 
+                    source="genero" 
+                    label="Género" 
                     fullWidth 
                 />
                 <ReferenceInput 
@@ -228,6 +240,11 @@ export const UsuariosEdit = () => (
                             marginBottom: "12px",
                         },
                     }}
+                />
+                <TextInput 
+                    source="legajo"
+                    label="Legajo" 
+                    fullWidth
                 />
                 <TextInput 
                     source="telefono" 
