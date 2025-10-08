@@ -8,7 +8,6 @@ import {
     DeleteButton,
     ArrayField,
     SingleFieldList, 
-    ChipField,
     usePermissions, 
     TopToolbar, 
     CreateButton, 
@@ -17,7 +16,8 @@ import {
     Create, 
     Edit,
     SimpleForm, 
-    TextInput, 
+    TextInput,
+    DateInput, 
     required,
     email,
     PasswordInput, 
@@ -25,9 +25,16 @@ import {
     SelectInput,
     Show, 
     SimpleShowLayout,
-    minLength
+    minLength,
+    FunctionField,
+    useRecordContext
 } from 'react-admin';
-import Stack from '@mui/material/Stack';
+import { 
+    Typography,
+    Box,
+    Grid,
+    Chip
+} from '@mui/material';
 
 // Filtros personalizados
 const usuariosFilters = [
@@ -42,21 +49,35 @@ const usuariosFilters = [
 ];
 
 // Función para obtener el color del rol
-/*
-const getRoleColor = (id_rol) => {
+const getRoleColor = (record) => {
     const roleColors = {
-        'Administrador': '#F44336',
-        'Director': '#9C27B0',
-        'Docente': '#4CAF50',
-        'Auxiliar': '#FF9800',
-        'Asesor Pedagogico': '#FDD835',
-        'Alumno': '#2196F3',
-        'Tutor': '#795548',
+        1: '#F44336',
+        2: '#9C27B0',
+        3: '#4CAF50',
+        4: '#FF9800',
+        5: '#FDD835',
+        6: '#2196F3',
+        7: '#795548',
     };
 
-    return roleColors[id_rol] || '#607D8B';
+    return roleColors[record?.id_rol] || '#607D8B';
 };
-*/
+
+// Formulario personalizado para Editar con valores por defecto
+const CustomSimpleForm = ({ children }) => {
+    const record = useRecordContext();
+    if (!record) return null;
+
+    const defaultValues = record
+    ? { ...record, id_rol: record.roles[0]?.id_rol }
+    : {};
+
+    return (
+        <SimpleForm defaultValues={defaultValues} sanitizeEmptyValues id='form-edit-usuario' disableInvalidFormNotification>
+            {children}
+        </SimpleForm>
+    );
+};
 
 // Toolbar personalizado según permisos
 const UsuariosListActions = () => {
@@ -98,7 +119,19 @@ export const UsuariosList = () => {
                 {/* Roles del usuario */}
                 <ArrayField label="Roles" source="roles">
                     <SingleFieldList>
-                        <ChipField source="nombre_rol" />
+                        <FunctionField 
+                            render={
+                                record => (
+                                    <Chip 
+                                        label={record?.nombre_rol} 
+                                        style={{ 
+                                            backgroundColor: getRoleColor(record), 
+                                            color: '#fff' 
+                                        }}
+                                    />
+                                )
+                            }
+                        />
                     </SingleFieldList>
                 </ArrayField>
 
@@ -112,202 +145,283 @@ export const UsuariosList = () => {
 
 export const UsuariosCreate = () => (
     <Create redirect="list">
-        <SimpleForm>
-            <Stack spacing={1} sx={{ width: '100%' }}>
-                <TextInput 
-                    source="nombre_completo" 
-                    label="Nombre Completo" 
-                    validate={[required("El nombre completo es requerido")]} 
-                    fullWidth 
-                    sx={{
-                        "& .MuiFormHelperText-root.Mui-error": {
-                        marginBottom: "12px", 
-                        },
-                    }}
-                />
-                <TextInput 
-                    source="numero_documento" 
-                    label="Documento" 
-                    validate={[required("El número de documento es requerido")]} 
-                    fullWidth 
-                    sx={{
-                        "& .MuiFormHelperText-root.Mui-error": {
-                            marginBottom: "12px",
-                        },
-                    }}
-                />
-                <TextInput 
-                    source="email" 
-                    label="Email" 
-                    validate={[required("El email es requerido"), email("El email no es válido")]} 
-                    fullWidth 
-                    sx={{
-                        "& .MuiFormHelperText-root.Mui-error": {
-                            marginBottom: "12px",
-                        },
-                    }}
-                />
-                <PasswordInput 
-                    source="contrasenia" 
-                    label="Contraseña"
-                    validate={[required("La contraseña es requerida"), minLength(8, "La contraseña debe tener al menos 8 caracteres")]}
-                    fullWidth
-                    sx={{
-                        "& .MuiFormHelperText-root.Mui-error": {
-                            marginBottom: "12px",
-                        },
-                    }}
-                />
-                <TextInput 
-                    source="legajo"
-                    label="Legajo" 
-                    fullWidth
-                />
-                <TextInput 
-                    source="telefono" 
-                    label="Teléfono" 
-                    fullWidth 
-                />
-                <TextInput 
-                    source="direccion" 
-                    label="Dirección" 
-                    fullWidth 
-                />
-                <TextInput 
-                    source="fecha_nacimiento" 
-                    label="Fecha Nac." 
-                    fullWidth 
-                />
-                <TextInput 
-                    source="genero" 
-                    label="Género" 
-                    fullWidth 
-                />
-                <ReferenceInput 
-                    source="id_rol" 
-                    reference="roles"
-                >
-                    <SelectInput 
-                        optionText="nombre_rol" 
-                        label="Rol"
-                        validate={[required("El rol es requerido")]}
+        <SimpleForm id='form-create-usuario' disableInvalidFormNotification sanitizeEmptyValues>
+            <Typography variant="h6" gutterBottom>Identidad</Typography>
+            <Grid container rowSpacing={0.5} columnSpacing={3}>
+                <Grid item size={12}>
+                    <TextInput
+                        source="nombre_completo"
+                        label="Nombre Completo"
+                        validate={[required("El nombre completo es requerido")]}
+                        fullWidth
                     />
-                </ReferenceInput>
-            </Stack>
+                </Grid>
+                <Grid item size={{xs: 12, md: 3}}>
+                    <TextInput
+                        source="numero_documento"
+                        label="Documento"
+                        validate={[required("El número de documento es requerido")]}
+                        fullWidth
+                    />
+                </Grid>
+                <Grid item size={{xs: 12, md: 3}}>
+                    <TextInput
+                        source="legajo"
+                        label="Legajo"
+                        validate={[required("El legajo es requerido")]}
+                        fullWidth
+                    />
+                </Grid>
+                <Grid item size={{xs: 12, md: 3}}>
+                    <TextInput
+                        source="genero"
+                        label="Género"
+                        fullWidth
+                    />
+                </Grid>
+                <Grid item size={{xs: 12, md: 3}}>
+                    <DateInput
+                        source="fecha_nacimiento"
+                        label="Fecha de Nacimiento"
+                        fullWidth
+                    />
+                </Grid>
+                <Grid item size={{xs: 12, md: 6}}>
+                    <TextInput
+                        source="telefono"
+                        label="Teléfono"
+                        fullWidth
+                    />
+                </Grid>
+                <Grid item size={{xs: 12, md: 6}}>
+                    <TextInput
+                        source="direccion"
+                        label="Dirección"
+                        fullWidth
+                    />
+                </Grid>
+            </Grid>
+
+            <Box mt={3}>
+                <Typography variant="h6" gutterBottom>Acceso</Typography>
+                <Grid container rowSpacing={0.5} columnSpacing={3}>
+                    <Grid item size={{xs: 12, md: 6}}>
+                        <TextInput
+                            source="email"
+                            label="Email"
+                            validate={[required("El email es requerido"), email("El email no es válido")]}
+                            fullWidth
+                        />
+                    </Grid>
+                    <Grid item size={{xs: 12, md: 6}}>
+                        <PasswordInput
+                            source="contrasenia"
+                            label="Contraseña"
+                            validate={[required("La contraseña es requerida"), minLength(8, "Debe tener al menos 8 caracteres")]}
+                            fullWidth
+                        />
+                    </Grid>
+                    <Grid item size={6}>
+                        <ReferenceInput
+                            source="id_rol"
+                            reference="roles"
+                        >
+                            <SelectInput
+                                optionText="nombre_rol"
+                                label="Rol"
+                                validate={[required("El rol es requerido")]}
+                                fullWidth
+                            />
+                        </ReferenceInput>
+                    </Grid>
+                </Grid>
+            </Box>
         </SimpleForm>
     </Create>
 );
 
 export const UsuariosEdit = () => (
     <Edit>
-        <SimpleForm idFormMessage="El formulario contiene errores. Por favor corrígelos antes de continuar.">
-            <Stack spacing={1} sx={{ width: '100%' }}>
-                <TextInput 
-                    source="id_usuario"
-                    label="ID Usuario" 
-                    inputProps={{ readOnly: true }}
-                    fullWidth
-                />
-                <TextInput 
-                    source="nombre_completo" 
-                    label="Nombre Completo" 
-                    validate={[required("El nombre completo es requerido")]} 
-                    fullWidth 
-                    sx={{
-                        "& .MuiFormHelperText-root.Mui-error": {
-                        marginBottom: "12px", 
-                        },
-                    }}
-                />
-                <TextInput 
-                    source="numero_documento" 
-                    label="Documento" 
-                    validate={[required("El número de documento es requerido")]} 
-                    fullWidth 
-                    sx={{
-                        "& .MuiFormHelperText-root.Mui-error": {
-                            marginBottom: "12px",
-                        },
-                    }}
-                />
-                <TextInput 
-                    source="email" 
-                    label="Email" 
-                    validate={[required("El email es requerido"), email("El email no es válido")]} 
-                    fullWidth 
-                    sx={{
-                        "& .MuiFormHelperText-root.Mui-error": {
-                            marginBottom: "12px",
-                        },
-                    }}
-                />
-                <TextInput 
-                    source="legajo"
-                    label="Legajo" 
-                    fullWidth
-                />
-                <TextInput 
-                    source="telefono" 
-                    label="Teléfono" 
-                    fullWidth 
-                />
-                <TextInput 
-                    source="direccion" 
-                    label="Dirección" 
-                    fullWidth 
-                />
-                <TextInput 
-                    source="fecha_nacimiento" 
-                    label="Fecha Nac." 
-                    fullWidth 
-                />
-                <ReferenceInput 
-                    source="id_rol" 
-                    reference="roles"
-                >
-                    <SelectInput 
-                        optionText="nombre_rol" 
-                        label="Rol"
+        <CustomSimpleForm>
+            <Typography variant="h6" gutterBottom>Identidad</Typography>
+            <Grid container rowSpacing={0.5} columnSpacing={3}>
+                <Grid item size={12}>
+                    <TextInput
+                        source="nombre_completo"
+                        label="Nombre Completo"
+                        validate={[required("El nombre completo es requerido")]}
+                        fullWidth
                     />
-                </ReferenceInput>
-            </Stack>
-        </SimpleForm>
+                </Grid>
+                <Grid item size={{xs: 12, md: 3}}>
+                    <TextInput
+                        source="numero_documento"
+                        label="Documento"
+                        validate={[required("El número de documento es requerido")]}
+                        fullWidth
+                    />
+                </Grid>
+                <Grid item size={{xs: 12, md: 3}}>
+                    <TextInput
+                        source="legajo"
+                        label="Legajo"
+                        validate={[required("El legajo es requerido")]}
+                        fullWidth
+                    />
+                </Grid>
+                <Grid item size={{xs: 12, md: 3}}>
+                    <TextInput
+                        source="genero"
+                        label="Género"
+                        fullWidth
+                    />
+                </Grid>
+                <Grid item size={{xs: 12, md: 3}}>
+                    <DateInput
+                        source="fecha_nacimiento"
+                        label="Fecha de Nacimiento"
+                        fullWidth
+                    />
+                </Grid>
+                <Grid item size={{xs: 12, md: 6}}>
+                    <TextInput
+                        source="telefono"
+                        label="Teléfono"
+                        fullWidth
+                    />
+                </Grid>
+                <Grid item size={{xs: 12, md: 6}}>
+                    <TextInput
+                        source="direccion"
+                        label="Dirección"
+                        fullWidth
+                    />
+                </Grid>
+            </Grid>
+
+            <Box mt={3}>
+                <Typography variant="h6" gutterBottom>Acceso</Typography>
+                <Grid container rowSpacing={0.5} columnSpacing={3}>
+                    <Grid item size={12}>
+                        <TextInput
+                            source="email"
+                            label="Email"
+                            validate={[required("El email es requerido"), email("El email no es válido")]}
+                            fullWidth
+                        />
+                    </Grid>
+                    <Grid item size={6}>
+                        <ReferenceInput
+                            source="id_rol"
+                            reference="roles"
+                        >
+                            <SelectInput
+                                optionText="nombre_rol"
+                                label="Rol"
+                                validate={[required("El rol es requerido")]}
+                                fullWidth
+                            />
+                        </ReferenceInput>
+                    </Grid>
+                </Grid>
+            </Box>
+        </CustomSimpleForm>
     </Edit>
 );
 
 export const UsuariosShow = () => (
     <Show>
         <SimpleShowLayout>
-            <TextField 
-                source="id_usuario" 
-                label="ID Usuario" />
-            <TextField 
-                source="nombre_completo" 
-                label="Nombre Completo" />
-            <TextField 
-                source="numero_documento" 
-                label="Documento" />
-            <TextField 
-                source="email" 
-                label="Email" />
-            <TextField 
-                source="telefono" 
-                label="Teléfono" />
-            <TextField 
-                source="direccion" 
-                label="Dirección" />
-            <TextField 
-                source="fecha_nacimiento" 
-                label="Fecha Nac." />
-            <TextField 
-                source="genero" 
-                label="Género" />
+            <Typography variant="h6" gutterBottom>Información Personal</Typography>
+            <Grid container rowSpacing={2} columnSpacing={3}>
+                <Grid item size={{xs: 12, md: 4}}>
+                    <Typography variant="subtitle2" gutterBottom sx={{fontWeight: 'bold'}}>ID de Usuario</Typography>
+                    <TextField 
+                        source="id_usuario" 
+                        label="ID Usuario" 
+                    />
+                </Grid>
+                <Grid item size={{xs: 12, md: 4}}>
+                    <Typography variant="subtitle2" gutterBottom sx={{fontWeight: 'bold'}}>Nombre Completo</Typography>
+                    <TextField 
+                        source="nombre_completo" 
+                        label="Nombre Completo" 
+                    />
+                </Grid>
+                <Grid item size={{xs: 12, md: 4}}>
+                    <Typography variant="subtitle2" gutterBottom sx={{fontWeight: 'bold'}}>Número de documento</Typography>
+                    <TextField 
+                        source="numero_documento" 
+                        label="Documento" 
+                    />
+                </Grid>
+                <Grid item size={{xs: 12, md: 4}}>
+                    <Typography variant="subtitle2" gutterBottom sx={{fontWeight: 'bold'}}>Legajo</Typography>
+                    <TextField 
+                        source="legajo" 
+                        label="Legajo"  
+                    />
+                </Grid>
+                <Grid item size={{xs: 12, md: 4}}>
+                    <Typography variant="subtitle2" gutterBottom sx={{fontWeight: 'bold'}}>Fecha de nacimiento</Typography>
+                    <TextField 
+                        source="fecha_nacimiento" 
+                        label="Fecha de nacimiento"  
+                    />
+                </Grid>
+                <Grid item size={{xs: 12, md: 4}}>
+                    <Typography variant="subtitle2" gutterBottom sx={{fontWeight: 'bold'}}>Género</Typography>
+                    <TextField 
+                        source="genero" 
+                        label="Género"  
+                    />
+                </Grid>
+                <Grid item size={{xs: 12, md: 4}}>
+                    <Typography variant="subtitle2" gutterBottom sx={{fontWeight: 'bold'}}>Teléfono</Typography>
+                    <TextField 
+                        source="telefono" 
+                        label="Teléfono"  
+                    />
+                </Grid>
+                <Grid item size={{xs: 12, md: 4}}>
+                    <Typography variant="subtitle2" gutterBottom sx={{fontWeight: 'bold'}}>Dirección</Typography>
+                    <TextField 
+                        source="direccion" 
+                        label="Dirección"  
+                    />
+                </Grid>
+            </Grid>
 
-            <ArrayField label="Roles" source="roles">
-                <SingleFieldList>
-                    <ChipField source="nombre_rol" />
-                </SingleFieldList>
-            </ArrayField>
+            <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Acceso</Typography>
+            <Grid container spacing={2}>
+                <Grid item size={12}>
+                    <Typography variant="subtitle2" gutterBottom sx={{fontWeight: 'bold'}}>Email</Typography>
+                    <TextField 
+                        source="email" 
+                        label="Email"  
+                    />
+                </Grid>
+                <Grid item size={12}>
+                    <Typography variant="subtitle2" gutterBottom sx={{fontWeight: 'bold'}}>Rol</Typography>
+                    <ArrayField label="Roles" source="roles">
+                        <SingleFieldList>
+                            <FunctionField 
+                                render={
+                                    record => (
+                                        <Chip 
+                                            label={record?.nombre_rol} 
+                                            style={{ 
+                                                backgroundColor: getRoleColor(record), 
+                                                color: '#fff' 
+                                            }}
+                                        />
+                                    )
+                                }
+                            />
+                        </SingleFieldList>
+                    </ArrayField>
+                </Grid>
+            </Grid>
         </SimpleShowLayout>
     </Show>
 );
