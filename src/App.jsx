@@ -6,7 +6,7 @@ import { dataProvider } from './providers/dataProvider';
 import { authProvider } from './providers/authProvider';
 import { theme } from './theme/theme';
 import { CustomLayout } from './layout/CustomLayout';
-import { AsistenciasHoy } from "./resources/asistencias/AsistenciasHoy";
+import { AsistenciasRecientes} from "./resources/asistencias/AsistenciasRecientes";
 
 // IMPORTANTE: Importar tu UserProvider
 import UserProvider from './contexts/UserContext/UserProvider';
@@ -29,11 +29,14 @@ import {
   UsuariosShow
 } from './resources/usuarios';
 
-import { DashboardPage } from './pages/DashboardPage';
+import { Dashboard } from './pages/Dashboard';
 
 // Iconos
 import { Today, School, Person, Class } from '@mui/icons-material';
 import { RegistrarAsistencia } from './resources/asistencias/RegistrarAsistencia';
+import { EliminarAsistencias } from './resources/asistencias/EliminarAsistencias';
+import { AsistenciasHistorico }from './resources/asistencias/AsistenciasHistorico';
+
 
 function App() {
   return (
@@ -53,7 +56,7 @@ function App() {
                 // authProvider={authProvider}
                 theme={theme}
                 layout={CustomLayout}
-                dashboard={DashboardPage}
+                dashboard={Dashboard}
                 loginPage={false} // Usamos tu login
                 requireAuth
               >
@@ -86,8 +89,10 @@ function App() {
 
                 {/* Rutas personalizadas para módulos sin CRUD */}
                 <CustomRoutes>
-                  <Route path="/asistencias/hoy" element={<AsistenciasHoy />} />
+                  <Route path="/asistencias/recientes" element={<AsistenciasRecientes />} />
                   <Route path="/asistencias/registrar" element={<RegistrarAsistencia />} />
+                  <Route path="/asistencias/historico" element={<AsistenciasHistorico />} />
+                  <Route path="/asistencias/eliminar" element={<EliminarAsistencias />} />
                   <Route path="/notificaciones" element={<div>Notificaciones</div>} />
                   <Route path="/mensajes" element={<div>Mensajes</div>} />
                   <Route path="/informes" element={<div>Informes</div>} />
