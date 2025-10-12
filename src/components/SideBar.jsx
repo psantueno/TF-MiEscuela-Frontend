@@ -24,21 +24,19 @@ import { useResourceDefinitions } from 'react-admin';
 import { useState, useEffect } from 'react';
 import LogoMiEscuela from "../assets/img/logo_oficial.png";
 
+
 export const Sidebar = ({ moduloActivo, onModuleChange }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const resourceDefs = useResourceDefinitions();
-
   // Abrir/cerrar submenú asistencias
   const [openAsistencias, setOpenAsistencias] = useState(false);
-
   // Abrir asistencias automáticamente si estoy en esa ruta
   useEffect(() => {
     if (location.pathname.startsWith('/asistencias')) {
       setOpenAsistencias(true);
     }
   }, [location.pathname]);
-
   // Recursos declarados en <Resource>, excepto asistencias
   const resourceItems = Object.values(resourceDefs)
     .filter(def => def.hasList && def.name !== 'asistencias')
@@ -51,28 +49,23 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
         to: `/${def.name}`,
       };
     });
-
   const handleItemClick = (item) => {
     onModuleChange?.(item.id);
     navigate(item.to);
   };
-
   // helper para aplicar estilos activos
   const isActive = (to) => location.pathname === to;
-
   // estilo base de los botones
   const getButtonStyle = (active) => ({
     backgroundColor: active ? 'rgba(255,255,255,0.1)' : 'transparent',
     borderRight: active ? '3px solid #1976d2' : '3px solid transparent',
   });
-
   const getTextStyle = (active) => ({
     '& .MuiListItemText-primary': {
       fontSize: '0.9rem',
-      fontWeight: active ? 600 : 400, // 👈 negrita si activo
+      fontWeight: active ? 600 : 400,
     },
   });
-
   return (
     <Box sx={{
       width: 240,
@@ -108,7 +101,6 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
           MiEscuela 4.0
         </Typography>
       </Box>
-
       {/* Menu */}
       <List sx={{ pt: 2, px: 1 }}>
         {/* Panel General */}
@@ -124,7 +116,6 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
             <ListItemText primary="Panel General" sx={getTextStyle(isActive('/'))} />
           </ListItemButton>
         </ListItem>
-
         {/* Recursos estándar */}
         {resourceItems.map((item) => (
           <ListItem disablePadding key={item.id}>
@@ -140,7 +131,6 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
             </ListItemButton>
           </ListItem>
         ))}
-
         {/* Bloque Asistencias */}
         <ListItem disablePadding>
           <ListItemButton onClick={() => setOpenAsistencias(!openAsistencias)}>
@@ -153,38 +143,44 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
         </ListItem>
         <Collapse in={openAsistencias} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            {/* Submenú: Listado */}
-            <ListItemButton
-              sx={{ pl: 6, ...getButtonStyle(isActive('/asistencias')) }}
-              selected={isActive('/asistencias')}
-              onClick={() => handleItemClick({ id: 'asistencias-listado', to: '/asistencias' })}
-            >
-              <ListItemText primary="Listado" sx={getTextStyle(isActive('/asistencias'))} />
-            </ListItemButton>
-
-            {/* Submenú: Hoy */}
-            <ListItemButton
-              sx={{ pl: 6, ...getButtonStyle(isActive('/asistencias/hoy')) }}
-              selected={isActive('/asistencias/hoy')}
-              onClick={() => handleItemClick({ id: 'asistencias-hoy', to: '/asistencias/hoy' })}
-            >
-              <ListItemText primary="Ver asistencia del día" sx={getTextStyle(isActive('/asistencias/hoy'))} />
-            </ListItemButton>
-
-            {/* Submenú: Registrar/Editar */}
+            {/* Registrar asistencia */}
             <ListItemButton
               sx={{ pl: 6, ...getButtonStyle(isActive('/asistencias/registrar')) }}
               selected={isActive('/asistencias/registrar')}
               onClick={() => handleItemClick({ id: 'asistencias-registrar', to: '/asistencias/registrar' })}
             >
               <ListItemText
-                primary="Tomar asistenca"
+                primary="Registrar asistencia"
                 sx={getTextStyle(isActive('/asistencias/registrar'))}
               />
             </ListItemButton>
+            {/* Asistencias recientes */}
+            <ListItemButton
+              sx={{ pl: 6, ...getButtonStyle(isActive('/asistencias/recientes')) }}
+              selected={isActive('/asistencias/recientes')}
+              onClick={() => handleItemClick({ id: 'asistencias-recientes', to: '/asistencias/recientes' })}
+            >
+              <ListItemText primary="Asistencias recientes" sx={getTextStyle(isActive('/asistencias/recientes'))} />
+            </ListItemButton>
+            {/* Histórico de asistencias */}
+            <ListItemButton
+              sx={{ pl: 6, ...getButtonStyle(isActive('/asistencias/historico')) }}
+              selected={isActive('/asistencias/historico')}
+              onClick={() => handleItemClick({ id: 'asistencias-historico', to: '/asistencias/historico' })}
+            >
+              <ListItemText primary="Reportes" sx={getTextStyle(isActive('/asistencias/historico'))} />
+            </ListItemButton>
+
+            {/* Eliminar asistencia */}
+            <ListItemButton
+              sx={{ pl: 6, ...getButtonStyle(isActive('/asistencias/eliminar')) }}
+              selected={isActive('/asistencias/eliminar')}
+              onClick={() => handleItemClick({ id: 'asistencias-eliminar', to: '/asistencias/eliminar' })}
+            >
+              <ListItemText primary="Eliminar asistencia" sx={getTextStyle(isActive('/asistencias/eliminar'))} />
+            </ListItemButton>
           </List>
         </Collapse>
-
         {/* Otros custom */}
         <ListItem disablePadding>
           <ListItemButton
@@ -198,7 +194,6 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
             <ListItemText primary="Notificaciones" sx={getTextStyle(isActive('/notificaciones'))} />
           </ListItemButton>
         </ListItem>
-
         <ListItem disablePadding>
           <ListItemButton
             selected={isActive('/mensajes')}
@@ -211,7 +206,6 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
             <ListItemText primary="Mensajes" sx={getTextStyle(isActive('/mensajes'))} />
           </ListItemButton>
         </ListItem>
-
         <ListItem disablePadding>
           <ListItemButton
             selected={isActive('/informes')}

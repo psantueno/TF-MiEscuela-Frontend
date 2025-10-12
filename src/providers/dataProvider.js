@@ -1,5 +1,6 @@
 import { fetchUtils } from 'react-admin';
 import { stringify } from 'query-string';
+import { api } from "../services/api"
 
 const API_URL = 'http://localhost:6543/api';
 
@@ -36,40 +37,40 @@ export const dataProvider = {
     const { nombre_completo, id_rol } = params.filter;
 
     const query = new URLSearchParams({
-        page,
-        perPage,
-        nombre_completo: nombre_completo || '',
-        id_rol: id_rol || '',
+      page,
+      perPage,
+      nombre_completo: nombre_completo || '',
+      id_rol: id_rol || '',
     }).toString();
 
     const url = `${API_URL}/${resource}?${query}`;
 
     return httpClient(url).then(({ json }) => ({
-      data: json.data ? 
+      data: json.data ?
         json.data.map(item => ({
           ...item,
           id: item.id_asistencia || item.id_alumno || item.id_docente || item.id_curso || item.id_rol || item.id_usuario || item.id
-        })) : 
+        })) :
         json.map(item => ({
           ...item,
           id: item.id_asistencia || item.id_alumno || item.id_docente || item.id_curso || item.id_rol || item.id_usuario || item.id
-        })), 
+        })),
       total: json.total,
     }));
   },
 
   getOne: (resource, params) =>
     httpClient(`${API_URL}/${resource}/${params.id}`).then(({ json }) => ({
-      data: { 
-        ...json, 
-        id: json.id_asistencia || json.id_alumno || json.id_docente || json.id_curso || json.id_rol || json.id_usuario || json.id 
+      data: {
+        ...json,
+        id: json.id_asistencia || json.id_alumno || json.id_docente || json.id_curso || json.id_rol || json.id_usuario || json.id
       },
     })),
 
   getMany: (resource, params) => {
     const query = { filter: JSON.stringify({ id: params.ids }) };
     const url = `${API_URL}/${resource}?${stringify(query)}`;
-    return httpClient(url).then(({ json }) => ({ 
+    return httpClient(url).then(({ json }) => ({
       data: json.map(item => ({
         ...item,
         id: item.id_asistencia || item.id_alumno || item.id_docente || item.id_curso || item.id_rol || item.id_usuario || item.id
@@ -97,10 +98,12 @@ export const dataProvider = {
     httpClient(`${API_URL}/${resource}/${params.id}`, {
       method: 'PUT',
       body: JSON.stringify(params.data),
-    }).then(({ json }) => ({ data: {
-      ...json,
-      id: json.id_asistencia || json.id_alumno || json.id_docente || json.id_curso || json.id_rol || json.id_usuario || json.id
-    } })),
+    }).then(({ json }) => ({
+      data: {
+        ...json,
+        id: json.id_asistencia || json.id_alumno || json.id_docente || json.id_curso || json.id_rol || json.id_usuario || json.id
+      }
+    })),
 
   updateMany: (resource, params) =>
     Promise.all(
@@ -126,18 +129,9 @@ export const dataProvider = {
       )
     ).then(responses => ({ data: responses.map(({ json }) => json.id) })),
 
-    getAsistenciaCursoHoy: (id_curso) =>
-    httpClient(`${API_URL}/asistencias/curso/${id_curso}/hoy`)
-      .then(({ json }) => ({
-        data: json.map(item => ({
-          ...item,
-          id: item.id_asistencia,
-        })),
-        total: json.length,
-      })),
 
 
- getAlumnosCurso: (cursoId, fecha = hoyAR()) =>
+  getAlumnosCurso: (cursoId, fecha = hoyAR()) =>
     httpClient(`${API_URL}/alumnos/curso/${cursoId}?fecha=${fecha}`)
       .then(({ json }) => ({
         data: json.map(a => ({
@@ -153,9 +147,9 @@ export const dataProvider = {
       body: JSON.stringify({ id_curso: cursoId, fecha, items }),
     }).then(({ json }) => ({ data: json })),
 
-  // obtener asistencias de un curso en el día
-  getAsistenciaCursoHoy: (cursoId, fecha = hoyAR()) =>
-    httpClient(`${API_URL}/asistencias/curso/${cursoId}/hoy?fecha=${fecha}`)
+  // obtener asistencias de un curso en una fecha dada
+  getAsistenciaCursoFecha: (cursoId, fecha = hoyAR()) =>
+    httpClient(`${API_URL}/asistencias/curso/${cursoId}/recientes?fecha=${fecha}`)
       .then(({ json }) => ({
         data: json.map(a => ({
           ...a,
@@ -163,5 +157,36 @@ export const dataProvider = {
         })),
       })),
 
+
+  // Asistencias históricas (curso o alumno) usando axios API
+  asistenciasHistorico: async (tipo, id, desde, hasta) => {
+    try {
+      const url =
+        tipo === "curso"
+          ? `/asistencias/curso/${id}?desde=${desde}&hasta=${hasta}`
+          : `/asistencias/alumno/${id}?desde=${desde}&hasta=${hasta}`;
+
+      const { data } = await api.get(url);
+      return { data };
+    } catch (err) {
+      console.error("❌ Error obteniendo asistencias históricas:", err);
+      throw err.response?.data || err;
+    }
+  },
+
+
+  // eliminar asistencias de un curso en una fecha dada
+deleteAsistenciasCurso: (cursoId, fecha) =>
+  httpClient(`${API_URL}/asistencias/curso/${cursoId}?fecha=${fecha}`, {
+    method: "DELETE",
+  }).then(({ json }) => ({
+    data: json,
+  })),
+  
 };
+
+
+
+
+
 
