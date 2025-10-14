@@ -44,7 +44,7 @@ export const UserMenu = () => {
     if (s.includes('auxil')) return 'auxiliar';
     if (s.includes('alum') || s.includes('estud') || s.includes('student')) return 'alumno';
     // por si viene exactamente una de las claves
-    if (['administrador','director','docente','auxiliar','alumno'].includes(s)) return s;
+    if (['administrador', 'director', 'docente', 'auxiliar', 'alumno'].includes(s)) return s;
     return 'alumno';
   };
 
@@ -121,13 +121,13 @@ export const UserMenu = () => {
   };
 
   const handleLogout = async () => {
-    if(window.confirm('¿Estás seguro que deseas cerrar sesión?')) {
-      try{
-        await logout(); 
+    if (window.confirm('¿Estás seguro que deseas cerrar sesión?')) {
+      try {
+        await logout();
         setUser(null);
         sessionStorage.clear();
         navigate('/login');
-      }catch(error){
+      } catch (error) {
         console.error("Error al cerrar sesión:", error);
       }
     }
@@ -138,14 +138,14 @@ export const UserMenu = () => {
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
         <CalendarMonth sx={{ fontSize: 16, color: '#666' }} />
-        <Typography variant="body2" sx={{ 
+        <Typography variant="body2" sx={{
           color: '#666',
           fontSize: '0.8rem',
           fontWeight: 500
         }}>
-          {new Date().toLocaleDateString('es-ES', { 
-            weekday: 'long', 
-            day: 'numeric', 
+          {new Date().toLocaleDateString('es-ES', {
+            weekday: 'long',
+            day: 'numeric',
             month: 'long'
           })}
         </Typography>
@@ -157,12 +157,12 @@ export const UserMenu = () => {
           <Notifications />
         </Badge>
       </IconButton>
-      
+
       {/* Área de usuario clickeable */}
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
           cursor: 'pointer',
           padding: '4px 8px',
           borderRadius: 1,
@@ -173,11 +173,11 @@ export const UserMenu = () => {
         }}
         onClick={handleClick}
       >
-        <Avatar 
-          src={user?.foto} 
-          sx={{ 
-            width: 32, 
-            height: 32, 
+        <Avatar
+          src={user?.foto}
+          sx={{
+            width: 32,
+            height: 32,
             mr: 1,
             backgroundColor: roleConfig.color,
             fontSize: '0.9rem'
@@ -187,7 +187,13 @@ export const UserMenu = () => {
             (user?.nombre_completo || '').split(' ').map(n => n[0]).join('').substring(0, 2)
           )}
         </Avatar>
-        <Box>
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'nowrap',
+            flexDirection: 'column'
+          }}
+        >
           <Typography variant="body2" sx={{ color: '#333', fontWeight: 500 }}>
             {user?.nombre_completo || 'Usuario'}
           </Typography>
@@ -230,13 +236,13 @@ export const UserMenu = () => {
         {/* Información del usuario */}
         <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #e0e0e0' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-            <Avatar 
+            <Avatar
               src={user?.foto}
-              sx={{ 
-                width: 40, 
-                height: 40, 
+              sx={{
+                width: 40,
+                height: 40,
                 mr: 1.5,
-                backgroundColor: roleConfig.color 
+                backgroundColor: roleConfig.color
               }}
             >
               {user?.foto ? null : roleConfig.icon}
@@ -249,14 +255,14 @@ export const UserMenu = () => {
                 {user?.email || ''}
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                <Box 
-                  sx={{ 
-                    width: 8, 
-                    height: 8, 
-                    bgcolor: roleConfig.color, 
-                    borderRadius: '50%', 
-                    mr: 0.5 
-                  }} 
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    bgcolor: roleConfig.color,
+                    borderRadius: '50%',
+                    mr: 0.5
+                  }}
                 />
                 <Typography variant="caption" sx={{ fontSize: '0.7rem', color: roleConfig.color }}>
                   {roleConfig.label}
@@ -273,7 +279,7 @@ export const UserMenu = () => {
           </ListItemIcon>
           <ListItemText primary="Mi Perfil" />
         </MenuItem>
-        
+
         <MenuItem onClick={handleSettings}>
           <ListItemIcon>
             <Settings fontSize="small" />
@@ -290,6 +296,6 @@ export const UserMenu = () => {
           <ListItemText primary="Cerrar Sesión" />
         </MenuItem>
       </Menu>
-    </Box>
+    </Box >
   );
 };

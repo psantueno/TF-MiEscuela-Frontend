@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import { LoaderOverlay } from "../components/LoaderOverlay";
 import backgroundImage from "../assets/img/fondo_login.png";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { login } from "../services/auth";
 import useUser from "../contexts/UserContext/useUser";
@@ -28,6 +28,21 @@ export const Login = () => {
   const [loading, setLoading] = useState(false);
 
   const { setUser } = useUser();
+
+  // Si ya existe token, redirigir según rol
+  useEffect(() => {
+    try {
+      const token = sessionStorage.getItem("access_token");
+      const storedUser = sessionStorage.getItem("user");
+      let role = sessionStorage.getItem("permissions");
+      if (!role && storedUser) {
+        try { role = JSON.parse(storedUser)?.rol; } catch {}
+      }
+      if (token) {
+        navigate(role ? "/" : "/no-access");
+      }
+    } catch {}
+  }, [navigate]);
 
   const handleLogin = async (data) => {
     setLoading(true);
@@ -69,7 +84,8 @@ export const Login = () => {
       if (payload.csrf_token) sessionStorage.setItem("csrf_token", payload.csrf_token);
       if (payload.access_token) sessionStorage.setItem("access_token", payload.access_token);
       if (payload.refresh_token) sessionStorage.setItem("refresh_token", payload.refresh_token);
-      navigate("/");
+      const roleAfter = sessionStorage.getItem("permissions");
+      navigate(roleAfter ? "/" : "/no-access");
     } catch (error) {
       setServerError(error.response?.data?.message);
     } finally {
@@ -81,7 +97,7 @@ export const Login = () => {
     <Box
       sx={{
         minHeight: "100vh",
-        width: "100%",
+        overflowX: 'hidden',
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: "cover",
         backgroundPosition: "center",

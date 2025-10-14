@@ -116,7 +116,7 @@ export const CalificacionesPorAlumno = () => {
 
             dataProvider.getCalificacionesPorAlumno(selectedAlumno.id_alumno, selectedMateria ? { id_materia: selectedMateria.id_materia } : {})
                 .then(({ data }) => setCalificaciones(data))
-                .catch(setCalificaciones([]))
+                .catch(() => setCalificaciones([]))
                 .finally(() => setLoading(false));
         }
 
@@ -243,7 +243,7 @@ export const CalificacionesPorAlumno = () => {
 
             dataProvider.getCalificacionesPorAlumno(selectedAlumno.id_alumno, selectedMateria ? { id_materia: selectedMateria.id_materia } : {})
             .then(({ data }) => setCalificaciones(data))
-            .catch(setCalificaciones([]));
+            .catch(() => setCalificaciones([]));
         }catch(error){
             console.error("Error en la operación de calificaciones:", error);
             handleError("Error en la operación de calificaciones");

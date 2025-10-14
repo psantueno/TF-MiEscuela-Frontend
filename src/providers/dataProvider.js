@@ -32,17 +32,16 @@ const httpClient = (url, options = {}) => {
 export const dataProvider = {
 
 
-  getList: (resource, params) => {
-    const { page, perPage } = params.pagination;
-
-    const { nombre_completo, id_rol } = params.filter;
+  getList: (resource, params = {}) => {
+    const { page = 1, perPage = 25 } = (params.pagination || {});
+    const filter = params.filter || {};
 
     // Soporte especial para el recurso virtual 'usuarios-sin-rol'
     if (resource === 'usuarios-sin-rol') {
       const queryUSR = new URLSearchParams({
         page,
         perPage,
-        nombre_completo: nombre_completo || '',
+        nombre_completo: filter.nombre_completo || '',
       }).toString();
       const urlUSR = `${API_URL}/usuarios/sin-rol?${queryUSR}`;
       return httpClient(urlUSR).then(({ json }) => ({
@@ -54,8 +53,7 @@ export const dataProvider = {
       }));
     }
 
-    //const { nombre_completo, id_rol } = params.filter;
-    const filter = params.filter || {};
+    // Resto de recursos estándar
     const query = new URLSearchParams({
       page,
       perPage,
