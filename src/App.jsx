@@ -6,7 +6,9 @@ import { dataProvider } from './providers/dataProvider';
 import { authProvider } from './providers/authProvider';
 import { theme } from './theme/theme';
 import { CustomLayout } from './layout/CustomLayout';
-import { AsistenciasRecientes} from "./resources/asistencias/AsistenciasRecientes";
+import { AsistenciasRecientes } from './resources/asistencias/AsistenciasRecientes';
+import { Calificaciones } from "./resources/calificaciones/Calificaciones";
+import { CalificacionesHijos } from "./resources/calificaciones/CalificacionesHijos";
 
 // IMPORTANTE: Importar tu UserProvider
 import UserProvider from './contexts/UserContext/UserProvider';
@@ -93,6 +95,8 @@ function App() {
                   <Route path="/asistencias/registrar" element={<RegistrarAsistencia />} />
                   <Route path="/asistencias/historico" element={<AsistenciasHistorico />} />
                   <Route path="/asistencias/eliminar" element={<EliminarAsistencias />} />
+                  <Route path="/calificaciones" element={<Calificaciones />} />
+                  <Route path="/calificaciones/hijos" element={<CalificacionesHijos />} />
                   <Route path="/notificaciones" element={<div>Notificaciones</div>} />
                   <Route path="/mensajes" element={<div>Mensajes</div>} />
                   <Route path="/informes" element={<div>Informes</div>} />
