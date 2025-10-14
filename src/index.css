@@ -18,3 +18,12 @@ body {
 #root {
   min-height: 100vh;
 }
+
+/* Global confirm button style for react-admin Confirm dialogs */
+.RaConfirm-confirmPrimary {
+  background-color: #D32F2F !important;
+  color: #fff !important;
+}
+.RaConfirm-confirmPrimary:hover {
+  background-color: #B71C1C !important;
+}

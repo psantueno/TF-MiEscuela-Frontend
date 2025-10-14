@@ -37,10 +37,38 @@ export const Login = () => {
 
     try {
       const res = await login(email, contrasenia);
-      setUser(res.data.user);
-      sessionStorage.setItem("csrf_token", res.data.csrf_token);
-      sessionStorage.setItem("access_token", res.data.access_token);
-      sessionStorage.setItem("refresh_token", res.data.refresh_token);
+      // res ya es response.data desde services/auth
+      const rawUser = (res && (res.user || res.usuario)) || (res?.data && (res.data.user || res.data.usuario)) || null;
+      if (rawUser) {
+        const mapToInternalRole = (name) => {
+          if (!name) return undefined;
+          const s = String(name).toLowerCase();
+          if (s.includes('admin')) return 'admin';
+          if (s.includes('director')) return 'director';
+          if (s.includes('docen')) return 'docente';
+          if (s.includes('auxil')) return 'auxiliar';
+          if (s.includes('asesor')) return 'asesor_pedagogico';
+          if (s.includes('jefe') && s.includes('aux')) return 'jefe_auxiliares';
+          if (s.includes('tutor')) return 'tutor';
+          if (s.includes('alum') || s.includes('estud') || s.includes('student')) return 'alumno';
+          return s;
+        };
+        // Preferir el rol desde roles[] del backend si existe
+        const rolesArr = Array.isArray(rawUser.roles) ? rawUser.roles : [];
+        const inferredRoleRaw = (rolesArr[0]?.nombre_rol) || rawUser.nombre_rol || rawUser.rol;
+        const inferredRole = mapToInternalRole(inferredRoleRaw);
+        const user = inferredRole ? { ...rawUser, rol: inferredRole } : rawUser;
+        setUser(user);
+        try { sessionStorage.setItem("user", JSON.stringify(user)); } catch {}
+        if (user.rol) {
+          // Sobrescribir cualquier permiso anterior con el rol interno
+          sessionStorage.setItem("permissions", user.rol);
+        }
+      }
+      const payload = res?.data || res || {};
+      if (payload.csrf_token) sessionStorage.setItem("csrf_token", payload.csrf_token);
+      if (payload.access_token) sessionStorage.setItem("access_token", payload.access_token);
+      if (payload.refresh_token) sessionStorage.setItem("refresh_token", payload.refresh_token);
       navigate("/");
     } catch (error) {
       setServerError(error.response?.data?.message);

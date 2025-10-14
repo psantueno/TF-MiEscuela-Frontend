@@ -8,6 +8,7 @@ export const Header = ({ moduloActivo }) => {
     'alumnos': 'Gestión de Alumnos',
     'docentes': 'Gestión de Docentes',
     'asistencias': 'Gestión de Asistencias',
+    'administracion': 'Administración',
     'notificaciones': 'Notificaciones',
     'mensajes': 'Mensajería',
     'informes': 'Informes y Reportes'

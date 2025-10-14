@@ -19,6 +19,7 @@ import {
   Today,
   ExpandLess,
   ExpandMore,
+  AdminPanelSettings,
 } from '@mui/icons-material';
 import { useResourceDefinitions } from 'react-admin';
 import { useState, useEffect } from 'react';
@@ -37,9 +38,32 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
       setOpenAsistencias(true);
     }
   }, [location.pathname]);
+
+  // Administración: abrir automáticamente si estoy en usuarios/roles/cursos/materias o /administracion
+  const [openAdministracion, setOpenAdministracion] = useState(false);
+  useEffect(() => {
+    if (
+      location.pathname.startsWith('/administracion') ||
+      location.pathname.startsWith('/usuarios') ||
+      location.pathname.startsWith('/roles') ||
+      location.pathname.startsWith('/cursos') ||
+      location.pathname.startsWith('/materias')
+    ) {
+      setOpenAdministracion(true);
+    }
+  }, [location.pathname]);
   // Recursos declarados en <Resource>, excepto asistencias
   const resourceItems = Object.values(resourceDefs)
-    .filter(def => def.hasList && def.name !== 'asistencias')
+    .filter(
+      def =>
+        def.hasList &&
+        def.name !== 'asistencias' &&
+        // Estos se mostrarán bajo Administración
+        def.name !== 'usuarios' &&
+        def.name !== 'roles' &&
+        def.name !== 'cursos' &&
+        def.name !== 'materias'
+    )
     .map(def => {
       const Icon = def.icon || Home;
       return {
@@ -131,6 +155,37 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
             </ListItemButton>
           </ListItem>
         ))}
+
+        {/* Bloque Administración */}
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => setOpenAdministracion(!openAdministracion)}>
+            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+              <AdminPanelSettings />
+            </ListItemIcon>
+            <ListItemText primary="Administración" />
+            {openAdministracion ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={openAdministracion} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            {/* Usuarios */}
+            <ListItemButton
+              sx={{ pl: 6, ...getButtonStyle(isActive('/usuarios')) }}
+              selected={isActive('/usuarios') || location.pathname.startsWith('/administracion/usuarios')}
+              onClick={() => handleItemClick({ id: 'administracion', to: '/administracion/usuarios' })}
+            >
+              <ListItemText primary="Usuarios" sx={getTextStyle(isActive('/usuarios'))} />
+            </ListItemButton>
+            {/* Roles */}
+            <ListItemButton
+              sx={{ pl: 6, ...getButtonStyle(isActive('/administracion/roles')) }}
+              selected={isActive('/administracion/roles')}
+              onClick={() => handleItemClick({ id: 'administracion', to: '/administracion/roles' })}
+            >
+              <ListItemText primary="Roles" sx={getTextStyle(isActive('/administracion/roles'))} />
+            </ListItemButton>
+          </List>
+        </Collapse>
         {/* Bloque Asistencias */}
         <ListItem disablePadding>
           <ListItemButton onClick={() => setOpenAsistencias(!openAsistencias)}>
