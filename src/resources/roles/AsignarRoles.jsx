@@ -12,6 +12,7 @@ import {
   useGetList,
 } from 'react-admin';
 import { Box, Button, MenuItem, Select } from '@mui/material';
+import { EmptyState } from '../../components/EmptyState';
 
 const RoleAssignCell = () => {
   const record = useRecordContext();
@@ -78,6 +79,7 @@ export const AsignarRoles = () => {
       filters={[<TextInput key="fnombre" source="nombre_completo" label="Buscar usuario" alwaysOn />]}
       perPage={10}
       sort={{ field: 'id_usuario', order: 'ASC' }}
+      empty={<EmptyState title="Sin resultados" subtitle="No se encontraron usuarios sin rol con los filtros actuales." />}
     >
       <Datagrid bulkActionButtons={false} rowClick={false}>
         <RATextField source="nombre_completo" label="Nombre" />

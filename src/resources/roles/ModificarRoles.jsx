@@ -16,8 +16,9 @@ import {
   Confirm,
 } from 'react-admin';
 import { Box, Button, MenuItem, Select, Tooltip, IconButton } from '@mui/material';
-import { DeleteOutline } from '@mui/icons-material';
+import { Delete } from '@mui/icons-material';
 import useUser from '../../contexts/UserContext/useUser';
+import { EmptyState } from '../../components/EmptyState';
 
 const RoleChangeCell = () => {
   const record = useRecordContext();
@@ -122,19 +123,20 @@ const RemoveRoleCell = () => {
       <Tooltip title={isSelf ? 'No podes quitar tu propio rol' : ''}>
         <span>
           <IconButton
-            aria-label="Eliminar rol"
+            aria-label="Quitar rol"
             onClick={onRemove}
             disabled={!hasRole || isSelf || saving}
             size="small"
+            disableRipple
+            disableFocusRipple
+            title='Quitar rol'
             sx={{
               color: 'error.main',
-              // bgcolor: 'common.white',
-              // border: '1px solid',
-              // borderColor: 'error.main',
               '&:hover': { bgcolor: 'error.main', color: 'common.white' },
+              transition: 'background-color 0.2s, color 0.2s',
             }}
           >
-            <DeleteOutline fontSize="small" />
+            <Delete fontSize="small" />
           </IconButton>
         </span>
       </Tooltip>
@@ -178,6 +180,7 @@ export const ModificarRoles = () => {
       ]}
       perPage={10}
       sort={{ field: 'id_usuario', order: 'ASC' }}
+      empty={<EmptyState title="Sin resultados" subtitle="No se encontraron usuarios con los filtros actuales." />}
     >
       <Datagrid rowClick={false} bulkActionButtons={false}>
         <RATextField source="nombre_completo" label="Nombre" />
@@ -192,7 +195,11 @@ export const ModificarRoles = () => {
           }}
         />
         <RoleChangeCell label="Cambiar rol" />
-        <RemoveRoleCell label="Quitar rol" />
+        <RemoveRoleCell
+          label="Quitar rol"
+          headerClassName="col-actions"
+          cellClassName="col-actions"
+        />
       </Datagrid>
     </List>
   );
