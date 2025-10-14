@@ -34,6 +34,26 @@ export const dataProvider = {
 
   getList: (resource, params) => {
     const { page, perPage } = params.pagination;
+
+    const { nombre_completo, id_rol } = params.filter;
+
+    // Soporte especial para el recurso virtual 'usuarios-sin-rol'
+    if (resource === 'usuarios-sin-rol') {
+      const queryUSR = new URLSearchParams({
+        page,
+        perPage,
+        nombre_completo: nombre_completo || '',
+      }).toString();
+      const urlUSR = `${API_URL}/usuarios/sin-rol?${queryUSR}`;
+      return httpClient(urlUSR).then(({ json }) => ({
+        data: (json.data || json).map(item => ({
+          ...item,
+          id: item.id_usuario || item.id,
+        })),
+        total: json.total,
+      }));
+    }
+
     //const { nombre_completo, id_rol } = params.filter;
     const filter = params.filter || {};
     const query = new URLSearchParams({
@@ -177,12 +197,36 @@ export const dataProvider = {
 
 
   // eliminar asistencias de un curso en una fecha dada
-  deleteAsistenciasCurso: (cursoId, fecha) =>
-    httpClient(`${API_URL}/asistencias/curso/${cursoId}?fecha=${fecha}`, {
-      method: "DELETE",
-    }).then(({ json }) => ({
-      data: json,
+
+deleteAsistenciasCurso: (cursoId, fecha) =>
+  httpClient(`${API_URL}/asistencias/curso/${cursoId}?fecha=${fecha}`, {
+    method: "DELETE",
+  }).then(({ json }) => ({
+    data: json,
+  })),
+  
+  // Usuarios sin rol asignado (endpoint custom del backend)
+  getUsuariosSinRol: () =>
+    httpClient(`${API_URL}/usuarios/sin-rol`).then(({ json }) => ({
+      data: (json.data || json).map(u => ({
+        ...u,
+        id: u.id_usuario || u.id,
+      })),
     })),
+
+  // Asignar rol a usuario (endpoint específico recomendado)
+  asignarRolUsuario: (idUsuario, idRol) =>
+    httpClient(`${API_URL}/usuarios/${idUsuario}/rol`, {
+      method: 'PUT',
+      body: JSON.stringify({ id_rol: idRol }),
+    }).then(({ json }) => ({ data: json })),
+
+  // Quitar rol a usuario (DELETE dedicado)
+  desasignarRolUsuario: (idUsuario) =>
+    httpClient(`${API_URL}/usuarios/${idUsuario}/rol`, {
+      method: 'DELETE',
+    }).then(() => ({ data: { id: idUsuario } })),
+  
 
   // obtener materias por curso
   getMateriasCurso: (cursoId) =>

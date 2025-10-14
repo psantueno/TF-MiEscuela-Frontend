@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Admin, Resource, CustomRoutes } from 'react-admin';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -21,14 +21,14 @@ import {
   AsistenciasList,
   AsistenciasEdit,
   AsistenciasCreate,
-  AsistenciasShow
+  AsistenciasShow,
 } from './resources/asistencias';
 
 import {
   UsuariosList,
   UsuariosEdit,
   UsuariosCreate,
-  UsuariosShow
+  UsuariosShow,
 } from './resources/usuarios';
 
 import { Dashboard } from './pages/Dashboard';
@@ -37,8 +37,9 @@ import { Dashboard } from './pages/Dashboard';
 import { Today, School, Person, Class } from '@mui/icons-material';
 import { RegistrarAsistencia } from './resources/asistencias/RegistrarAsistencia';
 import { EliminarAsistencias } from './resources/asistencias/EliminarAsistencias';
-import { AsistenciasHistorico }from './resources/asistencias/AsistenciasHistorico';
-
+import { AsistenciasHistorico } from './resources/asistencias/AsistenciasHistorico';
+import { RolesAdmin } from './resources/roles/RolesAdmin';
+import { NotFound } from './pages/NotFound';
 
 function App() {
   return (
@@ -88,9 +89,14 @@ function App() {
                 <Resource name="alumnos" icon={School} />
                 <Resource name="docentes" icon={Person} />
                 <Resource name="cursos" icon={Class} />
+                <Resource name="roles" />
 
                 {/* Rutas personalizadas para módulos sin CRUD */}
                 <CustomRoutes>
+                  {/* Administración: rutas amigables que redirigen a los recursos */}
+                  <Route path="/administracion/usuarios" element={<Navigate to="/usuarios" replace />} />
+                  <Route path="/administracion/roles" element={<RolesAdmin initialTab={0} />} />
+                  <Route path="/administracion/roles/modificar" element={<RolesAdmin initialTab={1} />} />
                   <Route path="/asistencias/recientes" element={<AsistenciasRecientes />} />
                   <Route path="/asistencias/registrar" element={<RegistrarAsistencia />} />
                   <Route path="/asistencias/historico" element={<AsistenciasHistorico />} />
@@ -100,6 +106,8 @@ function App() {
                   <Route path="/notificaciones" element={<div>Notificaciones</div>} />
                   <Route path="/mensajes" element={<div>Mensajes</div>} />
                   <Route path="/informes" element={<div>Informes</div>} />
+                  {/* Fallback 404 para rutas no encontradas dentro de Admin */}
+                  <Route path="*" element={<NotFound />} />
                 </CustomRoutes>
               </Admin>
             }
