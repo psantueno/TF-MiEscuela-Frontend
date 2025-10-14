@@ -19,7 +19,7 @@ import {
   Today,
   ExpandLess,
   ExpandMore,
-  AdminPanelSettings,
+  Grade
 } from '@mui/icons-material';
 import { useResourceDefinitions } from 'react-admin';
 import { useState, useEffect } from 'react';
@@ -32,10 +32,17 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
   const resourceDefs = useResourceDefinitions();
   // Abrir/cerrar submenú asistencias
   const [openAsistencias, setOpenAsistencias] = useState(false);
+
+  // Abrir/cerrar submenú calificaciones
+  const [openCalificaciones, setOpenCalificaciones] = useState(false);
+
   // Abrir asistencias automáticamente si estoy en esa ruta
   useEffect(() => {
     if (location.pathname.startsWith('/asistencias')) {
       setOpenAsistencias(true);
+    }
+    if (location.pathname.startsWith('/calificaciones')) {
+      setOpenCalificaciones(true);
     }
   }, [location.pathname]);
 
@@ -236,6 +243,40 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
             </ListItemButton>
           </List>
         </Collapse>
+
+        {/* Modulo de calificaciones */}
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => setOpenCalificaciones(!openCalificaciones)}>
+            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+              <Grade />
+            </ListItemIcon>
+            <ListItemText primary="Calificaciones" />
+            {openCalificaciones ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={openCalificaciones} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            {/* Submenú: Listado */}
+            <ListItemButton
+              sx={{ pl: 6, ...getButtonStyle(isActive('/calificaciones')) }}
+              selected={isActive('/calificaciones')}
+              onClick={() => handleItemClick({ id: 'calificaciones', to: '/calificaciones' })}
+            >
+              <ListItemText primary="Listado" sx={getTextStyle(isActive('/calificaciones'))} />
+            </ListItemButton>
+
+            {/* Submenú: Hijos */}
+            <ListItemButton
+              sx={{ pl: 6, ...getButtonStyle(isActive('/calificaciones/hijos')) }}
+              selected={isActive('/calificaciones/hijos')}
+              onClick={() => handleItemClick({ id: 'calificaciones', to: '/calificaciones/hijos' })}
+            >
+              <ListItemText primary="Calificaciones de mis hijos" sx={getTextStyle(isActive('/calificaciones/hijos'))} />
+            </ListItemButton>
+          </List>
+        </Collapse>
+
+
         {/* Otros custom */}
         <ListItem disablePadding>
           <ListItemButton

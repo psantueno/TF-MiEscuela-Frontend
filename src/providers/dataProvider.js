@@ -34,6 +34,7 @@ export const dataProvider = {
 
   getList: (resource, params) => {
     const { page, perPage } = params.pagination;
+
     const { nombre_completo, id_rol } = params.filter;
 
     // Soporte especial para el recurso virtual 'usuarios-sin-rol'
@@ -53,11 +54,14 @@ export const dataProvider = {
       }));
     }
 
+    //const { nombre_completo, id_rol } = params.filter;
+    const filter = params.filter || {};
     const query = new URLSearchParams({
       page,
       perPage,
-      nombre_completo: nombre_completo || '',
-      id_rol: id_rol || '',
+      ...filter,
+        // nombre_completo: nombre_completo || '',
+      // id_rol: id_rol || '',
     }).toString();
 
     const url = `${API_URL}/${resource}?${query}`;
@@ -193,6 +197,7 @@ export const dataProvider = {
 
 
   // eliminar asistencias de un curso en una fecha dada
+
 deleteAsistenciasCurso: (cursoId, fecha) =>
   httpClient(`${API_URL}/asistencias/curso/${cursoId}?fecha=${fecha}`, {
     method: "DELETE",
@@ -222,10 +227,81 @@ deleteAsistenciasCurso: (cursoId, fecha) =>
       method: 'DELETE',
     }).then(() => ({ data: { id: idUsuario } })),
   
-};
 
+  // obtener materias por curso
+  getMateriasCurso: (cursoId) =>
+    httpClient(`${API_URL}/cursos/${cursoId}/materias`)
+      .then(({ json }) => ({
+        data: json.map(m => ({
+          ...m,
+          id: m.id_materia,
+        })),
+      })),
 
+  // obtener cursos por materia
+  getCursosMateria: (materiaId) =>
+    httpClient(`${API_URL}/materias/${materiaId}/cursos`)
+      .then(({ json }) => ({
+        data: json.map(c => ({
+          ...c,
+          id: c.id_curso,
+        })),
+      })),
 
+  // obtener alumnos por curso
+  getAlumnosPorCurso: (cursoId) =>
+    httpClient(`${API_URL}/cursos/${cursoId}/alumnos`)
+      .then(({ json }) => ({
+        data: json.map(a => ({
+          ...a,
+          id: a.id_alumno,
+        })),
+      })),
 
+  // obtener calificaciones por alumno
+  getCalificacionesPorAlumno: (alumnoId, filter) =>
+    httpClient(`${API_URL}/calificaciones/alumnos/${alumnoId}?${stringify(filter)}`)
+      .then(({ json }) => ({
+        data: json.map(c => ({
+          ...c,
+          id: c.id_calificacion,
+        })),
+      })),
 
+  // modificar muchas calificaciones
+  updateManyCalificaciones: (updatedRows) =>
+    httpClient(`${API_URL}/calificaciones`, {
+      method: 'PUT',
+      body: JSON.stringify({ calificaciones: updatedRows }),
+    }).then(({ json }) => ({
+      data: json,
+    })),
 
+  // crear muchas calificaciones
+  createManyCalificaciones: (newRows) =>
+    httpClient(`${API_URL}/calificaciones`, {
+      method: 'POST',
+      body: JSON.stringify({ calificaciones: newRows }),
+    }).then(({ json }) => ({
+      data: json,
+    })),
+
+  // eliminar muchas calificaciones
+  deleteManyCalificaciones: (ids) =>
+    httpClient(`${API_URL}/calificaciones`, {
+      method: 'DELETE',
+      body: JSON.stringify({ calificaciones: ids }),
+    }).then(({ json }) => ({
+      data: json,
+    })),
+
+  // obtener los hijos de un tutor
+  getHijosPorTutor: () =>
+    httpClient(`${API_URL}/tutores/hijos`)
+      .then(({ json }) => ({
+        data: json.map(h => ({
+          ...h,
+          id: h.id_tutor,
+        })),
+      })),
+}

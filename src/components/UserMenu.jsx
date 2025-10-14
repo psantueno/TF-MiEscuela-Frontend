@@ -90,6 +90,7 @@ export const UserMenu = () => {
         color: '#00897B',
         icon: <AdminPanelSettings />,
         label: 'Jefe de Auxiliares'
+
       }
     };
     return configs[rol] || configs.alumno;
