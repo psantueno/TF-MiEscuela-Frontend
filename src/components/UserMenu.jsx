@@ -61,6 +61,11 @@ export const UserMenu = () => {
         color: '#F44336',
         icon: <Settings />,
         label: 'Administrador'
+      },
+      tutor:{
+        color: '#795548',
+        icon: <Person />,
+        label: 'Tutor'
       }
     };
     return configs[rol] || configs.alumno;
