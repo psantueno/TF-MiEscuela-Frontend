@@ -14,6 +14,7 @@ export const ROLE_PERMISSIONS = {
   admin: {
     resources: {
       asistencias: resourcePerms({ list: true, show: true, create: true, edit: true, delete: true }),
+      'ciclos-lectivos': resourcePerms({ list: true, show: true, create: true, edit: true, delete: true }),
       usuarios: resourcePerms({ list: true, show: true, create: true, edit: true, delete: true }),
       alumnos: resourcePerms({ list: true, show: true }),
       docentes: resourcePerms({ list: true, show: true }),
@@ -25,6 +26,7 @@ export const ROLE_PERMISSIONS = {
       '/administracion/roles',
       '/administracion/roles/modificar',
       '/administracion/usuarios',
+      '/gestion-academica/ciclos-lectivos',
       '/asistencias/recientes',
       '/asistencias/registrar',
       '/asistencias/historico',
@@ -48,6 +50,7 @@ export const ROLE_PERMISSIONS = {
       'calificaciones',
       'calificaciones-hijos',
       'administracion',
+      'ciclos-lectivos',
     ]),
   },
 

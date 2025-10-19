@@ -19,6 +19,7 @@ import {
   ExpandMore,
   Grade,
   AdminPanelSettings,
+  CalendarMonth
 } from '@mui/icons-material';
 import { usePermissions, useResourceDefinitions } from 'react-admin';
 import { allowMenu, allowResource } from '../permissions/roles';
@@ -36,6 +37,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
 
   // Abrir/cerrar submenú calificaciones
   const [openCalificaciones, setOpenCalificaciones] = useState(false);
+  const [openGestionAcademica, setOpenGestionAcademica] = useState(false);
 
   // Abrir asistencias/calificaciones automáticamente si estoy en esa ruta
   useEffect(() => {
@@ -44,6 +46,9 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
     }
     if (location.pathname.startsWith('/calificaciones')) {
       setOpenCalificaciones(true);
+    }
+    if (location.pathname.startsWith('/gestion-academica') || location.pathname.startsWith('/ciclos-lectivos')) {
+      setOpenGestionAcademica(true);
     }
   }, [location.pathname]);
 
@@ -68,7 +73,8 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
         def.name !== 'usuarios' &&
         def.name !== 'roles' &&
         def.name !== 'cursos' &&
-        def.name !== 'materias' // si existiera
+        def.name !== 'materias' && // si existiera
+        def.name !== 'ciclos-lectivos'
     )
     .map(def => {
       const Icon = def.icon || Home;
@@ -258,6 +264,30 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
                 onClick={() => handleItemClick({ id: 'asistencias-eliminar', to: '/asistencias/eliminar' })}
               >
                 <ListItemText primary="Eliminar asistencia" sx={getTextStyle(isActive('/asistencias/eliminar'))} />
+              </ListItemButton>
+            )}
+          </List>
+        </Collapse>
+
+        {/* Módulo de Gestión académica */}
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => setOpenGestionAcademica(!openGestionAcademica)}>
+            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+              <CalendarMonth />
+            </ListItemIcon>
+            <ListItemText primary="Gestión académica" />
+            {openGestionAcademica ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={openGestionAcademica} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            {allowMenu(role, 'ciclos-lectivos') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(isActive('/ciclos-lectivos')) }}
+                selected={isActive('/ciclos-lectivos') || location.pathname.startsWith('/gestion-academica/ciclos-lectivos')}
+                onClick={() => handleItemClick({ id: 'ciclos-lectivos', to: '/gestion-academica/ciclos-lectivos' })}
+              >
+                <ListItemText primary="Ciclos lectivos" sx={getTextStyle(isActive('/ciclos-lectivos'))} />
               </ListItemButton>
             )}
           </List>

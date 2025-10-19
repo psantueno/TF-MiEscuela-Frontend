@@ -1,5 +1,5 @@
 // src/resources/asistencias/RegistrarAsistencia.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useDataProvider, useNotify } from "react-admin";
 import {
   Box,
@@ -135,6 +135,27 @@ export const RegistrarAsistencia = () => {
         });
     }
   }, [curso, fecha, dataProvider, estados]);
+
+  // ====================
+  // Ordenar alumnos por apellido (alfabético)
+  // ====================
+  const alumnosOrdenados = useMemo(() => {
+    return [...alumnos].sort((a, b) => {
+      const apA = (a?.alumno_apellido || "").toLocaleLowerCase();
+      const apB = (b?.alumno_apellido || "").toLocaleLowerCase();
+      const cmp = apA.localeCompare(apB, "es", { sensitivity: "base" });
+      if (cmp !== 0) return cmp;
+      const nA = `${a?.alumno_nombre_prop || ""} ${a?.alumno_apellido || ""}`.toLocaleLowerCase();
+      const nB = `${b?.alumno_nombre_prop || ""} ${b?.alumno_apellido || ""}`.toLocaleLowerCase();
+      return nA.localeCompare(nB, "es", { sensitivity: "base" });
+    });
+  }, [alumnos]);
+
+  const nombreApellidoUI = (a = {}) => {
+    const apellido = a?.alumno_apellido || "";
+    const nombre = a?.alumno_nombre_prop || "";
+    return `${apellido.trim()} ${nombre.trim()}`.trim();
+  };
 
   // ====================
   // Cambiar estado alumno
@@ -380,10 +401,10 @@ export const RegistrarAsistencia = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {alumnos.map((a, index) => (
+              {alumnosOrdenados.map((a, index) => (
                 <TableRow key={a.id_alumno}>
                   <TableCell>{index + 1}</TableCell>
-                  <TableCell>{a.alumno_nombre}</TableCell>
+                  <TableCell>{nombreApellidoUI(a)}</TableCell>
                   <TableCell align="center">
                     <ToggleButtonGroup
                       value={a.id_estado || ""}

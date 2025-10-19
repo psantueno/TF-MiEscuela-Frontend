@@ -65,11 +65,11 @@ export const dataProvider = {
       data: json.data ?
         json.data.map(item => ({
           ...item,
-          id: item.id_asistencia || item.id_alumno || item.id_docente || item.id_curso || item.id_rol || item.id_usuario || item.id
+          id: item.id_ciclo || item.id_asistencia || item.id_alumno || item.id_docente || item.id_curso || item.id_rol || item.id_usuario || item.id
         })) :
         json.map(item => ({
           ...item,
-          id: item.id_asistencia || item.id_alumno || item.id_docente || item.id_curso || item.id_rol || item.id_usuario || item.id
+          id: item.id_ciclo || item.id_asistencia || item.id_alumno || item.id_docente || item.id_curso || item.id_rol || item.id_usuario || item.id
         })),
       total: json.total,
     }));
@@ -79,7 +79,7 @@ export const dataProvider = {
     httpClient(`${API_URL}/${resource}/${params.id}`).then(({ json }) => ({
       data: {
         ...json,
-        id: json.id_asistencia || json.id_alumno || json.id_docente || json.id_curso || json.id_rol || json.id_usuario || json.id
+        id: json.id_ciclo || json.id_asistencia || json.id_alumno || json.id_docente || json.id_curso || json.id_rol || json.id_usuario || json.id
       },
     })),
 
@@ -89,7 +89,7 @@ export const dataProvider = {
     return httpClient(url).then(({ json }) => ({
       data: json.map(item => ({
         ...item,
-        id: item.id_asistencia || item.id_alumno || item.id_docente || item.id_curso || item.id_rol || item.id_usuario || item.id
+        id: item.id_ciclo || item.id_asistencia || item.id_alumno || item.id_docente || item.id_curso || item.id_rol || item.id_usuario || item.id
       }))
     }));
   },
@@ -107,7 +107,7 @@ export const dataProvider = {
       method: 'POST',
       body: JSON.stringify(params.data),
     }).then(({ json }) => ({
-      data: { ...params.data, id: json.id || json.id_asistencia || json.id_usuario || json.insertId },
+      data: { ...params.data, id: json.id || json.id_ciclo || json.id_asistencia || json.id_usuario || json.insertId },
     })),
 
   update: (resource, params) =>
@@ -117,7 +117,7 @@ export const dataProvider = {
     }).then(({ json }) => ({
       data: {
         ...json,
-        id: json.id_asistencia || json.id_alumno || json.id_docente || json.id_curso || json.id_rol || json.id_usuario || json.id
+        id: json.id_ciclo || json.id_asistencia || json.id_alumno || json.id_docente || json.id_curso || json.id_rol || json.id_usuario || json.id
       }
     })),
 

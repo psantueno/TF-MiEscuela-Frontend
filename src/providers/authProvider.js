@@ -59,10 +59,12 @@ export const authProvider = {
       if (!userStr) return Promise.reject();
       
       const user = JSON.parse(userStr);
-      
+      const apellido = user?.alumno_apellido || user?.apellido || user?.usuario?.apellido || '';
+      const nombre = user?.alumno_nombre_prop || user?.nombre || user?.usuario?.nombre || '';
+      const fullNamePref = `${apellido} ${nombre}`.trim() || user?.nombre_completo;
       return Promise.resolve({
         id: user.id_usuario,
-        fullName: user.nombre_completo,
+        fullName: fullNamePref,
         avatar: user.foto,
         role: user.rol,
         email: user.email,
