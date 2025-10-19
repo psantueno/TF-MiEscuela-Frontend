@@ -30,11 +30,10 @@ const httpClient = (url, options = {}) => {
 
 
 export const dataProvider = {
+  getList: (resource, params) => {
+    const { page, perPage } = params.pagination;
 
-
-  getList: (resource, params = {}) => {
-    const { page = 1, perPage = 25 } = (params.pagination || {});
-    const filter = params.filter || {};
+    const { filter } = params;
 
     // Soporte especial para el recurso virtual 'usuarios-sin-rol'
     if (resource === 'usuarios-sin-rol') {
@@ -58,8 +57,6 @@ export const dataProvider = {
       page,
       perPage,
       ...filter,
-        // nombre_completo: nombre_completo || '',
-      // id_rol: id_rol || '',
     }).toString();
 
     const url = `${API_URL}/${resource}?${query}`;
@@ -202,6 +199,12 @@ deleteAsistenciasCurso: (cursoId, fecha) =>
   }).then(({ json }) => ({
     data: json,
   })),
+
+  getPromedioAsistenciaCurso: (cursoId, desde, hasta) =>
+    httpClient(`${API_URL}/asistencias/curso/${cursoId}/promedio?desde=${desde}&hasta=${hasta}`)
+      .then(({ json }) => ({
+        data: json,
+      })),
   
   // Usuarios sin rol asignado (endpoint custom del backend)
   getUsuariosSinRol: () =>
@@ -225,6 +228,15 @@ deleteAsistenciasCurso: (cursoId, fecha) =>
       method: 'DELETE',
     }).then(() => ({ data: { id: idUsuario } })),
   
+  // obtener cursos segun rol
+  getCursosPorRol: () =>
+    httpClient(`${API_URL}/cursos/restricted`)
+      .then(({ json }) => ({
+        data: json.map(c => ({
+          ...c,
+          id: c.id_curso,
+        })),
+      })),
 
   // obtener materias por curso
   getMateriasCurso: (cursoId) =>
@@ -236,16 +248,6 @@ deleteAsistenciasCurso: (cursoId, fecha) =>
         })),
       })),
 
-  // obtener cursos por materia
-  getCursosMateria: (materiaId) =>
-    httpClient(`${API_URL}/materias/${materiaId}/cursos`)
-      .then(({ json }) => ({
-        data: json.map(c => ({
-          ...c,
-          id: c.id_curso,
-        })),
-      })),
-
   // obtener alumnos por curso
   getAlumnosPorCurso: (cursoId) =>
     httpClient(`${API_URL}/cursos/${cursoId}/alumnos`)
@@ -253,16 +255,6 @@ deleteAsistenciasCurso: (cursoId, fecha) =>
         data: json.map(a => ({
           ...a,
           id: a.id_alumno,
-        })),
-      })),
-
-  // obtener calificaciones por alumno
-  getCalificacionesPorAlumno: (alumnoId, filter) =>
-    httpClient(`${API_URL}/calificaciones/alumnos/${alumnoId}?${stringify(filter)}`)
-      .then(({ json }) => ({
-        data: json.map(c => ({
-          ...c,
-          id: c.id_calificacion,
         })),
       })),
 
@@ -284,14 +276,19 @@ deleteAsistenciasCurso: (cursoId, fecha) =>
       data: json,
     })),
 
-  // eliminar muchas calificaciones
-  deleteManyCalificaciones: (ids) =>
-    httpClient(`${API_URL}/calificaciones`, {
-      method: 'DELETE',
-      body: JSON.stringify({ calificaciones: ids }),
-    }).then(({ json }) => ({
-      data: json,
-    })),
+  // obtener tipos de calificaciones
+  getTiposCalificaciones: () =>
+    httpClient(`${API_URL}/calificaciones/tipos`)
+      .then(({ json }) => ({
+        data: json,
+      })),
+
+  // obtener calificaciones por alumno
+  getCalificacionesPorAlumno: (alumnoId) =>
+    httpClient(`${API_URL}/calificaciones/alumno/${alumnoId}`)
+      .then(({ json }) => ({
+        data: json,
+      })),
 
   // obtener los hijos de un tutor
   getHijosPorTutor: () =>

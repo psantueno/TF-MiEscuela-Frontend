@@ -18,7 +18,7 @@ import {
   ExpandLess,
   ExpandMore,
   Grade,
-  AdminPanelSettings
+  AdminPanelSettings,
 } from '@mui/icons-material';
 import { usePermissions, useResourceDefinitions } from 'react-admin';
 import { allowMenu, allowResource } from '../permissions/roles';
