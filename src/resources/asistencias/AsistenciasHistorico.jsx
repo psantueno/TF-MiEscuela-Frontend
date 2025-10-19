@@ -300,18 +300,28 @@ export const AsistenciasHistorico = () => {
                             const id = e.target.value;
                             setAlumnoId(id);
                             const a = alumnos.find((x) => String(x.id_alumno) === id);
-                            setAlumnoNombre(a?.Usuario?.nombre_completo || a?.alumno_nombre || "");
+                            setAlumnoNombre(`${a?.alumno_apellido || ''} ${a?.alumno_nombre_prop || ''}`.trim());
                             setBusquedaEjecutada(false);
                             setRows([]);
                         }}
                         disabled={!alumnos.length}
                     >
                         <MenuItem value="">— Todos —</MenuItem>
-                        {alumnos.map((a) => (
-                            <MenuItem key={a.id_alumno} value={a.id_alumno}>
-                                {a.Usuario?.nombre_completo || a.alumno_nombre}
-                            </MenuItem>
-                        ))}
+                        {[...alumnos]
+                            .sort((a, b) => {
+                                const apA = (a?.alumno_apellido || '').toLocaleLowerCase();
+                                const apB = (b?.alumno_apellido || '').toLocaleLowerCase();
+                                const cmp = apA.localeCompare(apB, 'es', { sensitivity: 'base' });
+                                if (cmp !== 0) return cmp;
+                                const nA = `${a?.alumno_nombre_prop || ''} ${a?.alumno_apellido || ''}`.toLocaleLowerCase();
+                                const nB = `${b?.alumno_nombre_prop || ''} ${b?.alumno_apellido || ''}`.toLocaleLowerCase();
+                                return nA.localeCompare(nB, 'es', { sensitivity: 'base' });
+                            })
+                            .map((a) => (
+                                <MenuItem key={a.id_alumno} value={a.id_alumno}>
+                                    {(a?.alumno_apellido || '') + ' ' + (a?.alumno_nombre_prop || '')}
+                                </MenuItem>
+                            ))}
                     </Select>
                 </FormControl>
 

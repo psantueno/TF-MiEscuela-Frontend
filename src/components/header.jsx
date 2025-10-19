@@ -12,7 +12,9 @@ export const Header = ({ moduloActivo }) => {
     'calificaciones': 'Gestión de Calificaciones',
     'notificaciones': 'Notificaciones',
     'mensajes': 'Mensajería',
-    'informes': 'Informes y Reportes'
+    'informes': 'Informes y Reportes',
+    'gestion-academica': 'Gestión académica',
+    'ciclos-lectivos': 'Gestión académica'
   };
 
   return (

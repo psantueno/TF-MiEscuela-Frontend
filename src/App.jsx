@@ -34,7 +34,8 @@ import {
 import { Dashboard } from './pages/Dashboard';
 
 // Iconos
-import { Today, School, Person, Class } from '@mui/icons-material';
+import { Today, School, Person, Class, CalendarMonth } from '@mui/icons-material';
+import { CiclosLectivosList, CiclosLectivosEdit, CiclosLectivosCreate, CiclosLectivosShow } from './resources/ciclosLectivos';
 import { RegistrarAsistencia } from './resources/asistencias/RegistrarAsistencia';
 import { EliminarAsistencias } from './resources/asistencias/EliminarAsistencias';
 import { AsistenciasHistorico } from './resources/asistencias/AsistenciasHistorico';
@@ -120,12 +121,28 @@ function App() {
                       <Resource name="docentes" icon={Person} />
                       <Resource name="cursos" icon={Class} />
 
+                      {/* Gestión académica */}
+                      {allowResource(role, 'ciclos-lectivos', 'list') && (
+                        <Resource
+                          name="ciclos-lectivos"
+                          list={CiclosLectivosList}
+                          edit={allowResource(role, 'ciclos-lectivos', 'edit') ? CiclosLectivosEdit : undefined}
+                          create={allowResource(role, 'ciclos-lectivos', 'create') ? CiclosLectivosCreate : undefined}
+                          show={allowResource(role, 'ciclos-lectivos', 'show') ? CiclosLectivosShow : undefined}
+                          icon={CalendarMonth}
+                          options={{ label: 'Ciclos lectivos' }}
+                        />
+                      )}
+
                       {/* Roles metadata solo si aplica */}
                       {allowResource(role, 'roles', 'list') && <Resource name="roles" />}
 
                       <CustomRoutes>
                         {allowRoute(role, '/administracion/usuarios') && (
                           <Route path="/administracion/usuarios" element={<Navigate to="/usuarios" replace />} />
+                        )}
+                        {allowRoute(role, '/gestion-academica/ciclos-lectivos') && (
+                          <Route path="/gestion-academica/ciclos-lectivos" element={<Navigate to="/ciclos-lectivos" replace />} />
                         )}
                         {allowRoute(role, '/administracion/roles') && (
                           <Route path="/administracion/roles" element={<RolesAdmin initialTab={0} />} />

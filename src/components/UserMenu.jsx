@@ -32,6 +32,13 @@ export const UserMenu = () => {
 
   const { user, setUser } = useUser();
 
+  const getNombreApellido = (u = {}) => {
+    const apellido = u?.apellido;
+    const nombre = u?.nombre;
+    const composed = `${apellido} ${nombre}`.trim();
+    return composed;
+  };
+
   const navigate = useNavigate();
 
   // Normaliza claves de rol a las esperadas por la UI
@@ -184,7 +191,7 @@ export const UserMenu = () => {
           }}
         >
           {user?.foto ? null : (
-            (user?.nombre_completo || '').split(' ').map(n => n[0]).join('').substring(0, 2)
+            getNombreApellido(user).split(' ').map(n => n[0]).join('').substring(0, 2)
           )}
         </Avatar>
         <Box
@@ -195,7 +202,7 @@ export const UserMenu = () => {
           }}
         >
           <Typography variant="body2" sx={{ color: '#333', fontWeight: 500 }}>
-            {user?.nombre_completo || 'Usuario'}
+            {getNombreApellido(user) || 'Usuario'}
           </Typography>
           <Typography variant="caption" sx={{ color: '#666', fontSize: '0.7rem' }}>
             {roleConfig.label}
@@ -249,7 +256,7 @@ export const UserMenu = () => {
             </Avatar>
             <Box>
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                {user?.nombre_completo || ''}
+                {getNombreApellido(user)}
               </Typography>
               <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.8rem' }}>
                 {user?.email || ''}

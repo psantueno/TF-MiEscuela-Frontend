@@ -106,6 +106,28 @@ export const AsistenciasRecientes = () => {
   }, [curso, fecha, dataProvider]);
 
   // ======================
+  // Ordenar por apellido (alfabético)
+  // ======================
+  const asistenciasOrdenadas = useMemo(() => {
+    return [...asistencias].sort((a, b) => {
+      const apA = (a?.alumno_apellido || "").toLocaleLowerCase();
+      const apB = (b?.alumno_apellido || "").toLocaleLowerCase();
+      const cmp = apA.localeCompare(apB, "es", { sensitivity: "base" });
+      if (cmp !== 0) return cmp;
+      const nA = `${a?.alumno_nombre_prop || ""} ${a?.alumno_apellido || ""}`.toLocaleLowerCase();
+      const nB = `${b?.alumno_nombre_prop || ""} ${b?.alumno_apellido || ""}`.toLocaleLowerCase();
+      return nA.localeCompare(nB, "es", { sensitivity: "base" });
+    });
+  }, [asistencias]);
+
+  // Helper de visualización usando solo campos separados
+  const nombreApellidoUI = (a = {}) => {
+    const apellido = a?.alumno_apellido || "";
+    const nombre = a?.alumno_nombre_prop || "";
+    return `${apellido.trim()} ${nombre.trim()}`.trim();
+  };
+
+  // ======================
   // Resumen por estado
   // ======================
   const resumen = useMemo(() => {
@@ -164,8 +186,8 @@ export const AsistenciasRecientes = () => {
     let y = resumenY + 20;
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(11);
-    asistencias.forEach((a, i) => {
-      doc.text(`${i + 1}. ${a.alumno_nombre} - ${a.estado_nombre}`, 14, y);
+    asistenciasOrdenadas.forEach((a, i) => {
+      doc.text(`${i + 1}. ${nombreApellidoUI(a)} - ${a.estado_nombre}`, 14, y);
       y += 7;
       if (y > 270) {
         doc.addPage();
@@ -181,9 +203,9 @@ export const AsistenciasRecientes = () => {
   const exportarExcel = () => {
     if (!asistencias.length) return;
     const header = ["#", "Alumno", "Estado"];
-    const rows = asistencias.map((a, i) => [
+    const rows = asistenciasOrdenadas.map((a, i) => [
       i + 1,
-      a.alumno_nombre,
+      nombreApellidoUI(a),
       a.estado_nombre,
     ]);
     const csvContent =
@@ -433,13 +455,13 @@ export const AsistenciasRecientes = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {asistencias.map((a, index) => {
+              {asistenciasOrdenadas.map((a, index) => {
                 const estado = a.estado_nombre?.toLowerCase() || "neutro";
                 const p = PALETTE[estado] || PALETTE.neutro;
                 return (
                   <TableRow key={a.id_asistencia || index}>
                     <TableCell>{index + 1}</TableCell>
-                    <TableCell>{a.alumno_nombre}</TableCell>
+                    <TableCell>{nombreApellidoUI(a)}</TableCell>
                     <TableCell
                       align="center"
                       sx={{
