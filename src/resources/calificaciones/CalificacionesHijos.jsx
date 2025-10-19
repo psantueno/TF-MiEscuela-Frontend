@@ -11,19 +11,19 @@ import {
 } from "@mui/material"
 import { ExpandMore } from "@mui/icons-material"
 import { LoaderOverlay } from "../../components/LoaderOverlay"
-import { CustomTable } from "../../components/Table"
+import { CustomTable } from "../../components/CustomTable"
 import { SummaryCard } from "../../components/SummaryCard"
 
 export const CalificacionesHijos = () => {
     const dataProvider = useDataProvider();
     const [hijos, setHijos] = useState([]);
-    const [anios, setAnios] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const TABLE_HEADERS = [
         {label: "Alumno"},
         {label: "Curso"},
         {label: "Materia"},
+        {label: "Tipo"},
         {label: "Calificación"},
         {label: "Fecha"},
         {label: "Docente"},
@@ -34,6 +34,7 @@ export const CalificacionesHijos = () => {
         {key: "alumno"},
         {key: "curso"},
         {key: "materia"},
+        {key: "tipo"},
         {key: "calificacion"},
         {key: "fecha"},
         {key: "docente"},
@@ -41,32 +42,88 @@ export const CalificacionesHijos = () => {
     ]
 
     useEffect(() => {
-        dataProvider.getHijosPorTutor()
-            .then(({ data }) => {
-                const hijosConCalificaciones = [];
-                data.forEach(hijo => {
-                    const hijoConCalificaciones = { alumno: hijo, calificaciones: [] };
-                    dataProvider.getCalificacionesPorAlumno(hijo.id_alumno).then(({ data }) => {
-                        hijoConCalificaciones.calificaciones = data;
-                        const uniqueAnios = [...new Set(data.map(c => c.ciclo_lectivo))];
-                        setAnios(uniqueAnios);
-                    }).catch(() => []);
-                    hijosConCalificaciones.push(hijoConCalificaciones);
-                });
-                setHijos(hijosConCalificaciones);
-            })
-            .catch(error => {
-                console.error("Error fetching calificaciones:", error);
-            })
-            .finally(() => setLoading(false));
+        const fetchData = async () => {
+        try {
+            const { data } = await dataProvider.getHijosPorTutor();
+
+            const hijosConCalificaciones = await Promise.all(
+                data.map(async (hijo) => {
+                    try {
+                        const { data: calificacionesData } = await dataProvider.getCalificacionesPorAlumno(hijo.id_alumno);
+
+                        const calificaciones = calificacionesData.map(c => ({
+                            ...c,
+                            alumno: `${c.alumno.usuario.apellido} ${c.alumno.usuario.nombre}`,
+                            curso: `${c.materiaCurso.curso.anio_escolar}° ${c.materiaCurso.curso.division}`,
+                            materia: c.materiaCurso.materia.nombre,
+                            tipo: c.tipoCalificacion.descripcion,
+                            calificacion: parseFloat(c.nota),
+                            fecha: new Date(c.fecha).toLocaleDateString(),
+                            docente: `${c.materiaCurso.docentes[0].usuario.apellido} ${c.materiaCurso.docentes[0].usuario.nombre}`,
+                            observaciones: c.observaciones || 'Ninguna',
+                            ciclo_lectivo: c.materiaCurso.curso.cicloLectivo.anio,
+                        }));
+
+                        const anios = [...new Set(calificaciones.map(c => c.ciclo_lectivo))];
+
+                        return {
+                            alumno: hijo,
+                            calificaciones,
+                            anios
+                        };
+                    } catch (error) {
+                        console.error("Error fetching calificaciones for hijo:", error);
+                        return { alumno: hijo, calificaciones: [], anios: [] };
+                    }
+                })
+            );
+
+            setHijos(hijosConCalificaciones);
+        } catch (error) {
+            console.error("Error fetching hijos:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    fetchData();
     }, [dataProvider]);
+
+    const getMejorCalificacion = (calificaciones, anio) => {
+        const notas = calificaciones
+            .filter(c => c.ciclo_lectivo == anio)
+            .map(c => parseFloat(c.nota));
+        return notas.length ? Math.max(...notas) : 0;
+    };
+    const getMateriaMejorCalificacion = (calificaciones, anio) => {
+        return `Materia: ${
+            calificaciones.map(c => c.ciclo_lectivo == anio && parseFloat(c.nota) === Math.max(...calificaciones.filter(c => c.ciclo_lectivo == anio).map(c => parseFloat(c.nota))) ? c.materia : null).filter(Boolean).join(', ')
+        }`
+    }
+
+    const getPeorCalificacion = (calificaciones, anio) => {
+        const notas = calificaciones
+            .filter(c => c.ciclo_lectivo == anio)
+            .map(c => parseFloat(c.nota));
+        return notas.length ? Math.min(...notas) : 0;
+    };
+
+    const getMateriaPeorCalificacion = (calificaciones, anio) => {
+        return `Materia: ${
+            calificaciones.map(c => c.ciclo_lectivo == anio && parseFloat(c.nota) === Math.min(...calificaciones.filter(c => c.ciclo_lectivo == anio).map(c => parseFloat(c.nota))) ? c.materia : null).filter(Boolean).join(', ')
+        }`
+    }
+
+    const getPromedio = (calificaciones, anio) => {
+        return (calificaciones.filter(c => c.ciclo_lectivo == anio).reduce((acc, curr) => acc + parseFloat(curr.nota), 0) / calificaciones.filter(c => c.ciclo_lectivo == anio).length).toFixed(2);
+    }
 
     return (
         <Box sx={{paddingBottom: 2}}>
             <LoaderOverlay open={loading} />
             {!loading && 
             <>
-            <Typography variant="h4" mt={2}>
+            <Typography variant="h4" sx={{ mb: 3, mt: 2 }}>
                 Calificaciones de mis hijos
             </Typography>
             <Box sx={{ display: "flex", gap: 1, flexDirection: "column" }} >
@@ -75,7 +132,7 @@ export const CalificacionesHijos = () => {
                         <AccordionSummary sx={{backgroundColor: "#F5F7FA"}} expandIcon={<ExpandMore />}>
                             <Box>
                                 <Typography variant="h6">
-                                    {hijo.alumno.usuario.nombre_completo}
+                                    {`${hijo.alumno.usuario.apellido} ${hijo.alumno.usuario.nombre}`}
                                 </Typography>
                                 <Typography variant="subtitle1">
                                     Curso: {hijo.alumno.curso.anio_escolar}° {hijo.alumno.curso.division}
@@ -86,7 +143,7 @@ export const CalificacionesHijos = () => {
                             </Box>
                         </AccordionSummary>
                         <AccordionDetails>
-                            {anios.map(anio => (
+                            {hijo.anios.map(anio => (
                                 <Box key={anio}>
                                     <Divider key={anio} sx={{ mb: 2, mt:2 }}>
                                         <Chip label={anio} sx={{backgroundColor: "#061B46", color: "#fff"}}/>
@@ -94,40 +151,26 @@ export const CalificacionesHijos = () => {
                                     <Box sx={{ display: "flex", gap: 2, mt: 2, mb: 2 }}>
                                         <SummaryCard 
                                             title="Mejor calificación"
-                                            mainContent={Math.max(...hijo.calificaciones.filter(c => c.ciclo_lectivo == anio).map(c => parseFloat(c.nota)), 0)}
-                                            secondaryContent={`Materia: ${
-                                                hijo.calificaciones.map(c => c.ciclo_lectivo == anio && parseFloat(c.nota) === Math.max(...hijo.calificaciones.filter(c => c.ciclo_lectivo == anio).map(c => parseFloat(c.nota))) ? c.materia.nombre : null).filter(Boolean).join(', ')
-                                            }`}
+                                            mainContent={getMejorCalificacion(hijo.calificaciones, anio)}
+                                            secondaryContent={getMateriaMejorCalificacion(hijo.calificaciones, anio)}
                                             type="success"
                                         />
                                         <SummaryCard 
                                             title="Peor calificación"
-                                            mainContent={Math.min(...hijo.calificaciones.filter(c => c.ciclo_lectivo == anio).map(c => parseFloat(c.nota)))}
-                                            secondaryContent={`Materia: ${
-                                                hijo.calificaciones.map(c => c.ciclo_lectivo == anio && parseFloat(c.nota) === Math.min(...hijo.calificaciones.filter(c => c.ciclo_lectivo == anio).map(c => parseFloat(c.nota))) ? c.materia.nombre : null).filter(Boolean).join(', ')
-                                            }`}
+                                            mainContent={getPeorCalificacion(hijo.calificaciones, anio)}
+                                            secondaryContent={getMateriaPeorCalificacion(hijo.calificaciones, anio)}
                                             type="error"
                                         />
                                         <SummaryCard 
                                             title="Promedio"
-                                            mainContent={(hijo.calificaciones.filter(c => c.ciclo_lectivo == anio).reduce((acc, curr) => acc + parseFloat(curr.nota), 0) / hijo.calificaciones.filter(c => c.ciclo_lectivo == anio).length).toFixed(2)}
+                                            mainContent={getPromedio(hijo.calificaciones, anio)}
                                             type="info"
                                         />
                                     </Box>
                                     <CustomTable 
                                         headers={TABLE_HEADERS}
                                         keys={TABLE_KEYS}
-                                        dataArray={hijo.calificaciones.filter(c => c.ciclo_lectivo == anio).map(c => {
-                                            return {
-                                                alumno: hijo.alumno.usuario.nombre_completo,
-                                                curso: `${hijo.alumno.curso.anio_escolar}° ${hijo.alumno.curso.division}`,
-                                                materia: c.materia.nombre,
-                                                calificacion: c.nota,
-                                                fecha: c.fecha,
-                                                docente: c.docente.usuario.nombre_completo,
-                                                observaciones: c.observaciones || "Ninguna"
-                                            }
-                                        })}
+                                        dataArray={hijo.calificaciones.filter(c => c.ciclo_lectivo == anio)}
                                         editable={false}
                                     />
                                 </Box>

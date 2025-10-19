@@ -124,6 +124,22 @@ export const ROLE_PERMISSIONS = {
       'mensajes',
     ]),
   },
+
+  tutor: {
+    resources: {
+
+    },
+    routes: new Set([
+      '/notificaciones',
+      '/mensajes',
+      '/calificaciones/hijos',
+    ]),
+    menu: new Set([
+      'notificaciones',
+      'mensajes',
+      'calificaciones-hijos',
+    ]) 
+  }
 };
 
 export const getRole = (permissions) => {

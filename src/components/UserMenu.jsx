@@ -195,7 +195,7 @@ export const UserMenu = () => {
           }}
         >
           <Typography variant="body2" sx={{ color: '#333', fontWeight: 500 }}>
-            {user?.nombre_completo || 'Usuario'}
+            {`${user.apellido} ${user.nombre}`}
           </Typography>
           <Typography variant="caption" sx={{ color: '#666', fontSize: '0.7rem' }}>
             {roleConfig.label}

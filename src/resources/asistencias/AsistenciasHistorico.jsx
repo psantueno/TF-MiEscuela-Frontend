@@ -134,7 +134,7 @@ const calcMetricsPorAlumno = (items) => {
         else if (estado.includes("JUST")) alumnos[id].AJ++;
         else if (estado.includes("AUS")) alumnos[id].A++;
     });
-
+    
     const resultado = Object.values(alumnos).map((a) => {
         const pct = (n) => (a.total ? Math.round((n * 10000) / a.total) / 100 : 0);
         return {
@@ -144,9 +144,10 @@ const calcMetricsPorAlumno = (items) => {
             pctAusJust: pct(a.AJ),
             pctAusNoJust: pct(a.A),
             total: a.total,
+            promAlu: a.promedioAlumno,
+            promCur: a.promedioCurso, 
         };
     });
-
     return resultado.sort((a, b) => b.pctAsistencia - a.pctAsistencia);
 };
 
@@ -163,7 +164,7 @@ export const AsistenciasHistorico = () => {
     const [loading, setLoading] = useState(false);
     const [busquedaEjecutada, setBusquedaEjecutada] = useState(false);
     const [sinAlumnos, setSinAlumnos] = useState(false);
-
+    const [promedios, setPromedios] = useState({});
 
     const metrics = useMemo(() => calcMetrics(rows), [rows]);
     const grouped = useMemo(() => groupForCharts(rows), [rows]);
@@ -233,6 +234,13 @@ export const AsistenciasHistorico = () => {
                 desde,
                 hasta
             );
+
+            if(tipo === "alumno"){
+                const { data } = await dataProvider.getPromedioAsistenciaCurso(cursoId, desde, hasta);
+                console.log("Promedios del curso:", data);
+                setPromedios(data);
+            }
+
             setRows(data);
             setBusquedaEjecutada(true);
             setSinAlumnos(false);
@@ -522,14 +530,28 @@ export const AsistenciasHistorico = () => {
 
                             <ChartBox title="Comparación con promedio del curso">
                                 <ResponsiveContainer width="100%" height={250}>
-                                    <LineChart data={ranking.map((r) => ({ alumno: r.alumno, asistencia: Number(r.pctAsistencia) || 0 }))}>
+                                    <LineChart data={promedios.map(p => ({
+                                        id: p.id_alumno,
+                                        alumno: p.nombre_completo,
+                                        promedio: p.promedio
+                                    }))}>
                                         <CartesianGrid strokeDasharray="3 3" />
                                         <XAxis dataKey="alumno" hide />
-                                        <YAxis />
-                                        <Tooltip />
+                                        <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`}/>
+                                        <Tooltip formatter={(value) => `${value}%`}/>
                                         <Legend />
                                         <ReferenceLine y={metrics.pctAsistencia} stroke="#9EA3A8" strokeDasharray="3 3" label={{ value: "Promedio del curso", position: "left", fill: "#6b7280" }} />
-                                        <Line type="monotone" dataKey="asistencia" stroke="#1E88E5" name="% asistencia alumno" dot />
+                                        <Line type="monotone" dataKey="promedio" stroke="#1E88E5" name="% asistencia alumno" 
+                                            dot={({ payload }) => (
+                                                <circle
+                                                cx={payload.cx}
+                                                cy={payload.cy}
+                                                r={payload.id === alumnoId ? 6 : 3} // más grande si es el alumno seleccionado
+                                                fill={payload.id === alumnoId ? "#E53935" : "#1E88E5"} // rojo si es el alumno seleccionado
+                                                />
+                                            )}
+                                            activeDot={{ r: 7 }}
+                                        />
                                     </LineChart>
                                 </ResponsiveContainer>
                             </ChartBox>
