@@ -290,6 +290,16 @@ deleteAsistenciasCurso: (cursoId, fecha) =>
         data: json,
       })),
 
+  // obtener docentes por curso
+  getDocentesPorCurso: (cursoId) =>
+    httpClient(`${API_URL}/cursos/${cursoId}/docentes`)
+      .then(({ json }) => ({
+        data: json.map(d => ({
+          ...d,
+          id: d.id_docente,
+        })),
+      })),
+
   // obtener los hijos de un tutor
   getHijosPorTutor: () =>
     httpClient(`${API_URL}/tutores/hijos`)

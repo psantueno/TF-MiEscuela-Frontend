@@ -40,6 +40,7 @@ export const Calificaciones = () => {
     const [selectableMaterias, setSelectableMaterias] = useState([]);
     const [alumnos, setAlumnos] = useState([]);
     const [tiposCalificaciones, setTiposCalificaciones] = useState([]);
+    const [docentes, setDocentes] = useState([]);
     const [selectedCurso, setSelectedCurso] = useState("");
     const [selectedMateria, setSelectedMateria] = useState("");
     const [selectedAlumno, setSelectedAlumno] = useState("");
@@ -80,7 +81,7 @@ export const Calificaciones = () => {
         { key: "fecha", editable: false, default: new Date(Date.now()).toLocaleDateString() }, 
         { key: "ciclo_lectivo", editable: false },
         { key: "curso", editable: false},
-        { key: "docente", editable: false, default: "Esteban Drukopf" }, 
+        { key: "docente", editable: false, default: "" }, 
         { key: "observaciones", editable: true, creatable: true, type: "text", default: "Ninguna" },
     ];
 
@@ -196,6 +197,18 @@ export const Calificaciones = () => {
             })
             .finally(() => setLoading(false));
 
+        dataProvider.getDocentesPorCurso(selectedCurso.id_curso)
+            .then(({ data }) => {
+                setDocentes(data.map(d => ({
+                    id: d.id_docente,
+                    usuario: d.usuario,
+                    materias: d.materiasCurso.map(mc => mc.materia)
+                })));
+            })
+            .catch(() => {
+                setDocentes([]);
+            });
+
         if(selectedMateria) setDisplayWithAccordion(false);
         else setDisplayWithAccordion(true);
     }
@@ -227,10 +240,25 @@ export const Calificaciones = () => {
     const formatKeys = (anio, idMateria, published) => {
         const formatted = TABLE_KEYS.map(key => {
             const newKey = { ...key };
-            if(key.key == "alumno") newKey.options = selectedAlumno ? { id: selectedAlumno.id_alumno, label: selectedAlumno.usuario.nombre_completo } : alumnos.map(a => ({ id: a.id_alumno, label: `${a.usuario.apellido} ${a.usuario.nombre}` }));
+            if(key.key == "alumno" && !selectedAlumno) {
+                newKey.options = alumnos.map(a => ({ id: a.id_alumno, label: `${a.usuario.apellido} ${a.usuario.nombre}` }))
+                newKey.type = "select";
+            };
+            if(key.key == "alumno" && selectedAlumno) {
+                newKey.default = `${selectedAlumno.usuario.apellido} ${selectedAlumno.usuario.nombre}`;
+                newKey.type = "text";
+            }
             if(key.key == "materia") newKey.default = materias.find(m => m.id_materia === (idMateria || selectedMateria?.id_materia))?.nombre || "";
             if(key.key == "ciclo_lectivo") newKey.default = anio;
-            if(key.key == "docente") newKey.default = `${user.apellido} ${user.nombre}`;
+            if(key.key == "docente" && user.rol == "docente") newKey.default = `${user.apellido} ${user.nombre}`;
+            if(key.key == "docente" && user.rol == "admin"){
+                newKey.type = "select";
+                newKey.editable = true;
+                newKey.required = true;
+                const materiaDocente = materias.find(m => m.id_materia === (idMateria || selectedMateria?.id_materia));
+                const docentesMateria = docentes.filter(d => d.materias.some(mat => mat.id_materia === materiaDocente.id_materia));
+                newKey.options = docentesMateria.map(d => ({ id: d.id, label: `${d.usuario.apellido} ${d.usuario.nombre}` }));
+            }
             if(key.key == "curso") newKey.default = selectedCurso.name;
             if(key.key == "tipo") newKey.options = tiposCalificaciones.map(t => ({ id: t.id_tipo_calificacion, label: t.descripcion }));
             return newKey;
@@ -243,26 +271,45 @@ export const Calificaciones = () => {
 
     const handleSave = async (updatedRows, addedRows) => {
         setLoading(true);
+
         console.log("Updated Rows:", updatedRows);
+        console.log("Added Rows:", addedRows);
+
         const mappedUpdatedRows = updatedRows.map(r => {
+            let docenteId = typeof r.docente === "string" ?
+                null:
+                r.docente;
+
             return {
                 id_calificacion: r.id,
-                nota: r.nota,
                 id_tipo_calificacion: r.tipo,
-                observaciones: r.observaciones
+                id_docente: docenteId,
+                nota: r.nota,
+                observaciones: r.observaciones,
             };
         });
 
         const mappedAddedRows = addedRows.map(r => {
+            let alumnoId = typeof r.alumno === "string" ?
+                alumnos.find(a => `${a.usuario.apellido} ${a.usuario.nombre}` === r.alumno)?.id_alumno
+                : r.alumno;
+
+            let docenteId = typeof r.docente === "string" ?
+                null:
+                r.docente;
             return{
-                id_alumno: r.alumno,
+                id_alumno: alumnoId,
                 id_materia: materias.find(m => m.nombre === r.materia)?.id_materia || null,
                 id_curso: cursos.find(c => c.name === r.curso)?.id_curso || null,
                 id_tipo_calificacion: r.tipo,
+                id_docente: docenteId,
                 nota: r.nota,
                 observaciones: r.observaciones
             }
         });
+
+        console.log("Mapped Updated Rows:", mappedUpdatedRows);
+        console.log("Mapped Added Rows:", mappedAddedRows);
 
         try{
 
