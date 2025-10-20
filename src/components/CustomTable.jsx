@@ -160,14 +160,14 @@ export const CustomTable = ({ headers, dataArray, keys, onSave, onError, editabl
         handleEditRow(data.length);
     };
 
-    const handleError = (rowIndex, key) => {
+    const handleError = (rowIndex, key, message) => {
         const ref = rowRefs.current[rowIndex];
         if(ref && ref.scrollIntoView) {
             ref.scrollIntoView({ behavior: "smooth", block: "center" });
             ref.classList.add("row-error-pulse");
             setTimeout(() => ref.classList.remove("row-error-pulse"), 3000);
         }
-        onError(`El campo "${key}" es obligatorio.`);
+        onError(message);
     }
 
     const closeConfirmModal = () => {
@@ -210,7 +210,7 @@ export const CustomTable = ({ headers, dataArray, keys, onSave, onError, editabl
         for (let row of rows) {
             for (let key of keys) {
                 if (key.required && key.type === "text" && (!row[key.key] || row[key.key].toString().trim() === "")) {
-                    handleError(data.indexOf(row), key.key);
+                    handleError(data.indexOf(row), key.key, `El campo "${key.key}" es obligatorio.`);
                     return false;
                 }
 
@@ -218,11 +218,11 @@ export const CustomTable = ({ headers, dataArray, keys, onSave, onError, editabl
                     const value = parseFloat(row[key.key]);
 
                     if(isNaN(value)) {
-                        handleError(data.indexOf(row), key.key);
+                        handleError(data.indexOf(row), key.key, `El campo "${key.key}" es obligatorio y debe ser un número.`);
                         return false;
                     }
                     if(value < 1 || value > 10) {
-                        handleError(data.indexOf(row), key.key);
+                        handleError(data.indexOf(row), key.key, `El campo "${key.key}" debe estar entre 1 y 10.`);
                         return false;
                     }
                 }
@@ -230,7 +230,7 @@ export const CustomTable = ({ headers, dataArray, keys, onSave, onError, editabl
                 if(key.type === "select" && key.options){
                     const isValidOption = key.options.some(option => option.label === row[key.key]);
                     if(!isValidOption){
-                        handleError(data.indexOf(row), key.key);
+                        handleError(data.indexOf(row), key.key, `El valor seleccionado en el campo "${key.key}" no es válido.`);
                         console.log("Validation failed for row:", row, "on key:", key.key);
                         return false;
                     }
@@ -243,7 +243,7 @@ export const CustomTable = ({ headers, dataArray, keys, onSave, onError, editabl
     if(data.length === 0 && !editable) return null;
 
     return (
-        <Box>
+        <Box sx={{ overflowX: "auto" }}>
             <Table stickyHeader>
                 <TableHead>
                     <TableRow >
@@ -269,6 +269,7 @@ export const CustomTable = ({ headers, dataArray, keys, onSave, onError, editabl
                                             handleEditRow(index);
                                         }
                                     }}
+                                    sx={{ px: 1, py: 2 }}
                                 >
                                     {editingRows.includes(index) && key.editable && key.type !== "select" ? 
                                     (
@@ -336,7 +337,18 @@ export const CustomTable = ({ headers, dataArray, keys, onSave, onError, editabl
             {editable && 
                 <Box 
                     onClick={handleAddRow} 
-                    sx={{ display: "flex", justifyContent: "center", alignItems: "center", mt: 1, cursor: "pointer", color: "#1976d2", backgroundColor: "#D9E2EF", paddingTop: 1, paddingBottom: 1 }}
+                    sx={{ 
+                        display: "flex", 
+                        justifyContent: "center", 
+                        alignItems: "center", 
+                        mt: 1, 
+                        cursor: "pointer", 
+                        color: "#1976d2", 
+                        backgroundColor: "#D9E2EF", 
+                        paddingTop: 1, 
+                        paddingBottom: 1, 
+                        width: "100%"
+                    }}
                 >
                     <Add />
                 </Box>
