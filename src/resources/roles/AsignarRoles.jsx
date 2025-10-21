@@ -3,13 +3,15 @@ import {
   List,
   Datagrid,
   TextField as RATextField,
-  EmailField,
   TextInput,
   useRecordContext,
   useNotify,
   useRefresh,
   useDataProvider,
   useGetList,
+  TopToolbar,
+  FilterButton,
+  ExportButton,
 } from 'react-admin';
 import { Box, Button, MenuItem, Select } from '@mui/material';
 import { EmptyState } from '../../components/EmptyState';
@@ -51,7 +53,7 @@ const RoleAssignCell = () => {
       <Select
         size="small"
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => setValue(Number(e.target.value))}
         displayEmpty
         sx={{ width: '42%' }}
       >
@@ -59,7 +61,7 @@ const RoleAssignCell = () => {
           Seleccionar rol…
         </MenuItem>
         {roles.map((r) => (
-          <MenuItem key={r.id || r.id_rol} value={r.id_rol || r.id}>
+          <MenuItem key={r.id || r.id_rol} value={Number(r.id_rol || r.id)}>
             {r.nombre_rol || `Rol ${r.id_rol || r.id}`}
           </MenuItem>
         ))}
@@ -72,19 +74,30 @@ const RoleAssignCell = () => {
 };
 
 export const AsignarRoles = () => {
+  const RolesListActions = () => (
+    <TopToolbar>
+      <FilterButton label="Agregar filtros" />
+      <ExportButton label="Exportar" />
+    </TopToolbar>
+  );
   return (
     <List
       resource="usuarios-sin-rol"
       title="Asignar Roles"
-      filters={[<TextInput key="fnombre" source="nombre_completo" label="Buscar usuario" alwaysOn />]}
+      actions={<RolesListActions />}
+      filters={[
+        <TextInput key="fdni" source="numero_documento" label="Buscar por DNI" alwaysOn />,
+        <TextInput key="fapellido" source="apellido" label="Apellido" />,
+        <TextInput key="fnombre" source="nombre" label="Nombre" />,
+      ]}
       perPage={10}
-      sort={{ field: 'id_usuario', order: 'ASC' }}
+      sort={{ field: 'apellido', order: 'ASC' }}
       empty={<EmptyState title="Sin resultados" subtitle="No se encontraron usuarios sin rol con los filtros actuales." />}
     >
       <Datagrid bulkActionButtons={false} rowClick={false}>
-        <RATextField source="nombre_completo" label="Nombre" />
-        <RATextField source="numero_documento" label="Documento" />
-        <EmailField source="email" label="Email" />
+        <RATextField source="apellido" label="Apellido" />
+        <RATextField source="nombre" label="Nombre" />
+        <RATextField source="numero_documento" label="DNI N°" />
         <RoleAssignCell label="Asignar rol" />
       </Datagrid>
     </List>

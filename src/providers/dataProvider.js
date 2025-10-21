@@ -37,13 +37,43 @@ export const dataProvider = {
 
     // Soporte especial para el recurso virtual 'usuarios-sin-rol'
     if (resource === 'usuarios-sin-rol') {
+      const { field, order } = params.sort || {};
       const queryUSR = new URLSearchParams({
         page,
         perPage,
+        ...(field ? { sort: field } : {}),
+        ...(order ? { order } : {}),
         nombre_completo: filter.nombre_completo || '',
+        apellido: filter.apellido || '',
+        nombre: filter.nombre || '',
+        numero_documento: filter.numero_documento || '',
+        dni: filter.numero_documento || '',
       }).toString();
       const urlUSR = `${API_URL}/usuarios/sin-rol?${queryUSR}`;
       return httpClient(urlUSR).then(({ json }) => ({
+        data: (json.data || json).map(item => ({
+          ...item,
+          id: item.id_usuario || item.id,
+        })),
+        total: json.total,
+      }));
+    }
+
+    // Recurso virtual para 'usuarios-con-rol'
+    if (resource === 'usuarios-con-rol') {
+      const { field, order } = params.sort;
+      const queryUCR = new URLSearchParams({
+        page,
+        perPage,
+        sort: field,
+        order: order,
+        apellido: filter.apellido || '',
+        nombre: filter.nombre || '',
+        numero_documento: filter.numero_documento || '',
+        id_rol: filter.id_rol || '',
+      }).toString();
+      const urlUCR = `${API_URL}/usuarios/con-rol?${queryUCR}`;
+      return httpClient(urlUCR).then(({ json }) => ({
         data: (json.data || json).map(item => ({
           ...item,
           id: item.id_usuario || item.id,
@@ -193,19 +223,19 @@ export const dataProvider = {
 
   // eliminar asistencias de un curso en una fecha dada
 
-deleteAsistenciasCurso: (cursoId, fecha) =>
-  httpClient(`${API_URL}/asistencias/curso/${cursoId}?fecha=${fecha}`, {
-    method: "DELETE",
-  }).then(({ json }) => ({
-    data: json,
-  })),
+  deleteAsistenciasCurso: (cursoId, fecha) =>
+    httpClient(`${API_URL}/asistencias/curso/${cursoId}?fecha=${fecha}`, {
+      method: "DELETE",
+    }).then(({ json }) => ({
+      data: json,
+    })),
 
   getPromedioAsistenciaCurso: (cursoId, desde, hasta) =>
     httpClient(`${API_URL}/asistencias/curso/${cursoId}/promedio?desde=${desde}&hasta=${hasta}`)
       .then(({ json }) => ({
         data: json,
       })),
-  
+
   // Usuarios sin rol asignado (endpoint custom del backend)
   getUsuariosSinRol: () =>
     httpClient(`${API_URL}/usuarios/sin-rol`).then(({ json }) => ({
@@ -219,7 +249,7 @@ deleteAsistenciasCurso: (cursoId, fecha) =>
   asignarRolUsuario: (idUsuario, idRol) =>
     httpClient(`${API_URL}/usuarios/${idUsuario}/rol`, {
       method: 'PUT',
-      body: JSON.stringify({ id_rol: idRol }),
+      body: JSON.stringify({ id_rol: Number(idRol) }),
     }).then(({ json }) => ({ data: json })),
 
   // Quitar rol a usuario (DELETE dedicado)
@@ -227,7 +257,7 @@ deleteAsistenciasCurso: (cursoId, fecha) =>
     httpClient(`${API_URL}/usuarios/${idUsuario}/rol`, {
       method: 'DELETE',
     }).then(() => ({ data: { id: idUsuario } })),
-  
+
   // obtener cursos segun rol
   getCursosPorRol: () =>
     httpClient(`${API_URL}/cursos/restricted`)
