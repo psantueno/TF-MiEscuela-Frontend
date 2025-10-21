@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   List,
   Datagrid,
@@ -17,9 +17,9 @@ import {
   FilterButton,
   ExportButton,
 } from 'react-admin';
+import useUser from '../../contexts/UserContext/useUser';
 import { Box, Button, MenuItem, Select, Tooltip, IconButton } from '@mui/material';
 import { Delete } from '@mui/icons-material';
-import useUser from '../../contexts/UserContext/useUser';
 import { EmptyState } from '../../components/EmptyState';
 
 const RoleChangeCell = () => {
@@ -193,7 +193,6 @@ export const ModificarRoles = () => {
       sort={{ field: 'apellido', order: 'ASC' }}
       empty={<EmptyState title="Sin resultados" subtitle="No se encontraron usuarios con los filtros actuales." />}
     >
-      <ResetFilters />
       <Datagrid rowClick={false} bulkActionButtons={false}>
         <RATextField source="apellido" label="Apellido" />
         <RATextField source="nombre" label="Nombre" />
@@ -215,18 +214,4 @@ export const ModificarRoles = () => {
       </Datagrid>
     </List>
   );
-};
-
-const ResetFilters = () => {
-    const { setFilters } = useListContext();
-    const initialized = useRef(false); // guarda si ya se limpió una vez
-
-    useEffect(() => {
-        if (!initialized.current) {
-            setFilters({}, []); // limpia todos los filtros activos solo la primera vez
-            initialized.current = true;
-        }
-    }, [setFilters]);
-
-    return null;
 };
