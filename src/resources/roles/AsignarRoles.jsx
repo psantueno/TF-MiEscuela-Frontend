@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   List,
   Datagrid,
@@ -94,6 +94,7 @@ export const AsignarRoles = () => {
       sort={{ field: 'apellido', order: 'ASC' }}
       empty={<EmptyState title="Sin resultados" subtitle="No se encontraron usuarios sin rol con los filtros actuales." />}
     >
+      <ResetFilters />
       <Datagrid bulkActionButtons={false} rowClick={false}>
         <RATextField source="apellido" label="Apellido" />
         <RATextField source="nombre" label="Nombre" />
@@ -102,4 +103,18 @@ export const AsignarRoles = () => {
       </Datagrid>
     </List>
   );
+};
+
+const ResetFilters = () => {
+    const { setFilters } = useListContext();
+    const initialized = useRef(false); // guarda si ya se limpió una vez
+
+    useEffect(() => {
+        if (!initialized.current) {
+            setFilters({}, []); // limpia todos los filtros activos solo la primera vez
+            initialized.current = true;
+        }
+    }, [setFilters]);
+
+    return null;
 };
