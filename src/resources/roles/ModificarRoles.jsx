@@ -3,7 +3,6 @@ import {
   List,
   Datagrid,
   TextField as RATextField,
-  EmailField,
   TextInput,
   FunctionField,
   useRecordContext,
@@ -14,7 +13,9 @@ import {
   SelectInput,
   useGetList,
   Confirm,
-  useListContext
+  TopToolbar,
+  FilterButton,
+  ExportButton,
 } from 'react-admin';
 import { Box, Button, MenuItem, Select, Tooltip, IconButton } from '@mui/material';
 import { Delete } from '@mui/icons-material';
@@ -68,7 +69,7 @@ const RoleChangeCell = () => {
           <Select
             size="small"
             value={value}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => setValue(Number(e.target.value))}
             displayEmpty
             sx={{ minWidth: 160 }}
             disabled={isSelf}
@@ -77,7 +78,7 @@ const RoleChangeCell = () => {
               Seleccionar rol...
             </MenuItem>
             {roles.map((r) => (
-              <MenuItem key={r.id || r.id_rol} value={r.id_rol || r.id}>
+              <MenuItem key={r.id || r.id_rol} value={Number(r.id_rol || r.id)}>
                 {r.nombre_rol || `Rol ${r.id_rol || r.id}`}
               </MenuItem>
             ))}
@@ -145,7 +146,7 @@ const RemoveRoleCell = () => {
       <Confirm
         isOpen={confirmOpen}
         title="Quitar rol"
-        content={`Quieres quitar el rol asignado a ${record?.nombre_completo || 'este usuario'}?`}
+        content={`Quieres quitar el rol asignado a ${(record ? (record.apellido || record.usuario?.apellido || '').toString().trim() + ' ' + (record.nombre || record.usuario?.nombre || '').toString().trim() : '').trim() || record?.nombre_completo || 'este usuario'}?`}
         confirm="Quitar"
         cancel="Cancelar"
         onConfirm={async () => {
@@ -169,32 +170,40 @@ const RemoveRoleCell = () => {
 };
 
 export const ModificarRoles = () => {
+  const RolesListActions = () => (
+    <TopToolbar>
+      <FilterButton label="Agregar filtros" />
+      <ExportButton label="Exportar" />
+    </TopToolbar>
+  );
   return (
     <List
-      resource="usuarios"
+      resource="usuarios-con-rol"
       title="Modificar Roles"
+      actions={<RolesListActions />}
       filters={[
-        <TextInput key="numero_documento" source="numero_documento" label="Buscar por número de documento" alwaysOn />,
+        <TextInput key="fbusqueda" source="numero_documento" label="Buscar por DNI" alwaysOn />,
+        <TextInput key="fapellido" source="apellido" label="Apellido" />,
+        <TextInput key="fnombre" source="nombre" label="Nombre" />,
         <ReferenceInput key="frol" label="Rol" source="id_rol" reference="roles">
           <SelectInput optionText="nombre_rol" label="Rol" />
         </ReferenceInput>,
       ]}
       perPage={10}
-      sort={{ field: 'id_usuario', order: 'ASC' }}
+      sort={{ field: 'apellido', order: 'ASC' }}
       empty={<EmptyState title="Sin resultados" subtitle="No se encontraron usuarios con los filtros actuales." />}
     >
       <ResetFilters />
       <Datagrid rowClick={false} bulkActionButtons={false}>
         <RATextField source="apellido" label="Apellido" />
         <RATextField source="nombre" label="Nombre" />
-        <RATextField source="numero_documento" label="Documento" />
-        <EmailField source="email" label="Email" />
+        <RATextField source="numero_documento" label="DNI N°" />
         <FunctionField
           label="Rol actual"
           render={(record) => {
             const roles = record?.roles || [];
-            if (!roles.length) return 'Sin asignar';
-            return roles.map((r) => r?.nombre_rol).join(', ');
+            if (!roles.length) return <strong>Sin asignar</strong>;
+            return <strong>{roles.map((r) => r?.nombre_rol).join(', ')}</strong>;
           }}
         />
         <RoleChangeCell label="Cambiar rol" />
