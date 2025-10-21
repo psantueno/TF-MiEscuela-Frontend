@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   List,
   Datagrid,
@@ -14,6 +14,7 @@ import {
   SelectInput,
   useGetList,
   Confirm,
+  useListContext
 } from 'react-admin';
 import { Box, Button, MenuItem, Select, Tooltip, IconButton } from '@mui/material';
 import { Delete } from '@mui/icons-material';
@@ -173,7 +174,7 @@ export const ModificarRoles = () => {
       resource="usuarios"
       title="Modificar Roles"
       filters={[
-        <TextInput key="fnombre" source="nombre_completo" label="Buscar usuario" alwaysOn />,
+        <TextInput key="numero_documento" source="numero_documento" label="Buscar por número de documento" alwaysOn />,
         <ReferenceInput key="frol" label="Rol" source="id_rol" reference="roles">
           <SelectInput optionText="nombre_rol" label="Rol" />
         </ReferenceInput>,
@@ -182,8 +183,10 @@ export const ModificarRoles = () => {
       sort={{ field: 'id_usuario', order: 'ASC' }}
       empty={<EmptyState title="Sin resultados" subtitle="No se encontraron usuarios con los filtros actuales." />}
     >
+      <ResetFilters />
       <Datagrid rowClick={false} bulkActionButtons={false}>
-        <RATextField source="nombre_completo" label="Nombre" />
+        <RATextField source="apellido" label="Apellido" />
+        <RATextField source="nombre" label="Nombre" />
         <RATextField source="numero_documento" label="Documento" />
         <EmailField source="email" label="Email" />
         <FunctionField
@@ -203,4 +206,18 @@ export const ModificarRoles = () => {
       </Datagrid>
     </List>
   );
+};
+
+const ResetFilters = () => {
+    const { setFilters } = useListContext();
+    const initialized = useRef(false); // guarda si ya se limpió una vez
+
+    useEffect(() => {
+        if (!initialized.current) {
+            setFilters({}, []); // limpia todos los filtros activos solo la primera vez
+            initialized.current = true;
+        }
+    }, [setFilters]);
+
+    return null;
 };

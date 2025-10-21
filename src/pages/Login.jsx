@@ -108,6 +108,11 @@ export const Login = () => {
         px: { xs: 2, sm: 3 },
         py: { xs: 4, sm: 6 },
       }}
+      onKeyPress={(e) => {
+        if (e.key === 'Enter') {
+          handleSubmit(handleLogin)();
+        }
+      }}
     >
       <Card
         sx={{
