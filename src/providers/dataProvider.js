@@ -40,7 +40,7 @@ export const dataProvider = {
       const queryUSR = new URLSearchParams({
         page,
         perPage,
-        nombre_completo: filter.nombre_completo || '',
+        ...filter,
       }).toString();
       const urlUSR = `${API_URL}/usuarios/sin-rol?${queryUSR}`;
       return httpClient(urlUSR).then(({ json }) => ({

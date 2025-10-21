@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   List,
   Datagrid,
@@ -10,6 +10,7 @@ import {
   useRefresh,
   useDataProvider,
   useGetList,
+  useListContext
 } from 'react-admin';
 import { Box, Button, MenuItem, Select } from '@mui/material';
 import { EmptyState } from '../../components/EmptyState';
@@ -72,21 +73,40 @@ const RoleAssignCell = () => {
 };
 
 export const AsignarRoles = () => {
+  const filters = [
+    <TextInput key="numero_documento" source="numero_documento" label="Buscar por número de documento" alwaysOn />,
+  ]
   return (
     <List
       resource="usuarios-sin-rol"
       title="Asignar Roles"
-      filters={[<TextInput key="fnombre" source="nombre_completo" label="Buscar usuario" alwaysOn />]}
+      filters={filters}
       perPage={10}
       sort={{ field: 'id_usuario', order: 'ASC' }}
       empty={<EmptyState title="Sin resultados" subtitle="No se encontraron usuarios sin rol con los filtros actuales." />}
     >
+      <ResetFilters />
       <Datagrid bulkActionButtons={false} rowClick={false}>
-        <RATextField source="nombre_completo" label="Nombre" />
+        <RATextField source="apellido" label="Apellido" />
+        <RATextField source="nombre" label="Nombre" />
         <RATextField source="numero_documento" label="Documento" />
         <EmailField source="email" label="Email" />
         <RoleAssignCell label="Asignar rol" />
       </Datagrid>
     </List>
   );
+};
+
+const ResetFilters = () => {
+    const { setFilters } = useListContext();
+    const initialized = useRef(false); // guarda si ya se limpió una vez
+
+    useEffect(() => {
+        if (!initialized.current) {
+            setFilters({}, []); // limpia todos los filtros activos solo la primera vez
+            initialized.current = true;
+        }
+    }, [setFilters]);
+
+    return null;
 };
