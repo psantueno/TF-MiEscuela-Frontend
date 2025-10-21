@@ -74,9 +74,10 @@ const RoleAssignCell = () => {
 };
 
 export const AsignarRoles = () => {
+
   const RolesListActions = () => (
-    <TopToolbar>
-      <FilterButton label="Agregar filtros" />
+    <TopToolbar>␍␊
+      <FilterButton label="Agregar filtros" />␍␊
       <ExportButton label="Exportar" />
     </TopToolbar>
   );
@@ -92,7 +93,7 @@ export const AsignarRoles = () => {
       ]}
       perPage={10}
       sort={{ field: 'apellido', order: 'ASC' }}
-      empty={<EmptyState title="Sin resultados" subtitle="No se encontraron usuarios sin rol con los filtros actuales." />}
+      empty={<EmptyState title="Sin resultados" subtitle="No se encontraron usuarios sin rol en el sistema." />}
     >
       <Datagrid bulkActionButtons={false} rowClick={false}>
         <RATextField source="apellido" label="Apellido" />
