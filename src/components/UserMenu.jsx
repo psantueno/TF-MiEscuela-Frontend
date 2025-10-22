@@ -50,6 +50,8 @@ export const UserMenu = () => {
     if (s.includes('docen')) return 'docente';
     if (s.includes('auxil')) return 'auxiliar';
     if (s.includes('alum') || s.includes('estud') || s.includes('student')) return 'alumno';
+    if(s.includes('tutor')) return 'tutor';
+    if(s.includes('asesor')) return 'asesor';
     // por si viene exactamente una de las claves
     if (['administrador', 'director', 'docente', 'auxiliar', 'alumno'].includes(s)) return s;
     return 'alumno';
@@ -83,7 +85,7 @@ export const UserMenu = () => {
         icon: <Settings />,
         label: 'Administrador'
       },
-      asesor_pedagogico: {
+      asesor: {
         color: '#6A1B9A',
         icon: <SupervisedUserCircle />,
         label: 'Asesor Pedagógico'

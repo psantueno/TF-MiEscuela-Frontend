@@ -19,7 +19,8 @@ import {
   ExpandMore,
   Grade,
   AdminPanelSettings,
-  CalendarMonth
+  CalendarMonth,
+  PsychologyAlt
 } from '@mui/icons-material';
 import { usePermissions, useResourceDefinitions } from 'react-admin';
 import { allowMenu, allowResource } from '../permissions/roles';
@@ -294,6 +295,8 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
         </Collapse>
 
         {/* Modulo de calificaciones */}
+        {allowMenu(role, 'calificaciones') || allowMenu(role, 'calificaciones-hijos') && (
+        <>
         <ListItem disablePadding>
           <ListItemButton onClick={() => setOpenCalificaciones(!openCalificaciones)}>
             <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
@@ -306,24 +309,46 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
         <Collapse in={openCalificaciones} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
             {/* Submenú: Listado */}
-            <ListItemButton
-              sx={{ pl: 6, ...getButtonStyle(isActive('/calificaciones')) }}
-              selected={isActive('/calificaciones')}
-              onClick={() => handleItemClick({ id: 'calificaciones', to: '/calificaciones' })}
-            >
-              <ListItemText primary="Listado" sx={getTextStyle(isActive('/calificaciones'))} />
-            </ListItemButton>
+            {allowMenu(role, 'calificaciones') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(isActive('/calificaciones')) }}
+                selected={isActive('/calificaciones')}
+                onClick={() => handleItemClick({ id: 'calificaciones', to: '/calificaciones' })}
+              >
+                <ListItemText primary="Listado" sx={getTextStyle(isActive('/calificaciones'))} />
+              </ListItemButton>
+            )}
 
             {/* Submenú: Hijos */}
-            <ListItemButton
-              sx={{ pl: 6, ...getButtonStyle(isActive('/calificaciones/hijos')) }}
-              selected={isActive('/calificaciones/hijos')}
-              onClick={() => handleItemClick({ id: 'calificaciones-hijos', to: '/calificaciones/hijos' })}
-            >
-              <ListItemText primary="Calificaciones de mis hijos" sx={getTextStyle(isActive('/calificaciones/hijos'))} />
-            </ListItemButton>
+            {allowMenu(role, 'calificaciones-hijos') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(isActive('/calificaciones/hijos')) }}
+                selected={isActive('/calificaciones/hijos')}
+                onClick={() => handleItemClick({ id: 'calificaciones-hijos', to: '/calificaciones/hijos' })}
+              >
+                <ListItemText primary="Calificaciones de mis hijos" sx={getTextStyle(isActive('/calificaciones/hijos'))} />
+              </ListItemButton>
+            )}
           </List>
         </Collapse>
+        </>
+        )}
+
+        {/* Informes pedagógicos */}
+        {allowMenu(role, 'informes-pedagogicos') && (
+        <ListItem disablePadding>
+          <ListItemButton
+            selected={isActive('/informes-pedagogicos')}
+            onClick={() => handleItemClick({ id: 'informes-pedagogicos', to: '/informes-pedagogicos' })}
+            sx={getButtonStyle(isActive('/informes-pedagogicos'))}
+          >
+            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+              <PsychologyAlt />
+            </ListItemIcon>
+            <ListItemText primary="Informes pedagógicos" sx={getTextStyle(isActive('/informes-pedagogicos'))} />
+          </ListItemButton>
+        </ListItem>
+        )}
 
         {/* Otros custom */}
         {allowMenu(role, 'notificaciones') && (

@@ -35,7 +35,7 @@ export const ROLE_PERMISSIONS = {
       '/mensajes',
       '/informes',
       '/calificaciones',
-      '/calificaciones/hijos',
+      '/informes-pedagogicos',
     ]),
     menu: new Set([
       'usuarios',
@@ -48,9 +48,9 @@ export const ROLE_PERMISSIONS = {
       'mensajes',
       'informes',
       'calificaciones',
-      'calificaciones-hijos',
       'administracion',
       'ciclos-lectivos',
+      'informes-pedagogicos',
     ]),
   },
 
@@ -65,10 +65,12 @@ export const ROLE_PERMISSIONS = {
     routes: new Set([
       '/asistencias/recientes',
       '/asistencias/historico',
+      '/calificaciones'
     ]),
     menu: new Set([
       'asistencias-recientes',
       'asistencias-historico',
+      'calificaciones',
     ]),
   },
 
@@ -142,6 +144,18 @@ export const ROLE_PERMISSIONS = {
       'mensajes',
       'calificaciones-hijos',
     ]) 
+  },
+
+  asesor_pedagogico: {
+    resources: {
+
+    },
+    routes: new Set([
+      '/informes-pedagogicos',
+    ]),
+    menu: new Set([
+      'informes-pedagogicos',
+    ])
   }
 };
 

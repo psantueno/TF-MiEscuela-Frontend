@@ -33,6 +33,8 @@ import {
 
 import { Dashboard } from './pages/Dashboard';
 
+import { InformesPedagogicos } from './resources/pedagogia/InformesPedagogicos';
+
 // Iconos
 import { Today, School, Person, Class, CalendarMonth } from '@mui/icons-material';
 import { CiclosLectivosList, CiclosLectivosEdit, CiclosLectivosCreate, CiclosLectivosShow } from './resources/ciclosLectivos';
@@ -87,6 +89,7 @@ function App() {
               >
                 {(permissions) => {
                   const role = getRole(permissions);
+                  console.log('Current role:', role);
                   return (
                     <>
                       {/* Asistencias */}
@@ -136,7 +139,6 @@ function App() {
 
                       {/* Roles metadata solo si aplica */}
                       {allowResource(role, 'roles', 'list') && <Resource name="roles" />}
-
                       <CustomRoutes>
                         {allowRoute(role, '/administracion/usuarios') && (
                           <Route path="/administracion/usuarios" element={<Navigate to="/usuarios" replace />} />
@@ -167,6 +169,9 @@ function App() {
                         )}
                         {allowRoute(role, '/calificaciones/hijos') && (
                           <Route path="/calificaciones/hijos" element={<CalificacionesHijos />} />
+                        )}
+                        {allowRoute(role, '/informes-pedagogicos') && (
+                          <Route path="/informes-pedagogicos" element={<InformesPedagogicos />} />
                         )}
                         {allowRoute(role, '/notificaciones') && (
                           <Route path="/notificaciones" element={<div>Notificaciones</div>} />
