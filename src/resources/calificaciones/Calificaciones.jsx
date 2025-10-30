@@ -41,10 +41,19 @@ export const Calificaciones = () => {
     const [alumnos, setAlumnos] = useState([]);
     const [tiposCalificaciones, setTiposCalificaciones] = useState([]);
     const [docentes, setDocentes] = useState([]);
-    const [selectedCurso, setSelectedCurso] = useState("");
-    const [selectedMateria, setSelectedMateria] = useState("");
-    const [selectedAlumno, setSelectedAlumno] = useState("");
+    const [filterValues, setFilterValues] = useState(
+        {
+            curso: "",
+            materia: "",
+            alumno: "",
+        }
+    );
     const [calificaciones, setCalificaciones] = useState([]);
+    const [calificacionesValues, setCalificacionesValues] = useState({
+        id_curso: "",
+        id_materia: "",
+        id_alumno: "",
+    });
     const [anios, setAnios] = useState([]);
     const [title, setTitle] = useState("");
     const [displayWithAccordion, setDisplayWithAccordion] = useState(true);
@@ -100,26 +109,26 @@ export const Calificaciones = () => {
     }, [dataProvider]);
 
     useEffect(() => {
-        if(!selectedCurso){
+        if(!filterValues.curso){
             setDisabledSearchButton(true);
             return;
         }
 
         dataProvider
-            .getMateriasCurso(selectedCurso.id_curso)
+            .getMateriasCurso(filterValues.curso.id_curso)
             .then(({ data }) => setMaterias(data))
             .catch(() => setMaterias([]))
             .finally(() => setLoading(false));
 
         dataProvider
-            .getAlumnosPorCurso(selectedCurso.id_curso)
+            .getAlumnosPorCurso(filterValues.curso.id_curso)
             .then(({ data }) => setAlumnos(data))
             .catch(() => setAlumnos([]))
             .finally(() => setLoading(false));
-    }, [dataProvider, selectedCurso]);
+    }, [dataProvider, filterValues.curso]);
 
     useEffect(() => {
-        if(!selectedCurso) return;
+        if(!filterValues.curso) return;
 
         setShowEmptyAlumnosMessage(false);
         setShowEmptyMateriasMessage(false);
@@ -140,12 +149,17 @@ export const Calificaciones = () => {
     }, [alumnos, materias]);
 
     useEffect(() => {
+        if(calificaciones.length === 0) {
+            setAnios([]);
+            return;
+        }
+
         const uniqueAnios = [...new Set(calificaciones.map(c => c.ciclo_lectivo))];
         setAnios(uniqueAnios);
 
-        let title = selectedCurso.name;
-        if(selectedAlumno) title += ` - ${selectedAlumno.usuario.apellido} ${selectedAlumno.usuario.nombre}`;
-        if(selectedMateria) title += ` - ${selectedMateria.nombre}`;
+        let title = filterValues.curso.name;
+        if(filterValues.alumno) title += ` - ${filterValues.alumno.usuario.apellido} ${filterValues.alumno.usuario.nombre}`;
+        if(filterValues.materia) title += ` - ${filterValues.materia.nombre}`;
         setTitle(title);
 
         if(EDIT_PERMISSION){
@@ -162,12 +176,19 @@ export const Calificaciones = () => {
     const handleSearch = async () => {
         setLoading(true);
         setSelectableMaterias(materias);
+        setCalificacionesValues(
+            {
+                id_curso: filterValues.curso.id_curso ?? "",
+                id_materia: filterValues.materia.id_materia ?? "",
+                id_alumno: filterValues.alumno.id ?? "",
+            }
+        );
 
         dataProvider
             .getList("calificaciones", {
                 pagination: { page: 1, perPage: 100 },
                 sort: {},
-                filter: { id_curso: selectedCurso.id_curso ?? "", id_materia: selectedMateria.id_materia ?? "", id_alumno: selectedAlumno.id ?? "" },
+                filter: { id_curso: filterValues.curso.id_curso ?? "", id_materia: filterValues.materia.id_materia ?? "", id_alumno: filterValues.alumno.id ?? "" },
             })
             .then(({ data }) => {
                 const mappedData = data.map((c) => {
@@ -197,7 +218,7 @@ export const Calificaciones = () => {
             })
             .finally(() => setLoading(false));
 
-        dataProvider.getDocentesPorCurso(selectedCurso.id_curso)
+        dataProvider.getDocentesPorCurso(filterValues.curso.id_curso)
             .then(({ data }) => {
                 setDocentes(data.map(d => ({
                     id: d.id_docente,
@@ -209,7 +230,7 @@ export const Calificaciones = () => {
                 setDocentes([]);
             });
 
-        if(selectedMateria) setDisplayWithAccordion(false);
+        if(filterValues.materia) setDisplayWithAccordion(false);
         else setDisplayWithAccordion(true);
     }
 
@@ -234,32 +255,33 @@ export const Calificaciones = () => {
     }
 
     const exportarPDF = async () => {
-        await generarReportePDF({ type: "curso", curso: selectedCurso, materia: selectedMateria, calificaciones: calificaciones, anios: anios });
+        await generarReportePDF({ type: "curso", curso: filterValues.curso, materia: filterValues.materia, calificaciones: calificaciones, anios: anios });
     }
 
     const formatKeys = (anio, idMateria, published) => {
         const formatted = TABLE_KEYS.map(key => {
             const newKey = { ...key };
-            if(key.key == "alumno" && !selectedAlumno) {
+            if(key.key == "alumno" && !filterValues.alumno) {
                 newKey.options = alumnos.map(a => ({ id: a.id_alumno, label: `${a.usuario.apellido} ${a.usuario.nombre}` }))
                 newKey.type = "select";
             };
-            if(key.key == "alumno" && selectedAlumno) {
-                newKey.default = `${selectedAlumno.usuario.apellido} ${selectedAlumno.usuario.nombre}`;
+            if(key.key == "alumno" && filterValues.alumno) {
+                newKey.default = `${filterValues.alumno.usuario.apellido} ${filterValues.alumno.usuario.nombre}`;
                 newKey.type = "text";
             }
-            if(key.key == "materia") newKey.default = materias.find(m => m.id_materia === (idMateria || selectedMateria?.id_materia))?.nombre || "";
+            if(key.key == "materia") newKey.default = materias.find(m => m.id_materia === (idMateria || calificacionesValues.id_materia))?.nombre || "";
             if(key.key == "ciclo_lectivo") newKey.default = anio;
             if(key.key == "docente" && user.rol == "docente") newKey.default = `${user.apellido} ${user.nombre}`;
             if(key.key == "docente" && user.rol == "admin"){
                 newKey.type = "select";
                 newKey.editable = true;
                 newKey.required = true;
-                const materiaDocente = materias.find(m => m.id_materia === (idMateria || selectedMateria?.id_materia));
+                console.log("materias:", materias); 
+                const materiaDocente = materias.find(m => m.id_materia === (idMateria || calificacionesValues.id_materia));
                 const docentesMateria = docentes.filter(d => d.materias.some(mat => mat.id_materia === materiaDocente.id_materia));
                 newKey.options = docentesMateria.map(d => ({ id: d.id, label: `${d.usuario.apellido} ${d.usuario.nombre}` }));
             }
-            if(key.key == "curso") newKey.default = selectedCurso.name;
+            if(key.key == "curso") newKey.default = filterValues.curso.name;
             if(key.key == "tipo") newKey.options = tiposCalificaciones.map(t => ({ id: t.id_tipo_calificacion, label: t.descripcion }));
             return newKey;
         });
@@ -320,9 +342,9 @@ export const Calificaciones = () => {
             setMessage("Cambios guardados correctamente");
             setOpen(true);
 
-            const filter = { id_curso: selectedCurso.id_curso };
-            if(selectedMateria) filter.id_materia = selectedMateria.id_materia;
-            if(selectedAlumno) filter.id_alumno = selectedAlumno.id_alumno;
+            const filter = { id_curso: filterValues.curso.id_curso };
+            if(filterValues.materia) filter.id_materia = filterValues.materia.id_materia;
+            if(filterValues.alumno) filter.id_alumno = filterValues.alumno.id_alumno;
 
             const { data } = await dataProvider.getList("calificaciones", {
                 pagination: { page: 1, perPage: 100 },
@@ -377,24 +399,24 @@ export const Calificaciones = () => {
                         options={cursos}
                         getOptionLabel={(option) => option.name || ""}
                         style={{ width: 300 }}
-                        value={cursos.find(c => c.id_curso === selectedCurso.id_curso) || null}
+                        value={cursos.find(c => c.id_curso === filterValues.curso.id_curso) || null}
                         onChange={(event, newValue) => {
-                            setSelectedCurso(newValue ? newValue : "");
+                            setFilterValues((prev) => ({...prev, curso: newValue ? newValue : ""}));
                         }}
                         renderInput={(params) => <TextField {...params} label="Seleccionar curso" variant="outlined" />}
                     />
                 </Grid>
 
                 {/* Selección de alumno */}
-                {selectedCurso &&
+                {filterValues.curso &&
                     <Grid item>
                         <Autocomplete
                             options={alumnos}
                             getOptionLabel={(option) => `${option.usuario.apellido} ${option.usuario.nombre} `}
                             style={{ width: 300 }}
-                            value={alumnos.find(a => a.id_alumno === selectedAlumno.id_alumno) || null}
+                            value={alumnos.find(a => a.id_alumno === filterValues.alumno.id_alumno) || null}
                             onChange={(event, newValue) => {
-                                setSelectedAlumno(newValue ? newValue : "");
+                                setFilterValues((prev) => ({...prev, alumno: newValue ? newValue : ""}));
                             }}
                             renderInput={(params) => <TextField {...params} label="Seleccionar alumno(opcional)" variant="outlined" />}
                         />
@@ -402,15 +424,15 @@ export const Calificaciones = () => {
                 }
 
                 {/* Selección de materia */}
-                {selectedCurso && 
+                {filterValues.curso && 
                     <Grid item>
                         <Autocomplete
                             options={materias}
                             getOptionLabel={(option) => option.nombre || ""}
                             style={{ width: 300 }}
-                            value={materias.find(m => m.id_materia === selectedMateria.id_materia) || null}
+                            value={materias.find(m => m.id_materia === filterValues.materia.id_materia) || null}
                             onChange={(event, newValue) => {
-                                setSelectedMateria(newValue ? newValue : "");
+                                setFilterValues((prev) => ({...prev, materia: newValue ? newValue : ""}));
                             }}
                             renderInput={(params) => <TextField {...params} label="Seleccionar materia(opcional)" variant="outlined" />}
                         />
@@ -547,7 +569,7 @@ export const Calificaciones = () => {
                                 <CustomTable 
                                     headers={TABLE_HEADERS} 
                                     dataArray={calificaciones.filter(c => c.ciclo_lectivo === anio)} 
-                                    keys={formatKeys(anio, selectedMateria.id_materia, EDIT_PERMISSION && anio === CURRENT_YEAR)}
+                                    keys={formatKeys(anio, calificacionesValues.id_materia, EDIT_PERMISSION && anio === CURRENT_YEAR)}
                                     onSave={handleSave}
                                     onError={handleError}
                                     editable={EDIT_PERMISSION && anio === CURRENT_YEAR}

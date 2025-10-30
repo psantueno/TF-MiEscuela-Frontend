@@ -42,7 +42,7 @@ export const InformePedagogicoTimeline = ({ informes }) => {
                             <Accordion sx={{ mb: 2 }}>
                                 <AccordionSummary expandIcon={<ExpandMore />} sx={{backgroundColor: "#E8EEF7"}}>
                                     <Typography>
-                                        {informe.alumno} - {informe.materia}
+                                        {informe.titulo}
                                     </Typography>
                                 </AccordionSummary>
                                 <AccordionDetails sx={{backgroundColor: "#F2F6FB"}}>
