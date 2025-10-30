@@ -295,7 +295,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
         </Collapse>
 
         {/* Modulo de calificaciones */}
-        {allowMenu(role, 'calificaciones') || allowMenu(role, 'calificaciones-hijos') && (
+        {(allowMenu(role, 'calificaciones') || allowMenu(role, 'calificaciones-hijos')) && (
         <>
         <ListItem disablePadding>
           <ListItemButton onClick={() => setOpenCalificaciones(!openCalificaciones)}>

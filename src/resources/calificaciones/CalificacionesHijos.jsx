@@ -143,6 +143,11 @@ export const CalificacionesHijos = () => {
                             </Box>
                         </AccordionSummary>
                         <AccordionDetails>
+                            {hijo.calificaciones.length === 0 && (
+                                <Typography variant="body1">
+                                    No se encontraron calificaciones para este alumno.
+                                </Typography>
+                            )}
                             {hijo.anios.map(anio => (
                                 <Box key={anio}>
                                     <Divider key={anio} sx={{ mb: 2, mt:2 }}>

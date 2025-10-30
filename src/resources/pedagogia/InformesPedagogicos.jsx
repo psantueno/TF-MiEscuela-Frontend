@@ -127,6 +127,7 @@ export const InformesPedagogicos = () => {
                 id_informe: informe.id_informe,
                 fecha: new Date(informe.fecha).toLocaleDateString(),
                 contenido: informe.contenido,
+                titulo: informe.titulo,
                 asesorPedagogico: `${informe.asesorPedagogico.usuario.apellido} ${informe.asesorPedagogico.usuario.nombre}`,
                 materia: informe.materiaCurso.materia.nombre,
                 curso: `${informe.materiaCurso.curso.anio_escolar}° ${informe.materiaCurso.curso.division}`,
