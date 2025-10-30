@@ -1,6 +1,7 @@
 import { fetchUtils } from 'react-admin';
 import { stringify } from 'query-string';
 import { api } from "../services/api"
+import { get } from 'react-hook-form';
 
 const API_URL = 'http://localhost:6543/api';
 
@@ -337,6 +338,24 @@ export const dataProvider = {
         data: json.map(h => ({
           ...h,
           id: h.id_tutor,
+        })),
+      })),
+
+  // cargar informe pedagogico
+  crearInformePedagogico: (data) =>
+    httpClient(`${API_URL}/informes-pedagogicos`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }).then(({ json }) => ({
+      data: { ...json, id: json.id_informe || json.insertId },
+    })),
+
+  getAsesoresPedagogicos: () =>
+    httpClient(`${API_URL}/asesores-pedagogicos`)
+      .then(({ json }) => ({
+        data: json.map(a => ({
+          ...a,
+          id: a.id_asesor,
         })),
       })),
 }
