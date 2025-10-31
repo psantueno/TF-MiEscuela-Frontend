@@ -191,6 +191,7 @@ export const Calificaciones = () => {
                 filter: { id_curso: filterValues.curso.id_curso ?? "", id_materia: filterValues.materia.id_materia ?? "", id_alumno: filterValues.alumno.id ?? "" },
             })
             .then(({ data }) => {
+                console.log("Calificaciones fetched:", data);
                 const mappedData = data.map((c) => {
                     return {
                         ciclo_lectivo: c.materiaCurso.curso.cicloLectivo.anio,
