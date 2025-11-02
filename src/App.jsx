@@ -43,6 +43,8 @@ import { RegistrarAsistencia } from './resources/asistencias/RegistrarAsistencia
 import { EliminarAsistencias } from './resources/asistencias/EliminarAsistencias';
 import { AsistenciasHistorico } from './resources/asistencias/AsistenciasHistorico';
 import { RolesAdmin } from './resources/roles/RolesAdmin';
+import { AsignarCursos } from './resources/alumnos/AsignarCursos';
+import { CambiarCurso } from './resources/alumnos/CambiarCurso';
 import { NotFound } from './pages/NotFound';
 import { NoAccess } from './pages/NoAccess';
 import { getRole, allowResource, allowRoute } from './permissions/roles';
@@ -157,6 +159,12 @@ function App() {
                         )}
                         {allowRoute(role, '/gestion-academica/cursos') && (
                           <Route path="/gestion-academica/cursos" element={<Navigate to="/cursos" replace />} />
+                        )}
+                        {allowRoute(role, '/gestion-academica/asignar-cursos') && (
+                          <Route path="/gestion-academica/asignar-cursos" element={<AsignarCursos />} />
+                        )}
+                        {allowRoute(role, '/gestion-academica/cambiar-curso') && (
+                          <Route path="/gestion-academica/cambiar-curso" element={<CambiarCurso />} />
                         )}
                         {allowRoute(role, '/administracion/roles') && (
                           <Route path="/administracion/roles" element={<RolesAdmin initialTab={0} />} />

@@ -135,7 +135,7 @@ export const CalificacionesHijos = () => {
                                     {`${hijo.alumno.usuario.apellido} ${hijo.alumno.usuario.nombre}`}
                                 </Typography>
                                 <Typography variant="subtitle1">
-                                    Curso: {hijo.alumno.curso.anio_escolar}° {hijo.alumno.curso.division}
+                                    Curso: {hijo?.alumno?.cursos?.[0] ? `${hijo.alumno.cursos[0].anio_escolar}° ${hijo.alumno.cursos[0].division}` : 'Sin curso'}
                                 </Typography>
                                 <Typography variant="subtitle2">
                                     {hijo.alumno.AlumnoTutor.parentesco}
