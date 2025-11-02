@@ -300,6 +300,24 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
                 <ListItemText primary="Cursos" sx={getTextStyle(isActive('/cursos'))} />
               </ListItemButton>
             )}
+            {allowMenu(role, 'asignar-cursos') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(isActive('/gestion-academica/asignar-cursos')) }}
+                selected={isActive('/gestion-academica/asignar-cursos')}
+                onClick={() => handleItemClick({ id: 'asignar-cursos', to: '/gestion-academica/asignar-cursos' })}
+              >
+                <ListItemText primary="Asignar cursos" sx={getTextStyle(isActive('/gestion-academica/asignar-cursos'))} />
+              </ListItemButton>
+            )}
+            {allowMenu(role, 'cambiar-curso') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(isActive('/gestion-academica/cambiar-curso')) }}
+                selected={isActive('/gestion-academica/cambiar-curso')}
+                onClick={() => handleItemClick({ id: 'cambiar-curso', to: '/gestion-academica/cambiar-curso' })}
+              >
+                <ListItemText primary="Cambios de curso" sx={getTextStyle(isActive('/gestion-academica/cambiar-curso'))} />
+              </ListItemButton>
+            )}
           </List>
         </Collapse>
 

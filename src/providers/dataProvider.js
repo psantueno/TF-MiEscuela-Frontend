@@ -115,6 +115,54 @@ export const dataProvider = {
       }));
     }
 
+    // Recurso virtual para 'alumnos-sin-curso'
+    if (resource === 'alumnos-sin-curso') {
+      const { field, order } = params.sort || {};
+      const queryASC = new URLSearchParams({
+        page,
+        perPage,
+        ...(field ? { sort: field } : {}),
+        ...(order ? { order } : {}),
+        apellido: filter?.apellido || '',
+        nombre: filter?.nombre || '',
+        numero_documento: filter?.numero_documento || '',
+        ...(filter?.id_ciclo ? { id_ciclo: filter.id_ciclo } : {}),
+      }).toString();
+      const urlASC = `${API_URL}/alumnos/sin-curso?${queryASC}`;
+      return httpClient(urlASC).then(({ json }) => ({
+        data: (json.data || json).map(item => ({
+          ...item,
+          id: item.id_alumno || item.id,
+        })),
+        total: json.total,
+      }));
+    }
+
+    // Recurso virtual para 'alumnos-con-curso'
+    if (resource === 'alumnos-con-curso') {
+      const { field, order } = params.sort || {};
+      const queryACC = new URLSearchParams({
+        page,
+        perPage,
+        ...(field ? { sort: field } : {}),
+        ...(order ? { order } : {}),
+        apellido: filter?.apellido || '',
+        nombre: filter?.nombre || '',
+        numero_documento: filter?.numero_documento || '',
+        ...(filter?.id_ciclo ? { id_ciclo: filter.id_ciclo } : {}),
+        ...(filter?.id_curso ? { id_curso: filter.id_curso } : {}),
+        modo: 'cambio',
+      }).toString();
+      const urlACC = `${API_URL}/alumnos/con-curso?${queryACC}`;
+      return httpClient(urlACC).then(({ json }) => ({
+        data: (json.data || json).map(item => ({
+          ...item,
+          id: item.id_alumno || item.id,
+        })),
+        total: json.total,
+      }));
+    }
+
     // Resto de recursos estándar
     const { field, order } = params.sort || {};
     const query = new URLSearchParams({
@@ -364,6 +412,30 @@ export const dataProvider = {
           id: d.id_docente,
         })),
       })),
+
+  // obtener cursos por ciclo lectivo (estados abiertos/planeamiento)
+  getCursosPorCiclo: (idCiclo) =>
+    httpClient(`${API_URL}/cursos?${new URLSearchParams({ id_ciclo: idCiclo, estado: 'abierto,planeamiento' }).toString()}`)
+      .then(({ json }) => ({
+        data: (json.data || json).map(c => ({
+          ...c,
+          id: c.id_curso ?? c.id,
+        })),
+      })),
+
+  // asignar curso (bulk)
+  asignarCursoAlumnos: (ids, idCurso) =>
+    httpClient(`${API_URL}/alumnos/curso/assign-bulk`, {
+      method: 'POST',
+      body: JSON.stringify({ ids, id_curso: Number(idCurso) }),
+    }).then(({ json }) => ({ data: json })),
+
+  // mover de curso (bulk)
+  moverCursoAlumnos: (ids, idCurso) =>
+    httpClient(`${API_URL}/alumnos/curso/move-bulk`, {
+      method: 'POST',
+      body: JSON.stringify({ ids, id_curso: Number(idCurso) }),
+    }).then(({ json }) => ({ data: json })),
 
   // obtener los hijos de un tutor
   getHijosPorTutor: () =>
