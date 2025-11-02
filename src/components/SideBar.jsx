@@ -291,6 +291,15 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
                 <ListItemText primary="Ciclos lectivos" sx={getTextStyle(isActive('/ciclos-lectivos'))} />
               </ListItemButton>
             )}
+            {allowMenu(role, 'cursos') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(isActive('/cursos')) }}
+                selected={isActive('/cursos') || location.pathname.startsWith('/gestion-academica/cursos')}
+                onClick={() => handleItemClick({ id: 'cursos', to: '/gestion-academica/cursos' })}
+              >
+                <ListItemText primary="Cursos" sx={getTextStyle(isActive('/cursos'))} />
+              </ListItemButton>
+            )}
           </List>
         </Collapse>
 

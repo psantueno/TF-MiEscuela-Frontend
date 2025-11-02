@@ -31,10 +31,42 @@ const httpClient = (url, options = {}) => {
 
 
 export const dataProvider = {
+  // Normaliza el campo id según el recurso
+  _mapId(resource, item) {
+    switch (resource) {
+      case 'cursos':
+        {
+          const v = item.id_curso ?? item.id;
+          const n = Number(v);
+          return Number.isNaN(n) ? v : n;
+        }
+      case 'ciclos-lectivos':
+        {
+          const v = item.id_ciclo ?? item.id;
+          const n = Number(v);
+          return Number.isNaN(n) ? v : n;
+        }
+      case 'asistencias':
+        return item.id_asistencia ?? item.id;
+      case 'alumnos':
+        return item.id_alumno ?? item.id;
+      case 'docentes':
+        return item.id_docente ?? item.id;
+      case 'roles':
+        return item.id_rol ?? item.id;
+      case 'usuarios':
+        return item.id_usuario ?? item.id;
+      default:
+        return item.id;
+    }
+  },
   getList: (resource, params) => {
     const { page, perPage } = params.pagination;
 
     const { filter } = params;
+
+    // Cursos: usar getList por defecto (sin caso especial). Si se requiere lógica
+    // particular, utilice un método custom del dataProvider (p.ej., getCursosPorRol).
 
     // Soporte especial para el recurso virtual 'usuarios-sin-rol'
     if (resource === 'usuarios-sin-rol') {
@@ -84,24 +116,22 @@ export const dataProvider = {
     }
 
     // Resto de recursos estándar
+    const { field, order } = params.sort || {};
     const query = new URLSearchParams({
       page,
       perPage,
+      ...(field ? { sort: field } : {}),
+      ...(order ? { order } : {}),
       ...filter,
     }).toString();
 
     const url = `${API_URL}/${resource}?${query}`;
 
     return httpClient(url).then(({ json }) => ({
-      data: json.data ?
-        json.data.map(item => ({
-          ...item,
-          id: item.id_ciclo || item.id_asistencia || item.id_alumno || item.id_docente || item.id_curso || item.id_rol || item.id_usuario || item.id
-        })) :
-        json.map(item => ({
-          ...item,
-          id: item.id_ciclo || item.id_asistencia || item.id_alumno || item.id_docente || item.id_curso || item.id_rol || item.id_usuario || item.id
-        })),
+      data: (json.data ? json.data : json).map(item => ({
+        ...item,
+        id: dataProvider._mapId(resource, item),
+      })),
       total: json.total,
     }));
   },
@@ -110,19 +140,23 @@ export const dataProvider = {
     httpClient(`${API_URL}/${resource}/${params.id}`).then(({ json }) => ({
       data: {
         ...json,
-        id: json.id_ciclo || json.id_asistencia || json.id_alumno || json.id_docente || json.id_curso || json.id_rol || json.id_usuario || json.id
+        id: dataProvider._mapId(resource, json),
       },
     })),
 
   getMany: (resource, params) => {
     const query = { filter: JSON.stringify({ id: params.ids }) };
     const url = `${API_URL}/${resource}?${stringify(query)}`;
-    return httpClient(url).then(({ json }) => ({
-      data: json.map(item => ({
-        ...item,
-        id: item.id_ciclo || item.id_asistencia || item.id_alumno || item.id_docente || item.id_curso || item.id_rol || item.id_usuario || item.id
-      }))
-    }));
+    return httpClient(url).then(({ json }) => {
+      const raw = json?.data ?? json;
+      const arr = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+      return {
+        data: arr.map(item => ({
+          ...item,
+          id: dataProvider._mapId(resource, item),
+        }))
+      };
+    });
   },
 
   getManyReference: (resource, params) => {
@@ -138,7 +172,7 @@ export const dataProvider = {
       method: 'POST',
       body: JSON.stringify(params.data),
     }).then(({ json }) => ({
-      data: { ...params.data, id: json.id || json.id_ciclo || json.id_asistencia || json.id_usuario || json.insertId },
+      data: { ...params.data, id: dataProvider._mapId(resource, json) ?? json.id ?? json.insertId },
     })),
 
   update: (resource, params) =>
@@ -148,7 +182,7 @@ export const dataProvider = {
     }).then(({ json }) => ({
       data: {
         ...json,
-        id: json.id_ciclo || json.id_asistencia || json.id_alumno || json.id_docente || json.id_curso || json.id_rol || json.id_usuario || json.id
+        id: dataProvider._mapId(resource, json),
       }
     })),
 

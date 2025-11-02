@@ -18,7 +18,7 @@ export const ROLE_PERMISSIONS = {
       usuarios: resourcePerms({ list: true, show: true, create: true, edit: true, delete: true }),
       alumnos: resourcePerms({ list: true, show: true }),
       docentes: resourcePerms({ list: true, show: true }),
-      cursos: resourcePerms({ list: true, show: true }),
+      cursos: resourcePerms({ list: true, show: true, create: true, edit: true, delete: true }),
       roles: resourcePerms({ list: true, show: true }),
       'asistencia-estados': resourcePerms({ list: true, show: true }),
     },
@@ -27,6 +27,7 @@ export const ROLE_PERMISSIONS = {
       '/administracion/roles/modificar',
       '/administracion/usuarios',
       '/gestion-academica/ciclos-lectivos',
+      '/gestion-academica/cursos',
       '/asistencias/recientes',
       '/asistencias/registrar',
       '/asistencias/historico',
@@ -50,6 +51,7 @@ export const ROLE_PERMISSIONS = {
       'calificaciones',
       'administracion',
       'ciclos-lectivos',
+      'cursos',
       'informes-pedagogicos',
     ]),
   },
@@ -59,18 +61,19 @@ export const ROLE_PERMISSIONS = {
       asistencias: resourcePerms({ list: true, show: true }),
       alumnos: resourcePerms({ list: true, show: true }),
       docentes: resourcePerms({ list: true, show: true }),
-      cursos: resourcePerms({ list: true, show: true }),
       'asistencia-estados': resourcePerms({ list: true, show: true }),
     },
     routes: new Set([
       '/asistencias/recientes',
       '/asistencias/historico',
-      '/calificaciones'
+      '/calificaciones',
+      '/gestion-academica/cursos',
     ]),
     menu: new Set([
       'asistencias-recientes',
       'asistencias-historico',
       'calificaciones',
+      'cursos',
     ]),
   },
 
@@ -79,7 +82,6 @@ export const ROLE_PERMISSIONS = {
       asistencias: resourcePerms({ list: true, show: true, create: true, edit: true, delete: true }),
       alumnos: resourcePerms({ list: true, show: true }),
       docentes: resourcePerms({ list: true, show: true }),
-      cursos: resourcePerms({ list: true, show: true }),
       'asistencia-estados': resourcePerms({ list: true, show: true }),
     },
     routes: new Set([
@@ -87,12 +89,14 @@ export const ROLE_PERMISSIONS = {
       '/asistencias/registrar',
       '/asistencias/historico',
       '/asistencias/eliminar',
+      '/gestion-academica/cursos',
     ]),
     menu: new Set([
       'asistencias-recientes',
       'asistencias-registrar',
       'asistencias-historico',
       'asistencias-eliminar',
+      'cursos',
     ]),
   },
 
@@ -100,7 +104,6 @@ export const ROLE_PERMISSIONS = {
     resources: {
       asistencias: resourcePerms({ list: true, show: true }),
       alumnos: resourcePerms({ list: true, show: true }),
-      cursos: resourcePerms({ list: true, show: true }),
       'asistencia-estados': resourcePerms({ list: true, show: true }),
     },
     routes: new Set([
