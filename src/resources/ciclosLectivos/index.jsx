@@ -26,13 +26,13 @@ import {
   SaveButton,
   ListButton
 } from 'react-admin';
-import { Box, Typography, Grid, Button } from '@mui/material';
+import { Box, Typography, Grid, Button, Alert } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 const EstadoChoices = [
   { id: 'Abierto', name: 'Abierto' },
-  { id: 'Planeado', name: 'Planeado' },
+  { id: 'Planeamiento', name: 'Planeamiento' },
   { id: 'Cerrado', name: 'Cerrado' },
 ];
 
@@ -89,9 +89,6 @@ const CiclosListActions = () => {
   const navigate = useNavigate();
   return (
     <TopToolbar>
-      <Button onClick={() => navigate('/ciclos-lectivos')} startIcon={<ArrowBack />} size="small" sx={{ mr: 1 }}>
-        Volver
-      </Button>
       <FilterButton label="Filtrar por" />
       <CreateButton label="Crear" />
       <ExportButton label="Exportar" />
@@ -103,11 +100,12 @@ const DeleteCicloButton = () => {
   const notify = useNotify();
   const record = useRecordContext();
   if (!record) return null;
+  const cerrado = record?.estado === 'Cerrado';
+  const title = cerrado ? 'No se puede eliminar: ciclo cerrado' : 'Eliminar';
 
   return (
     <DeleteWithConfirmButton
       label="Borrar"
-      title="Eliminar"
       confirmTitle="Confirmar eliminación"
       confirmContent={
         <Box sx={{ mt: 1 }}>
@@ -121,9 +119,17 @@ const DeleteCicloButton = () => {
       }
       size="small"
       sx={{ minWidth: 0, p: 0.25, ml: 1 }}
+      disabled={cerrado}
+      title={title}
       mutationOptions={{
         onSuccess: () => notify('Ciclo lectivo eliminado correctamente', { type: 'success' }),
-        onError: (error) => notify(error?.message || 'Error al eliminar ciclo lectivo', { type: 'warning' }),
+        onError: (e) => {
+          let msg = e?.body?.error || e?.body?.message || e?.message || 'Error al eliminar ciclo lectivo';
+          if (e?.status === 409 && !e?.body?.error) {
+            msg = 'No se puede eliminar: tiene registros asociados o está cerrado';
+          }
+          notify(msg, { type: 'warning' });
+        },
       }}
     />
   );
@@ -132,32 +138,39 @@ const DeleteCicloButton = () => {
 export const CiclosLectivosList = () => (
   <List title="Ciclos lectivos" actions={<CiclosListActions />} filters={ciclosFilters} perPage={25}>
     <Datagrid rowClick="show">
-      <TextField source="id_ciclo" label="ID" />
       <TextField source="anio" label="Año" />
       <DateField source="fecha_inicio" label="Fecha inicio" showTime={false} />
       <DateField source="fecha_fin" label="Fecha fin" showTime={false} />
       <TextField source="estado" label="Estado" />
-      <EditButton label="Editar" />
+      <EditCicloButton />
       <ShowButton label="Ver" />
       <DeleteCicloButton />
     </Datagrid>
   </List>
 );
 
-const FormFields = () => (
+const EditCicloButton = () => {
+  const record = useRecordContext();
+  if (!record) return null;
+  const disabled = record?.estado === 'Cerrado';
+  const title = disabled ? 'No se puede editar: ciclo cerrado' : 'Editar';
+  return <EditButton label="Editar" disabled={disabled} title={title} />;
+};
+
+const FormFields = ({ disabled = false }) => (
   <>
     <Grid container rowSpacing={1} columnSpacing={3}>
       <Grid size={{ xs: 12, md: 3 }}>
-        <NumberInput source="anio" label="Año" validate={[required()]} fullWidth />
+        <NumberInput source="anio" label="Año" validate={[required()]} fullWidth disabled={disabled} />
       </Grid>
       <Grid size={{ xs: 12, md: 4 }}>
-        <DateInput source="fecha_inicio" label="Fecha inicio" validate={[required()]} fullWidth />
+        <DateInput source="fecha_inicio" label="Fecha inicio" validate={[required()]} fullWidth disabled={disabled} />
       </Grid>
       <Grid size={{ xs: 12, md: 4 }}>
-        <DateInput source="fecha_fin" label="Fecha fin" validate={[required()]} fullWidth />
+        <DateInput source="fecha_fin" label="Fecha fin" validate={[required()]} fullWidth disabled={disabled} />
       </Grid>
       <Grid size={{ xs: 12, md: 3 }}>
-        <SelectInput source="estado" label="Estado" choices={EstadoChoices} />
+        <SelectInput source="estado" label="Estado" choices={EstadoChoices} disabled={disabled} />
       </Grid>
     </Grid>
   </>
@@ -206,10 +219,31 @@ export const CiclosLectivosEdit = () => {
         },
       }}
     >
-      <SimpleForm sanitizeEmptyValues validate={validateCiclo} toolbar={<Toolbar><SaveButton label="Guardar" /></Toolbar>}>
-        <FormFields />
-      </SimpleForm>
+      <CicloEditForm />
     </Edit>
+  );
+};
+
+const CicloEditForm = () => {
+  const record = useRecordContext();
+  const cerrado = record?.estado === 'Cerrado';
+  return (
+    <SimpleForm
+      sanitizeEmptyValues
+      validate={validateCiclo}
+      toolbar={
+        <Toolbar>
+          <SaveButton label="Guardar" disabled={cerrado} />
+        </Toolbar>
+      }
+    >
+      {cerrado && (
+        <Box sx={{ mb: 2 }}>
+          <Alert severity="warning">Este ciclo está en estado "Cerrado". No se puede editar.</Alert>
+        </Box>
+      )}
+      <FormFields disabled={cerrado} />
+    </SimpleForm>
   );
 };
 
@@ -228,12 +262,17 @@ const CiclosCreateActions = () => (
   </TopToolbar>
 );
 
-const CiclosShowActions = () => (
-  <TopToolbar>
-    <ListButton label="Volver al listado" icon={<ArrowBack />} />
-    <EditButton label="Editar" />
-  </TopToolbar>
-);
+const CiclosShowActions = () => {
+  const record = useRecordContext();
+  const disabled = record?.estado === 'Cerrado';
+  const title = disabled ? 'No se puede editar: ciclo cerrado' : 'Editar';
+  return (
+    <TopToolbar>
+      <ListButton label="Volver al listado" icon={<ArrowBack />} />
+      <EditButton label="Editar" disabled={disabled} title={title} />
+    </TopToolbar>
+  );
+};
 
 export const CiclosLectivosShow = () => (
   <Show title="Ver ciclo lectivo" actions={<CiclosShowActions />}>
