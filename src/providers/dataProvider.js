@@ -5,6 +5,10 @@ import { get } from 'react-hook-form';
 
 const API_URL = 'http://localhost:6543/api';
 
+const ENABLE_HTTP_LOGS = false;
+const ENABLE_DP_LOGS = false;
+const dlog = (...args) => { if (ENABLE_HTTP_LOGS || ENABLE_DP_LOGS) { try { console.log(...args); } catch {} } };
+
 const httpClient = (url, options = {}) => {
   if (!options.headers) {
     options.headers = new Headers({ Accept: 'application/json' });
@@ -26,7 +30,25 @@ const httpClient = (url, options = {}) => {
 
   options.credentials = 'include';
 
-  return fetchUtils.fetchJson(url, options);
+  try {
+    if (ENABLE_HTTP_LOGS) {
+      const method = options?.method || 'GET';
+      const previewBody = (() => {
+        try { return options?.body ? JSON.stringify(JSON.parse(options.body)).slice(0, 400) : undefined; } catch { return String(options?.body).slice(0, 200); }
+      })();
+      dlog(`[HTTP] ${method} ${url}`, previewBody ? `body: ${previewBody}` : '');
+    }
+  } catch {}
+  return fetchUtils.fetchJson(url, options).then((res) => {
+    try {
+      if (ENABLE_HTTP_LOGS) {
+        const cr = res.headers?.get?.('Content-Range');
+        const size = Array.isArray(res.json) ? res.json.length : (res.json?.data?.length ?? 'n/a');
+        dlog('[HTTP RES]', res.status, url, 'Content-Range:', cr || 'none', 'items:', size);
+      }
+    } catch {}
+    return res;
+  });
 };
 
 
@@ -56,11 +78,145 @@ export const dataProvider = {
         return item.id_rol ?? item.id;
       case 'usuarios':
         return item.id_usuario ?? item.id;
+      case 'materias':
+        return item.id_materia ?? item.id;
+      case 'materias-curso':
+        return item.id_materia_curso ?? item.id;
+      case 'docentes-materias-curso':
+        // backend expone id sintético string
+        return item.id ?? `${item.id_docente}:${item.id_materia_curso}:${item.fecha_inicio}`;
       default:
         return item.id;
     }
   },
   getList: (resource, params) => {
+    // Recurso especial con RA Simple REST (_start/_end/_sort/_order & filter JSON)
+    if (resource === 'docentes-materias-curso') {
+      const { page, perPage } = params.pagination || { page: 1, perPage: 25 };
+      const rangeStart = (page - 1) * perPage;
+      const rangeEnd = page * perPage - 1;
+      const { field, order } = params.sort || {};
+      const rawFilter = params.filter || {};
+      // Limpia valores vacíos ('', null, undefined) para evitar where con NaN o strings vacías
+      const baseFilter = Object.fromEntries(
+        Object.entries(rawFilter).filter(([, v]) => v !== '' && v !== null && v !== undefined)
+      );
+      const { numero_documento, id_ciclo, ...restFilter } = baseFilter;
+
+      const buildAndRequest = async () => {
+        let effectiveFilter = { ...restFilter };
+
+        // Si filtra por DNI, resolvemos ids de docentes primero
+        if (numero_documento) {
+          const docentesUrl = `${API_URL}/docentes?${new URLSearchParams({
+            filter: JSON.stringify({ numero_documento })
+          }).toString()}`;
+          const { json: docentesJson } = await httpClient(docentesUrl);
+          const docentesArr = Array.isArray(docentesJson) ? docentesJson : (docentesJson?.data ?? []);
+          const docenteIds = docentesArr.map(d => d.id_docente ?? d.id).filter(Boolean);
+          if (!docenteIds.length) {
+            return { data: [], total: 0 };
+          }
+          // soporta tanto único id como lista
+          effectiveFilter.id_docente = docenteIds.length === 1 ? docenteIds[0] : docenteIds;
+        }
+
+        // Si filtra por ciclo, resolvemos ids de materias-curso del ciclo (cursos -> materias-curso)
+        if (id_ciclo) {
+          // 1) obtener cursos del ciclo
+          const cursosUrl = `${API_URL}/cursos?${new URLSearchParams({ id_ciclo }).toString()}`;
+          const { json: cursosJson } = await httpClient(cursosUrl);
+          const cursosArr = Array.isArray(cursosJson) ? cursosJson : (cursosJson?.data ?? []);
+          const cursoIds = cursosArr.map(c => c.id_curso ?? c.id).filter(Boolean);
+          if (!cursoIds.length) {
+            return { data: [], total: 0 };
+          }
+          // 2) obtener materias-curso de esos cursos
+          const mcUrl = `${API_URL}/materias-curso?${new URLSearchParams({
+            filter: JSON.stringify({ id_curso: cursoIds })
+          }).toString()}`;
+          const { json: mcJson } = await httpClient(mcUrl);
+          const mcArr = Array.isArray(mcJson) ? mcJson : (mcJson?.data ?? []);
+          const mcIds = mcArr.map(m => m.id_materia_curso ?? m.id).filter(Boolean);
+          if (!mcIds.length) {
+            return { data: [], total: 0 };
+          }
+          effectiveFilter.id_materia_curso = mcIds.length === 1 ? mcIds[0] : mcIds;
+        }
+
+        try { if (ENABLE_DP_LOGS) dlog('[DP][getList] docentes-materias-curso', { page, perPage, sort: { field, order }, filter: effectiveFilter }); } catch {}
+
+        const qs = new URLSearchParams({
+          _start: String(rangeStart),
+          _end: String(rangeEnd + 1),
+          ...(field ? { _sort: field } : {}),
+          ...(order ? { _order: order } : {}),
+          filter: JSON.stringify(effectiveFilter),
+        }).toString();
+        const url = `${API_URL}/${resource}?${qs}`;
+        const { json, headers } = await httpClient(url);
+        const raw = Array.isArray(json) ? json : (json?.data ?? []);
+        const contentRange = headers?.get?.('Content-Range') || headers?.get?.('content-range');
+        const headerTotal = contentRange ? parseInt(String(contentRange).split('/').pop(), 10) : undefined;
+        let total = headerTotal ?? (json?.total ?? raw.length ?? 0);
+        if (Array.isArray(raw) && typeof headerTotal === 'number' && raw.length > headerTotal) {
+          total = raw.length;
+        }
+        return {
+          data: raw.map(item => ({ ...item, id: dataProvider._mapId(resource, item) })),
+          total,
+        };
+      };
+
+      return buildAndRequest();
+    }
+    // Recursos con soporte de _start/_end y Content-Range
+    if (resource === 'docentes' || resource === 'materias-curso') {
+      const { page, perPage } = params.pagination || { page: 1, perPage: 25 };
+      const rangeStart = (page - 1) * perPage;
+      const rangeEnd = page * perPage - 1;
+      const { field, order } = params.sort || {};
+      const filter = params.filter || {};
+      // Pasar id_ciclo e id_curso (si vienen) como query directos para backend RA
+      const passthrough = {};
+      if (filter.id_ciclo !== undefined && filter.id_ciclo !== null && filter.id_ciclo !== '') {
+        passthrough.id_ciclo = filter.id_ciclo;
+      }
+      if (filter.id_curso !== undefined && filter.id_curso !== null && filter.id_curso !== '') {
+        // Nota: backend espera un único id_curso; si viene array, lo ignoramos aquí
+        if (!Array.isArray(filter.id_curso)) passthrough.id_curso = filter.id_curso;
+      }
+      const filterJson = Object.keys(filter || {}).length ? { filter: JSON.stringify(filter) } : {};
+      const qs = new URLSearchParams({
+        _start: String(rangeStart),
+        _end: String(rangeEnd + 1),
+        ...(field ? { _sort: field } : {}),
+        ...(order ? { _order: order } : {}),
+        ...filterJson,
+        ...passthrough,
+      }).toString();
+      const url = `${API_URL}/${resource}?${qs}`;
+      return httpClient(url).then(({ json, headers }) => {
+        let raw = Array.isArray(json) ? json : (json?.data ?? []);
+        // Solo mostrar materias-curso que tengan curso asociado
+        if (resource === 'materias-curso') {
+          raw = raw.filter((r) => {
+            const idCurso = r?.id_curso ?? r?.curso?.id_curso;
+            const hasCursoMeta = r?.curso_label || r?.curso_anio_escolar != null || r?.curso_division != null;
+            return Boolean(idCurso || hasCursoMeta);
+          });
+        }
+        const contentRange = headers?.get?.('Content-Range') || headers?.get?.('content-range');
+        let total = contentRange ? parseInt(String(contentRange).split('/').pop(), 10) : (json?.total ?? raw.length ?? 0);
+        if (Array.isArray(raw) && typeof total === 'number' && raw.length > total) {
+          total = raw.length;
+        }
+        return {
+          data: raw.map(item => ({ ...item, id: dataProvider._mapId(resource, item) })),
+          total,
+        };
+      });
+    }
     const { page, perPage } = params.pagination;
 
     const { filter } = params;
@@ -137,6 +293,8 @@ export const dataProvider = {
         total: json.total,
       }));
     }
+
+    // recurso 'docentes-sin-asignacion' eliminado
 
     // Recurso virtual para 'alumnos-con-curso'
     if (resource === 'alumnos-con-curso') {
@@ -215,16 +373,23 @@ export const dataProvider = {
     }));
   },
 
-  create: (resource, params) =>
-    httpClient(`${API_URL}/${resource}`, {
+  create: (resource, params) => {
+    let payload = params.data;
+    if (resource === 'docentes-materias-curso') {
+      const { id_ciclo, id_curso, ...rest } = params?.data || {};
+      payload = rest;
+    }
+    return httpClient(`${API_URL}/${resource}`, {
       method: 'POST',
-      body: JSON.stringify(params.data),
+      body: JSON.stringify(payload),
     }).then(({ json }) => ({
-      data: { ...params.data, id: dataProvider._mapId(resource, json) ?? json.id ?? json.insertId },
-    })),
+      data: { ...payload, id: dataProvider._mapId(resource, json) ?? json.id ?? json.insertId },
+    }));
+  },
 
-  update: (resource, params) =>
-    httpClient(`${API_URL}/${resource}/${params.id}`, {
+  update: (resource, params) => {
+    try { if (ENABLE_DP_LOGS) dlog('[DP] update', resource, params?.id, { keys: Object.keys(params?.data || {}) }); } catch {}
+    return httpClient(`${API_URL}/${resource}/${params.id}`, {
       method: 'PUT',
       body: JSON.stringify(params.data),
     }).then(({ json }) => ({
@@ -232,7 +397,8 @@ export const dataProvider = {
         ...json,
         id: dataProvider._mapId(resource, json),
       }
-    })),
+    }));
+  },
 
   updateMany: (resource, params) =>
     Promise.all(
@@ -298,7 +464,9 @@ export const dataProvider = {
       const { data } = await api.get(url);
       return { data };
     } catch (err) {
-      console.error("❌ Error obteniendo asistencias históricas:", err);
+      if (ENABLE_DP_LOGS) {
+        try { console.error("❌ Error obteniendo asistencias históricas:", err); } catch {}
+      }
       throw err.response?.data || err;
     }
   },

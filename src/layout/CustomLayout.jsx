@@ -13,14 +13,11 @@ export const CustomLayout = ({ children }) => {
     const segments = path.split('/').filter(Boolean);
     const first = segments[0] || 'general';
     // Mapear rutas de administración
-    if (
-      first === 'administracion' ||
-      first === 'usuarios' ||
-      first === 'roles' ||
-      first === 'cursos' ||
-      first === 'materias'
-    ) {
+    if (first === 'administracion' || first === 'usuarios' || first === 'roles') {
       return 'administracion';
+    }
+    if (first === 'cursos' || first === 'materias' || first === 'ciclos-lectivos') {
+      return 'gestion-academica';
     }
     return first;
   };
