@@ -135,10 +135,10 @@ export const CalificacionesHijos = () => {
                                     {`${hijo.alumno.usuario.apellido} ${hijo.alumno.usuario.nombre}`}
                                 </Typography>
                                 <Typography variant="subtitle1">
-                                    Curso: {hijo?.alumno?.cursos?.[0] ? `${hijo.alumno.cursos[0].anio_escolar}° ${hijo.alumno.cursos[0].division}` : 'Sin curso'}
+                                    Curso: {hijo?.alumno?.curso?.[0] ? `${hijo.alumno.curso[0].anio_escolar}° ${hijo.alumno.curso[0].division}` : 'Sin curso'}
                                 </Typography>
                                 <Typography variant="subtitle2">
-                                    {hijo.alumno.AlumnoTutor.parentesco}
+                                    {hijo.alumno.tutor.parentesco}
                                 </Typography>
                             </Box>
                         </AccordionSummary>

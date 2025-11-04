@@ -22,7 +22,7 @@ import {
     Search,
     ExpandMore,
     PictureAsPdf,
-    Info,
+    Add,
     Edit,
     SearchOff
 } from "@mui/icons-material";
@@ -60,6 +60,7 @@ export const Calificaciones = () => {
     const [showEmptyAlumnosMessage, setShowEmptyAlumnosMessage] = useState(false);
     const [showEmptyMateriasMessage, setShowEmptyMateriasMessage] = useState(false);
     const [showEmptyCalificacionesMessage, setShowEmptyCalificacionesMessage] = useState(false);
+    const [showAddTable, setShowAddTable] = useState(false);
     const [disabledSearchButton, setDisabledSearchButton] = useState(true);
     const [loading, setLoading] = useState(false);
     const [open, setOpen] = useState(false);
@@ -106,6 +107,16 @@ export const Calificaciones = () => {
             })
             .catch(() => setCursos([]))
             .finally(() => setLoading(false));
+
+        if(EDIT_PERMISSION){
+            dataProvider
+            .getTiposCalificaciones()
+            .then(({ data }) => {
+                setTiposCalificaciones(data);
+            }).catch(() => {
+                TABLE_KEYS.find(k => k.key === "tipo").options = [];
+            });
+        }
     }, [dataProvider]);
 
     useEffect(() => {
@@ -161,19 +172,10 @@ export const Calificaciones = () => {
         if(filterValues.alumno) title += ` - ${filterValues.alumno.usuario.apellido} ${filterValues.alumno.usuario.nombre}`;
         if(filterValues.materia) title += ` - ${filterValues.materia.nombre}`;
         setTitle(title);
-
-        if(EDIT_PERMISSION){
-            dataProvider
-            .getTiposCalificaciones()
-            .then(({ data }) => {
-                setTiposCalificaciones(data);
-            }).catch(() => {
-                TABLE_KEYS.find(k => k.key === "tipo").options = [];
-            });
-        }
     }, [calificaciones]);
 
     const handleSearch = async () => {
+        setShowAddTable(false);
         setLoading(true);
         setSelectableMaterias(materias);
         setCalificacionesValues(
@@ -390,6 +392,11 @@ export const Calificaciones = () => {
         setOpen(true);
     }
 
+    const handleAddTable = () => {
+        setShowAddTable(true);
+        setShowEmptyCalificacionesMessage(false);
+    }
+
     return (
         <Box sx={{paddingBottom: 2}}>
             <LoaderOverlay open={loading} />
@@ -534,11 +541,32 @@ export const Calificaciones = () => {
                     >
                         <SearchOff sx={{ fontSize: 60, mb: 1, color: "#9E9E9E" }} />
                         <Typography variant="h6" fontWeight="500">
-                            No hay calificaciones cargadas en este curso.
+                            No hay calificaciones cargadas que cumplan con los filtros seleccionados.
                         </Typography>
                         <Typography variant="body2" sx={{ mt: 0.5, color: "#9E9E9E" }}>
-                            Verifica que el curso tenga calificaciones cargadas o selecciona otro curso.
+                            Verifica que el curso tenga calificaciones cargadas o selecciona otros filtros.
                         </Typography>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            startIcon={<Add />}
+                            sx={{ mt: 2 }} 
+                            onClick={handleAddTable}
+                        >
+                            Agregar Calificaciones
+                        </Button>
+                    </Box>
+                }
+                {showAddTable &&
+                    <Box>
+                        <CustomTable 
+                            headers={TABLE_HEADERS} 
+                            dataArray={calificaciones} 
+                            keys={formatKeys(CURRENT_YEAR, calificacionesValues.id_materia, true)}
+                            onSave={handleSave}
+                            onError={handleError}
+                            editable={true}
+                        />
                     </Box>
                 }
                 {!loading && calificaciones.length > 0 && anios.map(anio => (
