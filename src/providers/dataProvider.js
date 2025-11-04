@@ -199,28 +199,6 @@ export const dataProvider = {
       const url = `${API_URL}/${resource}?${qs}`;
       return httpClient(url).then(({ json, headers }) => {
         let raw = Array.isArray(json) ? json : (json?.data ?? []);
-        // Solo mostrar materias-curso válidas y, si corresponde, del ciclo filtrado
-        if (resource === 'materias-curso') {
-          // Filtro por curso asociado (excluye registros "Materia - ")
-          raw = raw.filter((r) => {
-            const idCurso = r?.id_curso ?? r?.curso?.id_curso;
-            const hasIdCurso = idCurso !== undefined && idCurso !== null && String(idCurso).trim() !== '';
-            const hasCursoMeta = (
-              (r?.curso_label != null && String(r.curso_label).trim() !== '') ||
-              (r?.curso_anio_escolar != null && String(r.curso_anio_escolar).trim() !== '') ||
-              (r?.curso_division != null && String(r.curso_division).trim() !== '')
-            );
-            return Boolean(hasIdCurso || hasCursoMeta);
-          });
-          // Filtro defensivo por ciclo si fue solicitado desde el filtro RA
-          const cicloFilter = (params.filter || {}).id_ciclo;
-          if (cicloFilter !== undefined && cicloFilter !== null && cicloFilter !== '') {
-            raw = raw.filter((r) => {
-              const ciclo = r?.id_ciclo ?? r?.ciclo?.id_ciclo ?? r?.ciclo_anio;
-              return String(ciclo) === String(cicloFilter);
-            });
-          }
-        }
         const contentRange = headers?.get?.('Content-Range') || headers?.get?.('content-range');
         let total = contentRange ? parseInt(String(contentRange).split('/').pop(), 10) : (json?.total ?? raw.length ?? 0);
         // Tras el filtrado defensivo, priorizamos la cantidad efectiva
