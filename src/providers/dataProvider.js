@@ -177,12 +177,13 @@ export const dataProvider = {
       const rangeEnd = page * perPage - 1;
       const { field, order } = params.sort || {};
       const filter = params.filter || {};
-      // Pasar id_ciclo e id_curso (si vienen) como query directos para backend RA
+      // Pasar id_ciclo (si viene) como query directo para backend RA
+      // id_curso queda dentro del filter JSON (el backend acepta arrays)
       const passthrough = {};
       if (filter.id_ciclo !== undefined && filter.id_ciclo !== null && filter.id_ciclo !== '') {
         passthrough.id_ciclo = filter.id_ciclo;
       }
-      if (filter.id_curso !== undefined && filter.id_curso !== null && filter.id_curso !== '') {
+      if (false && filter.id_curso !== undefined && filter.id_curso !== null && filter.id_curso !== '') {
         // Nota: backend espera un único id_curso; si viene array, lo ignoramos aquí
         if (!Array.isArray(filter.id_curso)) passthrough.id_curso = filter.id_curso;
       }
@@ -198,17 +199,32 @@ export const dataProvider = {
       const url = `${API_URL}/${resource}?${qs}`;
       return httpClient(url).then(({ json, headers }) => {
         let raw = Array.isArray(json) ? json : (json?.data ?? []);
-        // Solo mostrar materias-curso que tengan curso asociado
+        // Solo mostrar materias-curso válidas y, si corresponde, del ciclo filtrado
         if (resource === 'materias-curso') {
+          // Filtro por curso asociado (excluye registros "Materia - ")
           raw = raw.filter((r) => {
             const idCurso = r?.id_curso ?? r?.curso?.id_curso;
-            const hasCursoMeta = r?.curso_label || r?.curso_anio_escolar != null || r?.curso_division != null;
-            return Boolean(idCurso || hasCursoMeta);
+            const hasIdCurso = idCurso !== undefined && idCurso !== null && String(idCurso).trim() !== '';
+            const hasCursoMeta = (
+              (r?.curso_label != null && String(r.curso_label).trim() !== '') ||
+              (r?.curso_anio_escolar != null && String(r.curso_anio_escolar).trim() !== '') ||
+              (r?.curso_division != null && String(r.curso_division).trim() !== '')
+            );
+            return Boolean(hasIdCurso || hasCursoMeta);
           });
+          // Filtro defensivo por ciclo si fue solicitado desde el filtro RA
+          const cicloFilter = (params.filter || {}).id_ciclo;
+          if (cicloFilter !== undefined && cicloFilter !== null && cicloFilter !== '') {
+            raw = raw.filter((r) => {
+              const ciclo = r?.id_ciclo ?? r?.ciclo?.id_ciclo ?? r?.ciclo_anio;
+              return String(ciclo) === String(cicloFilter);
+            });
+          }
         }
         const contentRange = headers?.get?.('Content-Range') || headers?.get?.('content-range');
         let total = contentRange ? parseInt(String(contentRange).split('/').pop(), 10) : (json?.total ?? raw.length ?? 0);
-        if (Array.isArray(raw) && typeof total === 'number' && raw.length > total) {
+        // Tras el filtrado defensivo, priorizamos la cantidad efectiva
+        if (Array.isArray(raw) && typeof total === 'number') {
           total = raw.length;
         }
         return {
