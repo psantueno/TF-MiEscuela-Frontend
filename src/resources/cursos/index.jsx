@@ -15,10 +15,13 @@ import {
   Create,
   Edit,
   SimpleForm,
+  TabbedForm,
   NumberInput,
   TextInput,
   ReferenceInput,
   SelectInput,
+  ReferenceArrayInput,
+  SelectArrayInput,
   required,
   Show,
   SimpleShowLayout,
@@ -31,7 +34,8 @@ import {
   ListButton,
 } from 'react-admin';
 import { useWatch } from 'react-hook-form';
-import { Box, Typography, Button, Alert, Grid } from '@mui/material';
+import { Box, Typography, Button, Alert, Grid, Chip, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { InfoOutlined, FiberManualRecord } from '@mui/icons-material';
 import { ArrowBack } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -43,7 +47,13 @@ const isCicloCerrado = (estado) => String(estado || '').toLowerCase() === 'cerra
 const cursosFilters = [
   <NumberInput key="f_anio" label="Año escolar" source="anio_escolar" alwaysOn />,
   <TextInput key="f_division" label="División" source="division" />,
-  <ReferenceInput key="f_ciclo" label="Ciclo lectivo" source="id_ciclo" reference="ciclos-lectivos">
+  <ReferenceInput
+    key="f_ciclo"
+    label="Ciclo lectivo (solo planeamiento)"
+    source="id_ciclo"
+    reference="ciclos-lectivos"
+    filter={{ estado: 'Planeamiento' }}
+  >
     <SelectInput optionText="anio" />
   </ReferenceInput>,
 ];
@@ -71,6 +81,7 @@ const CursosListActions = () => {
   const navigate = useNavigate();
   return (
     <TopToolbar>
+      <CursosHelperButton />
       <FilterButton label="Filtrar por" />
       <CreateCursoButton />
       <ExportButton label="Exportar" />
@@ -78,13 +89,55 @@ const CursosListActions = () => {
   );
 };
 
+// Botón de información (estilo similar a Materias)
+const CursosHelperButton = () => {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <>
+      <Button size="small" onClick={() => setOpen(true)} sx={{ ml: 1 }} startIcon={<InfoOutlined />}>Información</Button>
+      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth scroll="paper">
+        <DialogTitle>Guía para la gestión de cursos</DialogTitle>
+        <DialogContent
+          dividers
+          sx={{
+            '& p': { mb: 1.25, lineHeight: 1.6 },
+            '& ul': { pl: 3, m: 0, listStylePosition: 'outside' },
+            '& li': { mb: 0.75 },
+            '& li .MuiTypography-root': { m: 0 },
+          }}
+        >
+          <Typography gutterBottom>
+            Las operaciones de edición y eliminación sobre cursos se rigen por el estado del ciclo lectivo al que pertenecen.
+          </Typography>
+          <Box component="ul">
+            <li>
+              <Typography variant="body2">Solo se pueden editar o eliminar cursos cuando el ciclo está en estado <strong>Planeamiento</strong>.</Typography>
+            </li>
+            <li>
+              <Typography variant="body2">La asignación de materias al curso también es editable únicamente en <strong>Planeamiento</strong>.</Typography>
+            </li>
+            <li>
+              <Typography variant="body2">Cuando el ciclo no está en Planeamiento (por ejemplo, Abierto o Cerrado), los botones de edición y borrado aparecerán deshabilitados.</Typography>
+            </li>
+            <li>
+              <Typography variant="body2">Ante intentos de actualización no permitidos, el sistema devolverá un error que indica que el ciclo no permite modificaciones.</Typography>
+            </li>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Entendido</Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+};
+
 const DeleteCursoButton = () => {
   const notify = useNotify();
   const record = useRecordContext();
   if (!record) return null;
-  const { data: ciclo, isLoading } = useGetOne('ciclos-lectivos', { id: record.id_ciclo }, { enabled: !!record.id_ciclo });
-  const cicloCerrado = !isLoading && ciclo?.estado === 'Cerrado';
-  const title = cicloCerrado ? 'No se puede eliminar: ciclo cerrado' : 'Eliminar';
+  const blocked = !!record?.bloquear_edicion;
+  const title = blocked ? 'No se puede eliminar: fuera de planeamiento' : 'Eliminar';
   return (
     <DeleteWithConfirmButton
       label="Borrar"
@@ -101,14 +154,14 @@ const DeleteCursoButton = () => {
       }
       size="small"
       sx={{ minWidth: 0, p: 0.25, ml: 1 }}
-      disabled={cicloCerrado}
+      disabled={blocked}
       title={title}
       mutationOptions={{
         onSuccess: () => notify('Curso eliminado correctamente', { type: 'success' }),
         onError: (e) => {
           let msg = e?.body?.error || e?.body?.message || e?.message || 'Error al eliminar curso';
           if (e?.status === 409 && !e?.body?.error) {
-            msg = 'No se puede eliminar el curso: tiene registros asociados o el ciclo está cerrado';
+            msg = 'No se puede eliminar el curso: tiene registros asociados o el ciclo no permite modificaciones';
           }
           notify(msg, { type: 'warning' });
         },
@@ -120,10 +173,9 @@ const DeleteCursoButton = () => {
 const EditCursoButton = () => {
   const record = useRecordContext();
   if (!record) return null;
-  const { data: ciclo, isLoading } = useGetOne('ciclos-lectivos', { id: record.id_ciclo }, { enabled: !!record.id_ciclo });
-  const disabled = !isLoading && ciclo?.estado === 'Cerrado';
-  const title = disabled ? 'No se puede editar: ciclo cerrado' : 'Editar';
-  return <EditButton label="Editar" disabled={disabled} title={title} />;
+  const disabled = !!record?.bloquear_edicion;
+  const title = disabled ? 'No se puede editar: fuera de planeamiento' : 'Editar y/o asignar materias';
+  return <EditButton label="Editar / Asignar materias" disabled={disabled} title={title} />;
 };
 
 export const CursosList = () => (
@@ -145,6 +197,18 @@ export const CursosList = () => (
       <NumberField source="anio_escolar" label="Año" />
       <TextField source="division" label="División" />
       <FunctionField label="Ciclo lectivo" render={(r) => r?.cicloLectivo?.anio ?? r?.id_ciclo} />
+      <FunctionField
+        label="Estado"
+        render={(r) => (
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            {r?.bloquear_edicion ? (
+              <Chip size="small" label="Bloqueado" color="warning" />
+            ) : (
+              <Chip size="small" label="Editable" color="success" />
+            )}
+          </Box>
+        )}
+      />
       <EditCursoButton />
       <ShowButton label="Ver" />
       <DeleteCursoButton />
@@ -220,7 +284,9 @@ export const CursosEdit = () => {
     <Edit
       title="Editar curso"
       actions={<CursosEditActions />}
+      mutationMode="pessimistic"
       transform={(data) => ({
+        ...(console.log('[EDIT transform] cursos', { id: data?.id ?? data?.id_curso, keys: Object.keys(data || {}) }), {}),
         ...data,
         ...(data.anio_escolar !== undefined ? { anio_escolar: Number(data.anio_escolar) } : {}),
         ...(data.id_ciclo !== undefined ? { id_ciclo: Number(data.id_ciclo) } : {}),
@@ -228,8 +294,11 @@ export const CursosEdit = () => {
       mutationOptions={{
         onSuccess: () => notify('Curso actualizado correctamente', { type: 'success' }),
         onError: (e) => {
-          let msg = e?.message || e?.body?.message || 'Error al actualizar curso';
-          if (e?.status === 409 || /unique|duplicad/i.test(String(msg))) {
+          let msg = e?.body?.message || e?.message || 'Error al actualizar curso';
+          const lower = String(msg).toLowerCase();
+          if (e?.status === 409 && /no permite|planeamient/.test(lower)) {
+            msg = 'El ciclo no permite modificaciones. Solo se puede editar en Planeamiento.';
+          } else if (e?.status === 409 || /unique|duplicad/.test(lower)) {
             msg = 'Ya existe un curso para ese año/división en el ciclo seleccionado';
           }
           notify(msg, { type: 'warning' });
@@ -309,25 +378,51 @@ const CursoCreateForm = ({ defaultValues }) => {
 
 const CursoEditForm = () => {
   const record = useRecordContext();
-  const { data: ciclo } = useGetOne('ciclos-lectivos', { id: record?.id_ciclo }, { enabled: !!record?.id_ciclo });
-  const cicloCerrado = ciclo?.estado === 'Cerrado';
+  const blocked = !!record?.bloquear_edicion;
   return (
-    <SimpleForm
+    <TabbedForm
       sanitizeEmptyValues
       validate={validateCurso}
       toolbar={
         <Toolbar>
-          <SaveButton label="Guardar" disabled={cicloCerrado} />
+          <SaveButton label="Guardar" disabled={blocked} alwaysEnable />
         </Toolbar>
       }
     >
-      {cicloCerrado && (
+      <TabbedForm.Tab label="Edición">
+      {blocked && (
         <Box sx={{ mb: 2 }}>
-          <Alert severity="warning">Este curso pertenece a un ciclo cerrado. No se puede editar.</Alert>
+          <Alert severity="warning">Este curso pertenece a un ciclo que no está en Planeamiento. No se puede editar.</Alert>
         </Box>
       )}
       <FormFields />
-    </SimpleForm>
+
+      </TabbedForm.Tab>
+      <TabbedForm.Tab label="Materias">
+      {blocked ? (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          La asignación de materias está bloqueada porque el ciclo se encuentra abierto. Puede acceder al botón "INFORMACIÓN" para más detalles.
+        </Alert>
+      ) : (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Seleccioná las materias que se van a dictar en este curso.
+        </Alert>
+      )}
+      <Box sx={{ mt: 2 }}>
+        <ReferenceArrayInput
+          label="Materias del curso"
+          source="materiaIds"
+          reference="materias"
+          perPage={1000}
+          parse={(value) => (Array.isArray(value) ? value.map((v) => Number(v)) : [])}
+          format={(value) => (Array.isArray(value) ? value : [])}
+          disabled={blocked}
+        >
+          <SelectArrayInput optionText="nombre" optionValue="id" fullWidth />
+        </ReferenceArrayInput>
+      </Box>
+      </TabbedForm.Tab>
+    </TabbedForm>
   );
 };
 

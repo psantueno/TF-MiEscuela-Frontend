@@ -75,7 +75,9 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
         def.name !== 'roles' &&
         def.name !== 'cursos' &&
         def.name !== 'materias' && // si existiera
-        def.name !== 'ciclos-lectivos'
+        def.name !== 'ciclos-lectivos' &&
+        def.name !== 'docentes-materias-curso' &&
+        def.name !== 'docentes-sin-asignacion'
     )
     .map(def => {
       const Icon = def.icon || Home;
@@ -88,8 +90,13 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
     });
 
   const handleItemClick = (item) => {
-    if (item?.id && !allowMenu(role, item.id)) {
-      return;
+    if (item?.id) {
+      const isResource = !!resourceDefs[item.id];
+      if (isResource) {
+        if (!allowResource(role, item.id, 'list')) return;
+      } else {
+        if (!allowMenu(role, item.id)) return;
+      }
     }
     onModuleChange?.(item.id);
     navigate(item.to);
@@ -300,6 +307,24 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
                 <ListItemText primary="Cursos" sx={getTextStyle(isActive('/cursos'))} />
               </ListItemButton>
             )}
+            {allowMenu(role, 'materias') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(isActive('/materias')) }}
+                selected={isActive('/materias') || location.pathname.startsWith('/gestion-academica/materias')}
+                onClick={() => handleItemClick({ id: 'materias', to: '/gestion-academica/materias' })}
+              >
+                <ListItemText primary="Materias" sx={getTextStyle(isActive('/materias'))} />
+              </ListItemButton>
+            )}
+            {allowMenu(role, 'asignar-docentes') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(isActive('/docentes-materias-curso')) }}
+                selected={isActive('/docentes-materias-curso') || location.pathname.startsWith('/gestion-academica/asignar-docentes')}
+                onClick={() => handleItemClick({ id: 'asignar-docentes', to: '/gestion-academica/asignar-docentes' })}
+              >
+                <ListItemText primary="Designar Docentes" sx={getTextStyle(isActive('/docentes-materias-curso'))} />
+              </ListItemButton>
+            )}
             {allowMenu(role, 'asignar-cursos') && (
               <ListItemButton
                 sx={{ pl: 6, ...getButtonStyle(isActive('/gestion-academica/asignar-cursos')) }}
@@ -309,6 +334,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
                 <ListItemText primary="Asignar cursos" sx={getTextStyle(isActive('/gestion-academica/asignar-cursos'))} />
               </ListItemButton>
             )}
+            {/* ítem 'docentes-sin-asignacion' eliminado */}
             {allowMenu(role, 'cambiar-curso') && (
               <ListItemButton
                 sx={{ pl: 6, ...getButtonStyle(isActive('/gestion-academica/cambiar-curso')) }}

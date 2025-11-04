@@ -39,6 +39,8 @@ import { InformesPedagogicos } from './resources/pedagogia/InformesPedagogicos';
 import { Today, School, Person, Class, CalendarMonth } from '@mui/icons-material';
 import { CiclosLectivosList, CiclosLectivosEdit, CiclosLectivosCreate, CiclosLectivosShow } from './resources/ciclosLectivos';
 import { CursosList, CursosEdit, CursosCreate, CursosShow } from './resources/cursos';
+import { MateriasList, MateriasEdit, MateriasCreate, MateriasShow } from './resources/materias';
+import { DocentesMateriasCursoList, DocentesMateriasCursoEdit, DocentesMateriasCursoCreate, DocentesMateriasCursoShow } from './resources/docentesMateriasCurso';
 import { RegistrarAsistencia } from './resources/asistencias/RegistrarAsistencia';
 import { EliminarAsistencias } from './resources/asistencias/EliminarAsistencias';
 import { AsistenciasHistorico } from './resources/asistencias/AsistenciasHistorico';
@@ -148,8 +150,34 @@ function App() {
                         />
                       )}
 
+                      {/* Materias */}
+                      {allowResource(role, 'materias', 'list') && (
+                        <Resource
+                          name="materias"
+                          list={MateriasList}
+                          edit={allowResource(role, 'materias', 'edit') ? MateriasEdit : undefined}
+                          create={allowResource(role, 'materias', 'create') ? MateriasCreate : undefined}
+                          show={allowResource(role, 'materias', 'show') ? MateriasShow : undefined}
+                          icon={School}
+                          options={{ label: 'Materias' }}
+                        />
+                      )}
+
+                      {/* Asignaciones Docente-Materia-Curso */}
+                      {allowResource(role, 'docentes-materias-curso', 'list') && (
+                        <Resource
+                          name="docentes-materias-curso"
+                          list={DocentesMateriasCursoList}
+                          edit={allowResource(role, 'docentes-materias-curso', 'edit') ? DocentesMateriasCursoEdit : undefined}
+                          create={allowResource(role, 'docentes-materias-curso', 'create') ? DocentesMateriasCursoCreate : undefined}
+                          show={allowResource(role, 'docentes-materias-curso', 'show') ? DocentesMateriasCursoShow : undefined}
+                          options={{ label: 'Designar Docentes' }}
+                        />
+                      )}
+
                       {/* Roles metadata solo si aplica */}
                       {allowResource(role, 'roles', 'list') && <Resource name="roles" />}
+                      {/* recurso 'docentes-sin-asignacion' eliminado */}
                       <CustomRoutes>
                         {allowRoute(role, '/administracion/usuarios') && (
                           <Route path="/administracion/usuarios" element={<Navigate to="/usuarios" replace />} />
@@ -160,6 +188,13 @@ function App() {
                         {allowRoute(role, '/gestion-academica/cursos') && (
                           <Route path="/gestion-academica/cursos" element={<Navigate to="/cursos" replace />} />
                         )}
+                        {allowRoute(role, '/gestion-academica/materias') && (
+                          <Route path="/gestion-academica/materias" element={<Navigate to="/materias" replace />} />
+                        )}
+                        {allowRoute(role, '/gestion-academica/asignar-docentes') && (
+                          <Route path="/gestion-academica/asignar-docentes" element={<Navigate to="/docentes-materias-curso" replace />} />
+                        )}
+                        {/* ruta 'docentes-sin-asignacion' eliminada */}
                         {allowRoute(role, '/gestion-academica/asignar-cursos') && (
                           <Route path="/gestion-academica/asignar-cursos" element={<AsignarCursos />} />
                         )}
