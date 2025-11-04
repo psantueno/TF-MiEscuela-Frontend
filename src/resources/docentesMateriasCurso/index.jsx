@@ -31,7 +31,6 @@ import {
   SelectInput,
   useDataProvider,
 } from 'react-admin';
-import { SearchInput } from 'react-admin';
 import { useWatch, useFormContext } from 'react-hook-form';
 import { Box, Typography, Alert, Chip } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
@@ -74,13 +73,21 @@ const asignacionesFilters = [
       <AutocompleteInput label="Ciclo lectivo" optionText={(r) => (r?.anio || r?.ciclo_anio || '')} fullWidth />
     </ReferenceInput>
   ),
-  <SearchInput key="f_dni" source="numero_documento" placeholder="DNI" alwaysOn resettable />,
+  (
+    <TextInput
+      key="f_dni"
+      source="docente_numero_documento"
+      label="DNI"
+      alwaysOn
+      resettable
+    />
+  ),
 ];
 
 const ListActions = () => (
   <TopToolbar>
     <FilterButton label="Filtrar por" />
-    <CreateButton label="Asignar Docente" />
+    <CreateButton label="Crear designación" />
     <ExportButton label="Exportar" />
   </TopToolbar>
 );

@@ -158,7 +158,7 @@ export const InformesPedagogicos = () => {
         }
     };
 
-    const handleSave = async (alumno, curso, materia, asesor, contenido) => {
+    const handleSave = async (alumno, curso, materia, asesor, contenido, titulo) => {
         try{
             setLoading(true);
             const body = {
@@ -167,6 +167,7 @@ export const InformesPedagogicos = () => {
                 id_materia: materia.id_materia,
                 id_asesor: asesor ? asesor.id_asesor : null,
                 contenido: contenido,
+                titulo: titulo,
             }
             await dataProvider.crearInformePedagogico(body);
             notify("Informe pedagógico creado exitosamente", { type: "success" });
@@ -343,16 +344,20 @@ const AddModal = ({ alumno, curso, materia = null, onSave, onCancel, inputs }) =
     const [inputValues, setInputValues] = useState({
         materia: materia || "",
         asesor: "",
+        titulo: "",
         contenido: "",
     });
 
     const [errors, setErrors] = useState({
         materia: "",
         asesor: "",
+        titulo: "",
         contenido: "",
     });
 
     const handleSave = () => {
+        if(!inputValues.titulo.trim()) setErrors((prev) => ({ ...prev, titulo: "El título del informe no puede estar vacío." }));
+
         if(!inputValues.contenido.trim()) setErrors((prev) => ({ ...prev, contenido: "El contenido del informe no puede estar vacío." }));
 
         if(!inputValues.asesor) setErrors((prev) => ({ ...prev, asesor: "Debe seleccionar un asesor pedagógico." }));
@@ -361,7 +366,7 @@ const AddModal = ({ alumno, curso, materia = null, onSave, onCancel, inputs }) =
 
         if(Object.values(errors).some((error) => error !== "")) return;
 
-        onSave(alumno, curso, inputValues.materia, inputValues.asesor, inputValues.contenido);
+        onSave(alumno, curso, inputValues.materia, inputValues.asesor, inputValues.contenido, inputValues.titulo);
     }
 
     return (
@@ -373,7 +378,7 @@ const AddModal = ({ alumno, curso, materia = null, onSave, onCancel, inputs }) =
                 <Box>
                     <Grid container spacing={2} sx={{ display: inputs.asesores && inputs.materias ? 'flex' : 'none', mt: 2, mb: 2 }}>
                         {inputs.materias.length > 0 && (
-                            <Grid size={6}>
+                            <Grid size={4}>
                                 <Autocomplete
                                     options={inputs.materias}
                                     getOptionLabel={(option) => option.nombre || ""}
@@ -388,7 +393,7 @@ const AddModal = ({ alumno, curso, materia = null, onSave, onCancel, inputs }) =
                             </Grid>
                         )}
                         {inputs.asesores.length > 0 && (
-                            <Grid size={6} sx={{ display: inputs.asesores ? 'block' : 'none' }}>
+                            <Grid size={4} sx={{ display: inputs.asesores ? 'block' : 'none' }}>
                                 <Autocomplete
                                     options={inputs.asesores}
                                     getOptionLabel={(option) => `${option.usuario.apellido} ${option.usuario.nombre}`}
@@ -402,6 +407,16 @@ const AddModal = ({ alumno, curso, materia = null, onSave, onCancel, inputs }) =
                                 {errors.asesor && <Typography color="error" variant="body2">{errors.asesor}</Typography>}
                             </Grid>
                         )}
+                        <Grid>
+                            <TextField
+                                label="Titulo"
+                                type="text"
+                                variant="outlined"
+                                value={inputValues.titulo}
+                                onChange={(e) => setInputValues({ ...inputValues, titulo: e.target.value })}
+                                style={{ width: 300 }}
+                            />
+                        </Grid>
                     </Grid>
                     <TextareaAutosize
                         minRows={5}

@@ -322,7 +322,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
                 selected={isActive('/docentes-materias-curso') || location.pathname.startsWith('/gestion-academica/asignar-docentes')}
                 onClick={() => handleItemClick({ id: 'asignar-docentes', to: '/gestion-academica/asignar-docentes' })}
               >
-                <ListItemText primary="Designar Docentes" sx={getTextStyle(isActive('/docentes-materias-curso'))} />
+                <ListItemText primary="Designación de docentes" sx={getTextStyle(isActive('/docentes-materias-curso'))} />
               </ListItemButton>
             )}
             {allowMenu(role, 'asignar-cursos') && (
