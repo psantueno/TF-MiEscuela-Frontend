@@ -204,13 +204,13 @@ const AsignacionFormFields = () => (
 );
 
 export const DocentesMateriasCursoCreate = () => (
-  <Create title="Crear asignación" actions={<CreateActions />}>
+  <Create title="Crear asignación" actions={<CreateActions />} mutationMode="pessimistic">
     <CreateAsignacionForm />
   </Create>
 );
 
 export const DocentesMateriasCursoEdit = () => (
-  <Edit title="Editar asignación" actions={<EditActions />}>
+  <Edit title="Editar asignación" actions={<EditActions />} mutationMode="pessimistic">
     <EditAsignacionForm />
   </Edit>
 );
@@ -231,19 +231,72 @@ export const DocentesMateriasCursoShow = () => (
   </Show>
 );
 
-const AsignacionToolbar = ({ disabled }) => (
-  <Toolbar>
-    <SaveButton label="Guardar" disabled={disabled} alwaysEnable />
-  </Toolbar>
-);
+// Normalizador de errores de API -> mensaje y errores por campo
+const normalizeApiError = (err) => {
+  const body = err?.body || {};
+  const fieldErrors = {};
+  if (Array.isArray(body.errors)) {
+    body.errors.forEach((e) => {
+      if (e?.path) fieldErrors[e.path] = e?.message || 'Dato inválido';
+    });
+  }
+  if (Array.isArray(body.details)) {
+    body.details.forEach((d) => {
+      if (d?.path) fieldErrors[d.path] = d?.message || 'Dato inválido';
+    });
+  }
+  if (body?.validationErrors && typeof body.validationErrors === 'object') {
+    Object.entries(body.validationErrors).forEach(([k, v]) => {
+      fieldErrors[k] = typeof v === 'string' ? v : (v?.message || 'Dato inválido');
+    });
+  }
+  const message = body?.error || body?.message || err?.message || 'Ocurrió un error';
+  return { message, fieldErrors };
+};
+
+const AsignacionToolbar = ({ disabled }) => {
+  const notify = useNotify();
+  const { setError } = useFormContext();
+  return (
+    <Toolbar>
+      <SaveButton
+        label="Guardar"
+        disabled={disabled}
+        alwaysEnable
+        mutationOptions={{
+          onSuccess: () => notify('Asignación actualizada correctamente', { type: 'success' }),
+          onError: (e) => {
+            const { message, fieldErrors } = normalizeApiError(e);
+            Object.entries(fieldErrors).forEach(([name, msg]) => setError(name, { type: 'server', message: msg }));
+            notify(message, { type: 'warning' });
+          },
+        }}
+      />
+    </Toolbar>
+  );
+};
 
 // Toolbar que calcula el bloqueo dentro del contexto del formulario (Create)
 const AsignacionToolbarCreate = () => {
   const idMateriaCurso = useWatch({ name: 'id_materia_curso' });
   const bloqueado = useCicloCerradoPorMateriaCurso(idMateriaCurso);
+  const notify = useNotify();
+  const { setError } = useFormContext();
   return (
     <Toolbar>
-      <SaveButton label="Guardar" disabled={bloqueado} alwaysEnable />
+      <SaveButton
+        label="Guardar"
+        disabled={bloqueado}
+        alwaysEnable
+        mutationOptions={{
+          onSuccess: () => notify('Asignación creada correctamente', { type: 'success' }),
+          onError: (e) => {
+            const { message, fieldErrors } = normalizeApiError(e);
+            Object.entries(fieldErrors).forEach(([name, msg]) => setError(name, { type: 'server', message: msg }));
+            notify(message, { type: 'warning' });
+          },
+        }}
+      />
     </Toolbar>
   );
 };
@@ -262,7 +315,7 @@ const BloqueoAlertCreate = () => {
 
 const CreateAsignacionForm = () => {
   return (
-    <SimpleForm sanitizeEmptyValues validate={validateAsignacion} toolbar={<AsignacionToolbarCreate />}>
+    <SimpleForm sanitizeEmptyValues toolbar={<AsignacionToolbarCreate />}>
       <BloqueoAlertCreate />
       <CreateAsignacionFields />
     </SimpleForm>
@@ -271,7 +324,7 @@ const CreateAsignacionForm = () => {
 
 // Campos del Create con dependencia Ciclo -> Curso -> Materia/Curso
 const CreateAsignacionFields = () => {
-  const { setValue } = useFormContext();
+  const { setValue, clearErrors } = useFormContext();
   const dataProvider = useDataProvider();
   const idCiclo = useWatch({ name: 'id_ciclo' });
   const cicloIdNum = idCiclo != null && idCiclo !== '' ? Number(idCiclo) : undefined;
@@ -279,8 +332,8 @@ const CreateAsignacionFields = () => {
   const [loadingMc, setLoadingMc] = React.useState(false);
 
   React.useEffect(() => {
-    // Al cambiar ciclo, limpiar materia seleccionada
     setValue('id_materia_curso', undefined, { shouldValidate: true, shouldDirty: true });
+    clearErrors('id_materia_curso');
     if (!cicloIdNum) {
       setHasMcOptions(false);
       setLoadingMc(false);
@@ -296,7 +349,7 @@ const CreateAsignacionFields = () => {
       })
       .then(({ total, data }) => {
         if (!active) return;
-        const count = typeof total === 'number' ? total : (Array.isArray(data) ? data.length : 0);
+        const count = Array.isArray(data) ? data.length : 0;
         setHasMcOptions(count > 0);
       })
       .catch(() => active && setHasMcOptions(false))
@@ -311,8 +364,10 @@ const CreateAsignacionFields = () => {
       <ReferenceInput source="id_docente" reference="docentes">
         <AutocompleteInput
           label="Docente"
-          validate={[required()]}
+          validate={[required('El docente es requerido')]}
+          parse={(v) => (v === '' || v == null ? undefined : Number(v))}
           optionText={(r) => (r ? `${r.apellido || ''}, ${r.nombre || ''}${r.numero_documento ? ` (${r.numero_documento})` : ''}` : '')}
+          onChange={() => clearErrors('id_docente')}
           fullWidth
         />
       </ReferenceInput>
@@ -320,30 +375,31 @@ const CreateAsignacionFields = () => {
       <ReferenceInput
         source="id_ciclo"
         reference="ciclos-lectivos"
-        label="Ciclo lectivo"
         filter={{ estado: 'Abierto,Planeamiento' }}
         perPage={100}
       >
-        <AutocompleteInput optionText={(r) => (r?.anio || r?.ciclo_anio || '')} fullWidth />
+        <AutocompleteInput label="Ciclo lectivo" optionText={(r) => (r?.anio || r?.ciclo_anio || '')} fullWidth />
       </ReferenceInput>
 
       {cicloIdNum && hasMcOptions && (
         <ReferenceInput
           source="id_materia_curso"
           reference="materias-curso"
-          label="Materia / Curso"
           filter={{ id_ciclo: cicloIdNum }}
           perPage={300}
         >
           <AutocompleteInput
-            validate={[required()]}
+            validate={[required('La materia-curso es requerida')]}
+            parse={(v) => (v === '' || v == null ? undefined : Number(v))}
             optionText={(r) => (r ? `${r.materia_nombre || ''} - ${r.curso_label || `${r.curso_anio_escolar || ''} ${r.curso_division || ''}`}` : '')}
+            onChange={() => clearErrors('id_materia_curso')}
+            label="Materia / Curso"
             fullWidth
           />
         </ReferenceInput>
       )}
       {cicloIdNum && !loadingMc && !hasMcOptions && (
-        <Alert severity="info">No hay materias asignadas en este ciclo.</Alert>
+        <Alert severity="info">No hay materias asignadas asociadas a cursos en este momento. Gestionelo en la pestaña cursos, usando el boton editar y seleccionando "materias".</Alert>
       )}
 
       <SelectInput
@@ -367,7 +423,7 @@ const EditAsignacionForm = () => {
   const idMateriaCurso = record?.id_materia_curso;
   const bloqueado = useCicloCerradoPorMateriaCurso(idMateriaCurso);
   return (
-    <SimpleForm sanitizeEmptyValues validate={validateAsignacion} toolbar={<AsignacionToolbar disabled={bloqueado} />}>
+    <SimpleForm sanitizeEmptyValues toolbar={<AsignacionToolbar disabled={bloqueado} />}>
       {bloqueado && (
         <Box sx={{ mb: 2 }}>
           <Alert severity="warning">Este curso pertenece a un ciclo cerrado. No se puede editar.</Alert>
