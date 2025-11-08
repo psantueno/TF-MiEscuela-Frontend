@@ -43,6 +43,8 @@ export const ROLE_PERMISSIONS = {
       '/informes',
       '/calificaciones',
       '/informes-pedagogicos',
+      '/justificativos',
+      '/justificativos/hijos',
     ]),
     menu: new Set([
       'usuarios',
@@ -63,6 +65,8 @@ export const ROLE_PERMISSIONS = {
       'asignar-cursos',
       'cambiar-curso',
       'informes-pedagogicos',
+      'justificativos',
+      'justificativos-hijos',
     ]),
   },
 
@@ -161,11 +165,13 @@ export const ROLE_PERMISSIONS = {
       '/notificaciones',
       '/mensajes',
       '/calificaciones/hijos',
+      '/justificativos/hijos',
     ]),
     menu: new Set([
       'notificaciones',
       'mensajes',
       'calificaciones-hijos',
+      'justificativos-hijos',
     ]) 
   },
 

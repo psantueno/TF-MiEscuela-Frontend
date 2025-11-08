@@ -20,26 +20,8 @@ export const CalificacionesHijos = () => {
     const [loading, setLoading] = useState(true);
 
     const TABLE_HEADERS = [
-        {label: "Alumno"},
-        {label: "Curso"},
-        {label: "Materia"},
-        {label: "Tipo"},
-        {label: "Calificación"},
-        {label: "Fecha"},
-        {label: "Docente"},
-        {label: "Observaciones"}
+        {label: "Alumno"}
     ];
-
-    const TABLE_KEYS = [
-        {key: "alumno"},
-        {key: "curso"},
-        {key: "materia"},
-        {key: "tipo"},
-        {key: "calificacion"},
-        {key: "fecha"},
-        {key: "docente"},
-        {key: "observaciones"}
-    ]
 
     useEffect(() => {
         const fetchData = async () => {
@@ -52,16 +34,16 @@ export const CalificacionesHijos = () => {
                         const { data: calificacionesData } = await dataProvider.getCalificacionesPorAlumno(hijo.id_alumno);
 
                         const calificaciones = calificacionesData.map(c => ({
-                            ...c,
-                            alumno: `${c.alumno.usuario.apellido} ${c.alumno.usuario.nombre}`,
-                            curso: `${c.materiaCurso.curso.anio_escolar}° ${c.materiaCurso.curso.division}`,
-                            materia: c.materiaCurso.materia.nombre,
-                            tipo: c.tipoCalificacion.descripcion,
-                            calificacion: parseFloat(c.nota),
-                            fecha: new Date(c.fecha).toLocaleDateString(),
-                            docente: `${c.materiaCurso.docentes[0].usuario.apellido} ${c.materiaCurso.docentes[0].usuario.nombre}`,
-                            observaciones: c.observaciones || 'Ninguna',
                             ciclo_lectivo: c.materiaCurso.curso.cicloLectivo.anio,
+                            id_materia: c.materiaCurso.id_materia,
+                            materia: c.materiaCurso.materia.nombre,
+                            alumno: `${c.alumno.usuario.apellido} ${c.alumno.usuario.nombre}`,
+                            nota: c.nota,
+                            tipo: c.tipoCalificacion.descripcion,
+                            id: c.id_calificacion,
+                            publicado: c.publicado,
+                            id_alumno: c.alumno.id_alumno,
+                            id_curso: c.materiaCurso.id_curso,
                         }));
 
                         const anios = [...new Set(calificaciones.map(c => c.ciclo_lectivo))];
@@ -109,6 +91,7 @@ export const CalificacionesHijos = () => {
     };
 
     const getMateriaPeorCalificacion = (calificaciones, anio) => {
+        console.log(calificaciones);
         return `Materia: ${
             calificaciones.map(c => c.ciclo_lectivo == anio && parseFloat(c.nota) === Math.min(...calificaciones.filter(c => c.ciclo_lectivo == anio).map(c => parseFloat(c.nota))) ? c.materia : null).filter(Boolean).join(', ')
         }`
@@ -116,6 +99,45 @@ export const CalificacionesHijos = () => {
 
     const getPromedio = (calificaciones, anio) => {
         return (calificaciones.filter(c => c.ciclo_lectivo == anio).reduce((acc, curr) => acc + parseFloat(curr.nota), 0) / calificaciones.filter(c => c.ciclo_lectivo == anio).length).toFixed(2);
+    }
+
+    const getTableHeaders = (filteredCalificaciones) => {
+        const newHeaders = [...TABLE_HEADERS];
+
+        const tiposCalificaciones = [...new Set(filteredCalificaciones.map(c => c.tipo))];
+
+        tiposCalificaciones.forEach(tipo => {
+            newHeaders.push({ label: tipo, editable: true });
+        });
+
+        return newHeaders;
+    }
+
+    const getKeys = (filteredCalificaciones) => {
+        const tiposCalificaciones = [...new Set(filteredCalificaciones.map(c => c.tipo))];
+        const mappedTipos = tiposCalificaciones.map(tipo => ({ label: tipo, publicado: true }));
+        return mappedTipos;
+    }
+
+    const mapCalificaciones = (filteredCalificaciones, alumno) => {
+        const mapped = {};
+
+        if(filteredCalificaciones.length === 0) return mapped;
+
+        const uniqueTipos = [...new Set(filteredCalificaciones.map(c => c.tipo))];
+
+        mapped[alumno] = {};
+        uniqueTipos.forEach((tipo) => {
+            const calificacion = filteredCalificaciones.find(c => c.alumno === alumno && c.tipo === tipo);
+            mapped[alumno][tipo] = {};
+            mapped[alumno][tipo]['nota'] = calificacion ? calificacion.nota : "";
+            mapped[alumno][tipo]['id'] = calificacion ? calificacion.id : "";
+            mapped[alumno][tipo]['publicado'] = calificacion ? calificacion.publicado : false;
+            mapped[alumno].id_alumno = calificacion ? calificacion.id_alumno : "";
+            mapped[alumno].id_curso = calificacion ? calificacion.id_curso : "";
+            mapped[alumno].id_materia = calificacion ? calificacion.id_materia : "";
+        });
+        return mapped;
     }
 
     return (
@@ -173,9 +195,10 @@ export const CalificacionesHijos = () => {
                                         />
                                     </Box>
                                     <CustomTable 
-                                        headers={TABLE_HEADERS}
-                                        keys={TABLE_KEYS}
-                                        dataArray={hijo.calificaciones.filter(c => c.ciclo_lectivo == anio)}
+                                        alumnos={[{ alumno: `${hijo.alumno.usuario.apellido} ${hijo.alumno.usuario.nombre}` }]}
+                                        headers={getTableHeaders(hijo.calificaciones.filter(c => c.ciclo_lectivo == anio))}
+                                        data={mapCalificaciones(hijo.calificaciones.filter(c => c.ciclo_lectivo == anio), `${hijo.alumno.usuario.apellido} ${hijo.alumno.usuario.nombre}`)}
+                                        keys={getKeys(hijo.calificaciones.filter(c => c.ciclo_lectivo == anio))}
                                         editable={false}
                                     />
                                 </Box>

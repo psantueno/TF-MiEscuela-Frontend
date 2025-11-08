@@ -8,6 +8,7 @@ import { CustomLayout } from './layout/CustomLayout';
 import { AsistenciasRecientes } from './resources/asistencias/AsistenciasRecientes';
 import { Calificaciones } from './resources/calificaciones/Calificaciones';
 import { CalificacionesHijos } from './resources/calificaciones/CalificacionesHijos';
+import { JustificativosHijos } from './resources/justificativos/JustificativosHijos';
 
 // Contexto de usuario
 import UserProvider from './contexts/UserContext/UserProvider';
@@ -227,6 +228,9 @@ function App() {
                         )}
                         {allowRoute(role, '/informes-pedagogicos') && (
                           <Route path="/informes-pedagogicos" element={<InformesPedagogicos />} />
+                        )}
+                        {allowRoute(role, '/justificativos/hijos') && (
+                          <Route path="/justificativos/hijos" element={<JustificativosHijos />} />
                         )}
                         {allowRoute(role, '/notificaciones') && (
                           <Route path="/notificaciones" element={<div>Notificaciones</div>} />

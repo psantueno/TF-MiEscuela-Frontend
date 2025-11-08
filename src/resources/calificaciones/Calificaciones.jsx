@@ -22,8 +22,6 @@ import {
     Search,
     ExpandMore,
     PictureAsPdf,
-    Add,
-    Edit,
     SearchOff
 } from "@mui/icons-material";
 import { SummaryCard } from "../../components/SummaryCard";
@@ -40,7 +38,6 @@ export const Calificaciones = () => {
     const [selectableMaterias, setSelectableMaterias] = useState([]);
     const [alumnos, setAlumnos] = useState([]);
     const [tiposCalificaciones, setTiposCalificaciones] = useState([]);
-    const [docentes, setDocentes] = useState([]);
     const [filterValues, setFilterValues] = useState(
         {
             curso: "",
@@ -54,13 +51,16 @@ export const Calificaciones = () => {
         id_materia: "",
         id_alumno: "",
     });
-    const [anios, setAnios] = useState([]);
+
+    const [uniqueAnios, setUniqueAnios] = useState([]);
+    const [uniqueTipos, setUniqueTipos] = useState([]);
+    const [uniqueAlumnos, setUniqueAlumnos] = useState([]);
+
     const [title, setTitle] = useState("");
     const [displayWithAccordion, setDisplayWithAccordion] = useState(true);
     const [showEmptyAlumnosMessage, setShowEmptyAlumnosMessage] = useState(false);
     const [showEmptyMateriasMessage, setShowEmptyMateriasMessage] = useState(false);
     const [showEmptyCalificacionesMessage, setShowEmptyCalificacionesMessage] = useState(false);
-    const [showAddTable, setShowAddTable] = useState(false);
     const [disabledSearchButton, setDisabledSearchButton] = useState(true);
     const [loading, setLoading] = useState(false);
     const [open, setOpen] = useState(false);
@@ -74,25 +74,6 @@ export const Calificaciones = () => {
 
     const TABLE_HEADERS = [
         { label: "Alumno", editable: false },
-        { label: "Materia", editable: false },
-        { label: "Calificación", editable: true },
-        { label: "Tipo", editable: true },
-        { label: "Fecha", editable: false },
-        { label: "Ciclo Lectivo", editable: false },
-        { label: "Curso", editable: false },
-        { label: "Docente", editable: false },
-        { label: "Observaciones", editable: true },
-    ];
-    const TABLE_KEYS = [
-        { key: "alumno", editable: false, creatable: true, default: "", type: "select", options: [] },
-        { key: "materia", editable: false }, 
-        { key: "nota", editable: true, creatable: true, type: "number", required: true, default: 1 }, 
-        { key: "tipo", editable: true, creatable: true, required: true, type: "select", options: [], default: "" }, 
-        { key: "fecha", editable: false, default: new Date(Date.now()).toLocaleDateString() }, 
-        { key: "ciclo_lectivo", editable: false },
-        { key: "curso", editable: false},
-        { key: "docente", editable: false, default: "" }, 
-        { key: "observaciones", editable: true, creatable: true, type: "text", default: "Ninguna" },
     ];
 
     useEffect(() => {
@@ -114,7 +95,7 @@ export const Calificaciones = () => {
             .then(({ data }) => {
                 setTiposCalificaciones(data);
             }).catch(() => {
-                TABLE_KEYS.find(k => k.key === "tipo").options = [];
+                setTiposCalificaciones([]);
             });
         }
     }, [dataProvider]);
@@ -160,22 +141,37 @@ export const Calificaciones = () => {
     }, [alumnos, materias]);
 
     useEffect(() => {
-        if(calificaciones.length === 0) {
-            setAnios([]);
-            return;
-        }
-
         const uniqueAnios = [...new Set(calificaciones.map(c => c.ciclo_lectivo))];
-        setAnios(uniqueAnios);
+        setUniqueAnios(uniqueAnios);
+
+        const uniqueTipos = [...new Set(calificaciones.map(c => c.tipo))];
+        setUniqueTipos(uniqueTipos);
+
+        const uniqueAlumnos = [...new Set(calificaciones.map(c => c.alumno))].map(alumno => {
+            return {
+                alumno: alumno,
+                editable: calificaciones.some(cal => cal.alumno === alumno && cal.ciclo_lectivo === CURRENT_YEAR && cal.publicado === false)
+            }
+        });
+        setUniqueAlumnos(uniqueAlumnos);
 
         let title = filterValues.curso.name;
         if(filterValues.alumno) title += ` - ${filterValues.alumno.usuario.apellido} ${filterValues.alumno.usuario.nombre}`;
         if(filterValues.materia) title += ` - ${filterValues.materia.nombre}`;
         setTitle(title);
+
+        if(EDIT_PERMISSION){
+            dataProvider
+            .getTiposCalificaciones()
+            .then(({ data }) => {
+                setTiposCalificaciones(data);
+            }).catch(() => {
+                setTiposCalificaciones([]);
+            });
+        }
     }, [calificaciones]);
 
     const handleSearch = async () => {
-        setShowAddTable(false);
         setLoading(true);
         setSelectableMaterias(materias);
         setCalificacionesValues(
@@ -193,21 +189,18 @@ export const Calificaciones = () => {
                 filter: { id_curso: filterValues.curso.id_curso ?? "", id_materia: filterValues.materia.id_materia ?? "", id_alumno: filterValues.alumno.id ?? "" },
             })
             .then(({ data }) => {
-                console.log("Calificaciones fetched:", data);
                 const mappedData = data.map((c) => {
                     return {
                         ciclo_lectivo: c.materiaCurso.curso.cicloLectivo.anio,
                         id_materia: c.materiaCurso.id_materia,
-                        alumno: `${c.alumno.usuario.apellido} ${c.alumno.usuario.nombre}`,
                         materia: c.materiaCurso.materia.nombre,
+                        alumno: `${c.alumno.usuario.apellido} ${c.alumno.usuario.nombre}`,
                         nota: c.nota,
                         tipo: c.tipoCalificacion.descripcion,
-                        fecha: new Date(c.fecha).toLocaleDateString(),
-                        curso: `${c.materiaCurso.curso.anio_escolar}° ${c.materiaCurso.curso.division}`,
-                        docente: `${c.docente.usuario.apellido} ${c.docente.usuario.nombre}`,
-                        observaciones: c.observaciones || "Ninguna",
                         id: c.id_calificacion,
                         publicado: c.publicado,
+                        id_alumno: c.alumno.id_alumno,
+                        id_curso: filterValues.curso.id_curso,
                     }
                 });
                 setCalificaciones(mappedData);
@@ -220,18 +213,6 @@ export const Calificaciones = () => {
                 setShowEmptyCalificacionesMessage(true);
             })
             .finally(() => setLoading(false));
-
-        dataProvider.getDocentesPorCurso(filterValues.curso.id_curso)
-            .then(({ data }) => {
-                setDocentes(data.map(d => ({
-                    id: d.id_docente,
-                    usuario: d.usuario,
-                    materias: d.materiasCurso.map(mc => mc.materia)
-                })));
-            })
-            .catch(() => {
-                setDocentes([]);
-            });
 
         if(filterValues.materia) setDisplayWithAccordion(false);
         else setDisplayWithAccordion(true);
@@ -258,40 +239,109 @@ export const Calificaciones = () => {
     }
 
     const exportarPDF = async () => {
-        await generarReportePDF({ type: "curso", curso: filterValues.curso, materia: filterValues.materia, calificaciones: calificaciones, anios: anios });
+        const type = filterValues.alumno ? "alumno" : "curso";
+        await generarReportePDF({ type, curso: filterValues.curso, materia: filterValues.materia, calificaciones: calificaciones, alumno: filterValues.alumno });
     }
 
-    const formatKeys = (anio, idMateria, published) => {
-        const formatted = TABLE_KEYS.map(key => {
-            const newKey = { ...key };
-            if(key.key == "alumno" && !filterValues.alumno) {
-                newKey.options = alumnos.map(a => ({ id: a.id_alumno, label: `${a.usuario.apellido} ${a.usuario.nombre}` }))
-                newKey.type = "select";
-            };
-            if(key.key == "alumno" && filterValues.alumno) {
-                newKey.default = `${filterValues.alumno.usuario.apellido} ${filterValues.alumno.usuario.nombre}`;
-                newKey.type = "text";
-            }
-            if(key.key == "materia") newKey.default = materias.find(m => m.id_materia === (idMateria || calificacionesValues.id_materia))?.nombre || "";
-            if(key.key == "ciclo_lectivo") newKey.default = anio;
-            if(key.key == "docente" && user.rol == "docente") newKey.default = `${user.apellido} ${user.nombre}`;
-            if(key.key == "docente" && user.rol == "admin"){
-                newKey.type = "select";
-                newKey.editable = true;
-                newKey.required = true;
-                console.log("materias:", materias); 
-                const materiaDocente = materias.find(m => m.id_materia === (idMateria || calificacionesValues.id_materia));
-                const docentesMateria = docentes.filter(d => d.materias.some(mat => mat.id_materia === materiaDocente.id_materia));
-                newKey.options = docentesMateria.map(d => ({ id: d.id, label: `${d.usuario.apellido} ${d.usuario.nombre}` }));
-            }
-            if(key.key == "curso") newKey.default = filterValues.curso.name;
-            if(key.key == "tipo") newKey.options = tiposCalificaciones.map(t => ({ id: t.id_tipo_calificacion, label: t.descripcion }));
-            return newKey;
+    const getDefaultValues = (idMateria) => {
+        const defaultValues = {};
+        defaultValues["id_curso"] = calificacionesValues.id_curso;
+        defaultValues["id_materia"] = calificacionesValues.id_materia || idMateria;
+        defaultValues["id_alumno"] = calificacionesValues.id_alumno;
+        defaultValues["alumnos"] = alumnos.map(a => ({
+            id_alumno: a.id_alumno,
+            alumno: `${a.usuario.apellido} ${a.usuario.nombre}`,
+        }));
+
+        return defaultValues;
+    }
+    
+    const getOptions = (filteredCalificaciones) => {
+        const options = {};
+        options["alumnos"] = getAlumnosOptions(filteredCalificaciones);
+        options["tiposCalificaciones"] = tiposCalificaciones.map(t => ({ id: t.id_tipo_calificacion, label: t.descripcion }));
+        options["current_alumnos"] = alumnos.map(a => ({
+            id: a.id_alumno,
+            label: `${a.usuario.apellido} ${a.usuario.nombre}`,
+        }));
+        return options;
+    }
+
+    const getHeaders = (filteredCalificaciones) => {
+        const newHeaders = [...TABLE_HEADERS];
+
+        const tiposCalificaciones = [...new Set(filteredCalificaciones.map(c => c.tipo))];
+
+        tiposCalificaciones.forEach(tipo => {
+            newHeaders.push({ label: tipo, editable: true });
         });
-        if(published){
-            return [...formatted, { key: "editable" }];
+
+        return newHeaders;
+    }
+
+    const getKeys = (filteredCalificaciones) => {
+        const tiposCalificaciones = [...new Set(filteredCalificaciones.map(c => c.tipo))];
+        const mappedTipos = tiposCalificaciones.map(tipo => ({ label: tipo, publicado: filteredCalificaciones.some(c => c.tipo === tipo && c.ciclo_lectivo === CURRENT_YEAR && c.publicado === true) }));
+        return mappedTipos;
+    }
+
+    const getAlumnos = (filteredCalificaciones) => {
+        const alumnosSet = new Set();
+        if(filteredCalificaciones.length === 0){
+            if(filterValues.alumno){
+                alumnosSet.add({ alumno: `${filterValues.alumno.usuario.apellido} ${filterValues.alumno.usuario.nombre}`, editable: true });
+            }else{
+                alumnos.forEach(a => {
+                    alumnosSet.add({ alumno: `${a.usuario.apellido} ${a.usuario.nombre}`, editable: true });
+                });
+            }
+        }else{
+            const uniqueAlumnosInCalificaciones = [...new Set(filteredCalificaciones.map(c => c.alumno))];
+            uniqueAlumnosInCalificaciones.forEach(alumno => {
+                alumnosSet.add({ 
+                    alumno, 
+                    editable: filteredCalificaciones.some(c => c.alumno === alumno && c.ciclo_lectivo === CURRENT_YEAR && c.publicado === false && alumnos.some(al => `${al.usuario.apellido} ${al.usuario.nombre}` === alumno)),
+                    creatable: alumnos.some(al => `${al.usuario.apellido} ${al.usuario.nombre}` === alumno)
+                });
+            });
         }
-        return formatted;
+        return [...alumnosSet];
+    }
+
+    const getAlumnosOptions = (filteredCalificaciones) => {
+        if(filteredCalificaciones.length === 0) return [];
+        if(filterValues.alumno) return [];
+        const filteredAlumnos = alumnos.filter(a => {
+            const nombreCompleto = `${a.usuario.apellido} ${a.usuario.nombre}`;
+            return !filteredCalificaciones.some(c => c.alumno === nombreCompleto);
+        });
+        const mappedAlumnos = filteredAlumnos.map(a => ({
+            id: a.id_alumno,
+            label: `${a.usuario.apellido} ${a.usuario.nombre}`,
+        }));
+        
+        return mappedAlumnos;
+    }
+
+    const mapCalificaciones = (filteredCalificaciones) => {
+        const mapped = {};
+
+        if(filteredCalificaciones.length === 0) return mapped;
+
+        uniqueAlumnos.forEach((alumno) => {
+            mapped[alumno.alumno] = {};
+            uniqueTipos.forEach((tipo) => {
+                const calificacion = filteredCalificaciones.find(c => c.alumno === alumno.alumno && c.tipo === tipo);
+                mapped[alumno.alumno][tipo] = {};
+                mapped[alumno.alumno][tipo]['nota'] = calificacion ? calificacion.nota : "";
+                mapped[alumno.alumno][tipo]['id'] = calificacion ? calificacion.id : "";
+                mapped[alumno.alumno][tipo]['publicado'] = calificacion ? calificacion.publicado : false;
+                mapped[alumno.alumno].id_alumno = calificacion ? calificacion.id_alumno : "";
+                mapped[alumno.alumno].id_curso = calificacion ? calificacion.id_curso : "";
+                mapped[alumno.alumno].id_materia = calificacion ? calificacion.id_materia : "";
+            });
+        });
+        return mapped;
     }
 
     const handleSave = async (updatedRows, addedRows) => {
@@ -300,36 +350,45 @@ export const Calificaciones = () => {
         console.log("Updated Rows:", updatedRows);
         console.log("Added Rows:", addedRows);
 
-        const mappedUpdatedRows = updatedRows.map(r => {
-            let docenteId = typeof r.docente === "string" ?
-                null:
-                r.docente;
+        const updatedRowsKeys = Object.keys(updatedRows);
 
-            return {
-                id_calificacion: r.id,
-                id_tipo_calificacion: r.tipo,
-                id_docente: docenteId,
-                nota: r.nota,
-                observaciones: r.observaciones,
-            };
+        const mappedUpdatedRows = [];
+        updatedRowsKeys.forEach(alumnoKey => {
+            const row = {};
+            const calificaciones = Object.keys(updatedRows[alumnoKey]);
+            
+            calificaciones.forEach(tipoKey => {
+                if(tipoKey !== "id_alumno" && tipoKey !== "id_curso" && tipoKey !== "id_materia"){
+                    const tipoCalificacion = tiposCalificaciones.find(t => t.descripcion === tipoKey);
+                    row["id_alumno"] = updatedRows[alumnoKey].id_alumno;
+                    row["id_curso"] = updatedRows[alumnoKey].id_curso;
+                    row["id_materia"] = updatedRows[alumnoKey].id_materia;
+                    row["id_tipo_calificacion"] = tipoCalificacion ? tipoCalificacion.id_tipo_calificacion : null;
+                    row["nota"] = updatedRows[alumnoKey][tipoKey].nota;
+                    row["id_calificacion"] = updatedRows[alumnoKey][tipoKey].id || null;
+                }
+            });
+            mappedUpdatedRows.push(row);
         });
 
-        const mappedAddedRows = addedRows.map(r => {
-            let alumnoId = typeof r.alumno === "string" ?
-                alumnos.find(a => `${a.usuario.apellido} ${a.usuario.nombre}` === r.alumno)?.id_alumno
-                : r.alumno;
-
-            let docenteId = typeof r.docente === "string" ?
-                null:
-                r.docente;
-            return{
-                id_alumno: alumnoId,
-                id_materia: materias.find(m => m.nombre === r.materia)?.id_materia || null,
-                id_curso: cursos.find(c => c.name === r.curso)?.id_curso || null,
-                id_tipo_calificacion: r.tipo,
-                id_docente: docenteId,
-                nota: r.nota,
-                observaciones: r.observaciones
+        const mappedAddedRows = [];
+        const addedRowsKeys = Object.keys(addedRows);
+        addedRowsKeys.forEach(alumnoKey => {
+            const calificaciones = Object.keys(addedRows[alumnoKey]);
+            for(const tipoKey of calificaciones){
+                if(tipoKey !== "id_alumno" && tipoKey !== "id_curso" && tipoKey !== "id_materia"){
+                    const tipoCalificacion = tiposCalificaciones.find(t => t.descripcion === tipoKey);
+                    if(tipoCalificacion === undefined || addedRows[alumnoKey][tipoKey].nota === ""){
+                        continue;
+                    }
+                    const row = {};
+                    row["id_alumno"] = addedRows[alumnoKey].id_alumno;
+                    row["id_curso"] = addedRows[alumnoKey].id_curso;
+                    row["id_materia"] = addedRows[alumnoKey].id_materia;
+                    row["id_tipo_calificacion"] = tipoCalificacion ? tipoCalificacion.id_tipo_calificacion : null;
+                    row["nota"] = addedRows[alumnoKey][tipoKey].nota;
+                    mappedAddedRows.push(row);
+                }
             }
         });
 
@@ -338,8 +397,8 @@ export const Calificaciones = () => {
 
         try{
 
-                if(mappedUpdatedRows.length > 0) await dataProvider.updateManyCalificaciones(mappedUpdatedRows);
-                if(mappedAddedRows.length > 0) await dataProvider.createManyCalificaciones(mappedAddedRows);
+            if(mappedUpdatedRows.length > 0) await dataProvider.updateManyCalificaciones(mappedUpdatedRows);
+            if(mappedAddedRows.length > 0) await dataProvider.createManyCalificaciones(mappedAddedRows);
 
             setSuccess(true);
             setMessage("Cambios guardados correctamente");
@@ -358,17 +417,15 @@ export const Calificaciones = () => {
                 return {
                     ciclo_lectivo: c.materiaCurso.curso.cicloLectivo.anio,
                     id_materia: c.materiaCurso.id_materia,
-                    alumno: `${c.alumno.usuario.apellido} ${c.alumno.usuario.nombre}`,
                     materia: c.materiaCurso.materia.nombre,
+                    alumno: `${c.alumno.usuario.apellido} ${c.alumno.usuario.nombre}`,
                     nota: c.nota,
                     tipo: c.tipoCalificacion.descripcion,
-                    fecha: new Date(c.fecha).toLocaleDateString(),
-                    curso: `${c.materiaCurso.curso.anio_escolar}° ${c.materiaCurso.curso.division}`,
-                    docente: `${c.docente.usuario.apellido} ${c.docente.usuario.nombre}`,
-                    observaciones: c.observaciones || "Ninguna",
                     id: c.id_calificacion,
                     publicado: c.publicado,
-                }
+                    id_alumno: c.alumno.id_alumno,
+                    id_curso: filterValues.curso.id_curso,
+                };
             });
             setCalificaciones(mappedData);
             if(mappedData.length === 0) setShowEmptyCalificacionesMessage(true);
@@ -390,11 +447,6 @@ export const Calificaciones = () => {
         setSuccess(false);
         setMessage(errorMessage);
         setOpen(true);
-    }
-
-    const handleAddTable = () => {
-        setShowAddTable(true);
-        setShowEmptyCalificacionesMessage(false);
     }
 
     return (
@@ -528,48 +580,63 @@ export const Calificaciones = () => {
             </Typography>
             <Box>
                 {showEmptyCalificacionesMessage && !loading &&
-                    <Box
-                        display="flex"
-                        flexDirection="column"
-                        alignItems="center"
-                        justifyContent="center"
-                        sx={{
-                            mt: 6,
-                            color: "#5f6368",
-                            textAlign: "center",
-                        }}
-                    >
-                        <SearchOff sx={{ fontSize: 60, mb: 1, color: "#9E9E9E" }} />
-                        <Typography variant="h6" fontWeight="500">
-                            No hay calificaciones cargadas que cumplan con los filtros seleccionados.
-                        </Typography>
-                        <Typography variant="body2" sx={{ mt: 0.5, color: "#9E9E9E" }}>
-                            Verifica que el curso tenga calificaciones cargadas o selecciona otros filtros.
-                        </Typography>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            startIcon={<Add />}
-                            sx={{ mt: 2 }} 
-                            onClick={handleAddTable}
-                        >
-                            Agregar Calificaciones
-                        </Button>
+                    <Box key={new Date().getFullYear()} mb={4} mt={2}>
+                        <Divider>
+                            <Chip label={new Date().getFullYear()} sx={{backgroundColor: "#061B46", color: "#fff"}}/>
+                        </Divider>
+                        {displayWithAccordion && (
+                            <Box>
+                                {selectableMaterias.map(m => (
+                                    <Accordion key={m.id} sx={{ mt: 2 }}>
+                                        <AccordionSummary sx={{backgroundColor: "#E8EEF7"}} expandIcon={<ExpandMore />}>
+                                            <Typography variant="h6">{m.nombre}</Typography>
+                                        </AccordionSummary>
+                                        <AccordionDetails sx={{backgroundColor: "#F2F6FB"}}>
+                                            <Typography variant="body2" sx={{ fontStyle: "italic", color: "#616161", mb: 2, mt: 2, textAlign: "center" }}>
+                                                No hay calificaciones cargadas para esta materia en el ciclo lectivo {new Date().getFullYear().toString()}.
+                                            </Typography>
+                                            <CustomTable
+                                                alumnos={getAlumnos(calificaciones.filter(c => c.ciclo_lectivo === new Date().getFullYear().toString() && c.id_materia === m.id_materia))}
+                                                headers={getHeaders(calificaciones.filter(c => c.ciclo_lectivo === new Date().getFullYear().toString() && c.id_materia === m.id_materia))}
+                                                data={mapCalificaciones(calificaciones
+                                                    .filter(c => c.ciclo_lectivo === new Date().getFullYear().toString() && c.id_materia === m.id_materia))
+                                                }
+                                                defaultValues={getDefaultValues(m.id_materia)}
+                                                options={getOptions(calificaciones.filter(c => c.ciclo_lectivo === new Date().getFullYear().toString() && c.id_materia === m.id_materia))}
+                                                keys={getKeys(calificaciones.filter(c => c.ciclo_lectivo === new Date().getFullYear().toString() && c.id_materia === m.id_materia))}
+                                                onSave={handleSave}
+                                                onError={handleError}
+                                                editable={EDIT_PERMISSION && new Date().getFullYear().toString().toString() === CURRENT_YEAR}
+                                            />
+                                        </AccordionDetails>
+                                    </Accordion>
+                                ))}
+                            </Box>
+                        )}
+                        {!displayWithAccordion && (
+                                <Box sx={{ backgroundColor: "#E8EEF7", p: 2, borderRadius: 1, mt: 2 }}>
+                                    <Typography variant="body2" sx={{ fontStyle: "italic", color: "#616161", mb: 2, mt: 2, textAlign: "center" }}>
+                                        No hay calificaciones cargadas para esta materia en el ciclo lectivo {new Date().getFullYear().toString()}.
+                                    </Typography>
+                                    <CustomTable
+                                            alumnos={getAlumnos(calificaciones.filter(c => c.ciclo_lectivo === new Date().getFullYear().toString() && c.id_materia === filterValues.materia.id_materia))}
+                                            headers={getHeaders(calificaciones.filter(c => c.ciclo_lectivo === new Date().getFullYear().toString() && c.id_materia === filterValues.materia.id_materia))}
+                                            data={mapCalificaciones(calificaciones
+                                                .filter(c => c.ciclo_lectivo === new Date().getFullYear().toString() && c.id_materia === filterValues.materia.id_materia))
+                                            }
+                                            defaultValues={getDefaultValues(filterValues.materia.id_materia)}
+                                            options={getOptions(calificaciones.filter(c => c.ciclo_lectivo === new Date().getFullYear().toString() && c.id_materia === filterValues.materia.id_materia))}
+                                            keys={getKeys(calificaciones.filter(c => c.ciclo_lectivo === new Date().getFullYear().toString() && c.id_materia === filterValues.materia.id_materia))}
+                                            onSave={handleSave}
+                                            onError={handleError}
+                                            editable={EDIT_PERMISSION && new Date().getFullYear().toString().toString() === CURRENT_YEAR}
+                                        />
+                                </Box>
+                            )
+                        }
                     </Box>
                 }
-                {showAddTable &&
-                    <Box>
-                        <CustomTable 
-                            headers={TABLE_HEADERS} 
-                            dataArray={calificaciones} 
-                            keys={formatKeys(CURRENT_YEAR, calificacionesValues.id_materia, true)}
-                            onSave={handleSave}
-                            onError={handleError}
-                            editable={true}
-                        />
-                    </Box>
-                }
-                {!loading && calificaciones.length > 0 && anios.map(anio => (
+                {!loading && calificaciones.length > 0 && uniqueAnios.map(anio => (
                     <Box key={anio} mb={4} mt={2}>
                         <Divider>
                             <Chip label={anio} sx={{backgroundColor: "#061B46", color: "#fff"}}/>
@@ -595,10 +662,13 @@ export const Calificaciones = () => {
                                         type="info"
                                     />
                                 </Box>
-                                <CustomTable 
-                                    headers={TABLE_HEADERS} 
-                                    dataArray={calificaciones.filter(c => c.ciclo_lectivo === anio)} 
-                                    keys={formatKeys(anio, calificacionesValues.id_materia, EDIT_PERMISSION && anio === CURRENT_YEAR)}
+                                <CustomTable
+                                    alumnos={getAlumnos(calificaciones.filter(c => c.ciclo_lectivo === anio))}
+                                    headers={getHeaders(calificaciones.filter(c => c.ciclo_lectivo === anio))} 
+                                    data={mapCalificaciones(calificaciones.filter(c => c.ciclo_lectivo === anio))} 
+                                    defaultValues={getDefaultValues}
+                                    options={getOptions(calificaciones.filter(c => c.ciclo_lectivo === anio))}
+                                    keys={getKeys(calificaciones.filter(c => c.ciclo_lectivo === anio))}
                                     onSave={handleSave}
                                     onError={handleError}
                                     editable={EDIT_PERMISSION && anio === CURRENT_YEAR}
@@ -606,7 +676,7 @@ export const Calificaciones = () => {
                             </Box>
                         )}
                         {displayWithAccordion && (
-                            <Box>
+                            <Box key={loading ? "loading" : "loaded"}>
                                 {selectableMaterias.map(m => (
                                     <Accordion key={m.id} sx={{ mt: 2 }}>
                                         <AccordionSummary sx={{backgroundColor: "#E8EEF7"}} expandIcon={<ExpandMore />}>
@@ -640,12 +710,16 @@ export const Calificaciones = () => {
                                                 </Box>
                                             </>
                                             )}
-                                            <CustomTable 
-                                                headers={TABLE_HEADERS}
-                                                dataArray={calificaciones
-                                                    .filter(c => c.ciclo_lectivo === anio && c.id_materia === m.id_materia)
+                                            <CustomTable
+                                                alumnos={getAlumnos(calificaciones.filter(c => c.ciclo_lectivo === anio && c.id_materia === m.id_materia))}
+                                                headers={getHeaders(calificaciones
+                                                    .filter(c => c.ciclo_lectivo === anio && c.id_materia === m.id_materia))}
+                                                data={mapCalificaciones(calificaciones
+                                                    .filter(c => c.ciclo_lectivo === anio && c.id_materia === m.id_materia))
                                                 }
-                                                keys={formatKeys(anio, m.id_materia, EDIT_PERMISSION && anio === CURRENT_YEAR)}
+                                                defaultValues={getDefaultValues(m.id_materia)}
+                                                options={getOptions(calificaciones.filter(c => c.ciclo_lectivo === anio && c.id_materia === m.id_materia))}
+                                                keys={getKeys(calificaciones.filter(c => c.ciclo_lectivo === anio && c.id_materia === m.id_materia))}
                                                 onSave={handleSave}
                                                 onError={handleError}
                                                 editable={EDIT_PERMISSION && anio === CURRENT_YEAR}
