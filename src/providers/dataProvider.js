@@ -626,4 +626,18 @@ export const dataProvider = {
           id: a.id_asesor,
         })),
       })),
+
+  // obtener justificativos de los hijos de un tutor
+  getJustificativosHijos: () =>
+    httpClient(`${API_URL}/justificativos/hijos`)
+      .then(({ json }) => ({
+        data: json,
+      })),
+
+  // obtener justificativos por alumno
+  getJustificativosPorAlumno: (alumnoId) =>
+    httpClient(`${API_URL}/justificativos/alumno/${alumnoId}`)
+      .then(({ json }) => ({
+        data: json,
+      })),
 }

@@ -2,11 +2,38 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import logoOficial from "../../assets/img/logo_oficial.png";
 
+const mapRows = (calificaciones, tableColumnHeaders) => {
+    const mappedRows = [];
+    calificaciones.forEach((calificacion) => {
+        const existingRow = mappedRows.find(row => row[0] === calificacion.alumno);
+        if (existingRow) {
+            const tipoIndex = tableColumnHeaders.indexOf(calificacion.tipo);
+            if (tipoIndex !== -1) {
+                existingRow[tipoIndex] = calificacion.nota;
+            }
+        } else {
+            const newRow = new Array(tableColumnHeaders.length).fill("");
+            newRow[0] = calificacion.alumno;
+            const tipoIndex = tableColumnHeaders.indexOf(calificacion.tipo);
+            if (tipoIndex !== -1) {
+                newRow[tipoIndex] = calificacion.nota;
+            }
+            mappedRows.push(newRow);
+        }
+    });
+    return mappedRows;
+};
+
 export async function generarReportePDF({ type, curso = null, alumno = null, calificaciones = [], materia = null }) {
     const materias = Array.from(new Set(calificaciones.map(c => c.id_materia)));
-
     const anios = Array.from(new Set(calificaciones.map(c => c.ciclo_lectivo)));
 
+    const tableColumnHeaders = ["Alumno"];
+    const uniqueTipos = Array.from(new Set(calificaciones.map(c => c.tipo)));
+    uniqueTipos.forEach((tipo) => {
+        tableColumnHeaders.push(tipo);
+    });
+    console.log("alumno", alumno);
     try{
         const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
@@ -31,13 +58,12 @@ export async function generarReportePDF({ type, curso = null, alumno = null, cal
         doc.text("Reporte de Calificaciones", 40, 27);
         doc.setFontSize(12);
         if(type === "curso") doc.text(`Curso: ${curso.name}`, 14, 40);
-        if(type === "alumno") doc.text(`Alumno: ${alumno.usuario.nombre_completo}`, 14, 40);
+        if(type === "alumno") doc.text(`Alumno: ${alumno.usuario.apellido} ${alumno.usuario.nombre}`, 14, 40);
         if(materia) doc.text(`Materia: ${materia.nombre}`, 14, 45);
 
         // ——— Tabla de calificaciones ———
         if(type === "curso"){
             const startY = 50;
-            const tableColumnHeaders = ["Alumno","Calificación", "Tipo", "Fecha", "Docente", "Observaciones"];
 
             anios.forEach((anio) => {
                 // Título del ciclo
@@ -49,18 +75,13 @@ export async function generarReportePDF({ type, curso = null, alumno = null, cal
                 if(materia){
                     const filteredRows = calificaciones
                         .filter(c => c.ciclo_lectivo === anio && c.id_materia === materia.id_materia)
-                        .map(c => [
-                            c.alumno.usuario.nombre_completo,
-                            c.nota,
-                            c.tipo,
-                            new Date(c.fecha).toLocaleDateString(),
-                            c.docente.usuario.nombre_completo,
-                            c.observaciones || "Ninguna"
-                        ]);
+
+                    const mappedRows = mapRows(filteredRows, tableColumnHeaders);
+                    
                     autoTable(doc, {
                         startY: currentY,
                         head: [tableColumnHeaders],
-                        body: filteredRows,
+                        body: mappedRows,
                         tableWidth: 'auto',
                             styles: { 
                                 fontSize: 10, 
@@ -75,23 +96,17 @@ export async function generarReportePDF({ type, curso = null, alumno = null, cal
                 }else{
                     materias.forEach((mat) => {
                         doc.setFontSize(11);
-                        doc.text(`Materia: ${calificaciones.find(c => c.id_materia === mat).materia.nombre}`, 14, currentY);
+                        doc.text(`Materia: ${calificaciones.find(c => c.id_materia === mat).materia}`, 14, currentY);
 
                         const filteredRows = calificaciones
-                            .filter(c => c.ciclo_lectivo === anio && c.id_materia === mat)
-                            .map(c => [
-                                c.alumno.usuario.nombre_completo,
-                                c.nota,
-                                c.tipo,
-                                new Date(c.fecha).toLocaleDateString(),
-                                c.docente.usuario.nombre_completo,
-                                c.observaciones || "Ninguna"
-                            ]);
+                            .filter(c => c.ciclo_lectivo === anio && c.id_materia === mat);
+
+                        const mappedRows = mapRows(filteredRows, tableColumnHeaders);
 
                         autoTable(doc, {
                             startY: currentY + 5,
                             head: [tableColumnHeaders],
-                            body: filteredRows,
+                            body: mappedRows,
                             tableWidth: 'auto',
                             styles: { 
                                 fontSize: 10, 
@@ -120,8 +135,7 @@ export async function generarReportePDF({ type, curso = null, alumno = null, cal
         }
 
         if(type === "alumno"){
-            const startY = 50;
-            const tableColumnHeaders = ["Calificación", "Tipo", "Fecha", "Docente", "Observaciones"];
+            const startY = 50; 
             let currentY = startY;
 
             anios.forEach((anio) => {
@@ -134,17 +148,13 @@ export async function generarReportePDF({ type, curso = null, alumno = null, cal
                 if(materia){
                     const filteredRows = calificaciones
                         .filter(c => c.ciclo_lectivo === anio && c.id_materia === materia.id_materia)
-                        .map(c => [
-                            c.nota,
-                            c.tipo,
-                            new Date(c.fecha).toLocaleDateString(),
-                            c.docente.usuario.nombre_completo,
-                            c.observaciones || "Ninguna"
-                        ]);
+
+                    const mappedRows = mapRows(filteredRows, tableColumnHeaders);
+
                     autoTable(doc, {
                         startY: currentY,
                         head: [tableColumnHeaders],
-                        body: filteredRows,
+                        body: mappedRows,
                         tableWidth: 'auto',
                             styles: { 
                                 fontSize: 10, 
@@ -161,20 +171,16 @@ export async function generarReportePDF({ type, curso = null, alumno = null, cal
                 }else{
                     materias.forEach((mat) => {
                         doc.setFontSize(11);
-                        doc.text(`Materia: ${calificaciones.find(c => c.id_materia === mat).materia.nombre}`, 14, currentY);
+                        doc.text(`Materia: ${calificaciones.find(c => c.id_materia === mat).materia}`, 14, currentY);
+
                         const filteredRows = calificaciones
                             .filter(c => c.ciclo_lectivo === anio && c.id_materia === mat)
-                            .map(c => [
-                                c.nota,
-                                c.tipo,
-                                new Date(c.fecha).toLocaleDateString(),
-                                c.docente.usuario.nombre_completo,
-                                c.observaciones || "Ninguna"
-                            ]);
+                        const mappedRows = mapRows(filteredRows, tableColumnHeaders);
+
                         autoTable(doc, {
                             startY: currentY + 5,
                             head: [tableColumnHeaders],
-                            body: filteredRows,
+                            body: mappedRows,
                             tableWidth: 'auto',
                             styles: { 
                                 fontSize: 10, 
@@ -203,7 +209,7 @@ export async function generarReportePDF({ type, curso = null, alumno = null, cal
         // ——— Guardar PDF ———
         const fileNameParts = ["Reporte_Calificaciones"];
         if(type === "curso" && curso) fileNameParts.push(`Curso_${curso.name}`);
-        if(type === "alumno" && alumno) fileNameParts.push(`Alumno_${alumno.usuario.nombre_completo.replace(/\s+/g, "_")}`);
+        if(type === "alumno" && alumno) fileNameParts.push(`Alumno_${alumno.usuario.apellido}_${alumno.usuario.nombre}`);
         if(materia) fileNameParts.push(`Materia_${materia.nombre.replace(/\s+/g, "_")}`);
         const fileName = fileNameParts.join("_") + ".pdf";
         doc.save(fileName);
