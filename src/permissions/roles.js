@@ -43,8 +43,8 @@ export const ROLE_PERMISSIONS = {
       '/informes',
       '/calificaciones',
       '/informes-pedagogicos',
-      '/justificativos',
-      '/justificativos/hijos',
+      '/justificativos/validar',
+      '/justificativos/cargar',
     ]),
     menu: new Set([
       'usuarios',
@@ -65,8 +65,8 @@ export const ROLE_PERMISSIONS = {
       'asignar-cursos',
       'cambiar-curso',
       'informes-pedagogicos',
-      'justificativos',
-      'justificativos-hijos',
+      'justificativos-validar',
+      'justificativos-cargar',
     ]),
   },
 
@@ -112,6 +112,7 @@ export const ROLE_PERMISSIONS = {
       '/gestion-academica/cursos',
       '/gestion-academica/asignar-cursos',
       '/gestion-academica/cambiar-curso',
+      '/justificativos/validar',
     ]),
     menu: new Set([
       'asistencias-recientes',
@@ -121,6 +122,7 @@ export const ROLE_PERMISSIONS = {
       'cursos',
       'asignar-cursos',
       'cambiar-curso',
+      'justificativos-validar',
     ]),
   },
 
@@ -165,13 +167,13 @@ export const ROLE_PERMISSIONS = {
       '/notificaciones',
       '/mensajes',
       '/calificaciones/hijos',
-      '/justificativos/hijos',
+      '/justificativos/cargar',
     ]),
     menu: new Set([
       'notificaciones',
       'mensajes',
       'calificaciones-hijos',
-      'justificativos-hijos',
+      'justificativos-cargar',
     ]) 
   },
 
