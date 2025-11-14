@@ -465,9 +465,7 @@ export const dataProvider = {
     }
   },
 
-
   // eliminar asistencias de un curso en una fecha dada
-
   deleteAsistenciasCurso: (cursoId, fecha) =>
     httpClient(`${API_URL}/asistencias/curso/${cursoId}?fecha=${fecha}`, {
       method: "DELETE",
@@ -475,8 +473,16 @@ export const dataProvider = {
       data: json,
     })),
 
+  // obtener promedio de asistencias de un curso en un rango
   getPromedioAsistenciaCurso: (cursoId, desde, hasta) =>
     httpClient(`${API_URL}/asistencias/curso/${cursoId}/promedio?desde=${desde}&hasta=${hasta}`)
+      .then(({ json }) => ({
+        data: json,
+      })),
+
+  // Inasistencias de un alumno
+  getInasistenciasPorAlumno: (alumnoId) =>
+    httpClient(`${API_URL}/asistencias/alumno/${alumnoId}/ausentes`)
       .then(({ json }) => ({
         data: json,
       })),
@@ -627,17 +633,33 @@ export const dataProvider = {
         })),
       })),
 
-  // obtener justificativos de los hijos de un tutor
-  getJustificativosHijos: () =>
-    httpClient(`${API_URL}/justificativos/hijos`)
-      .then(({ json }) => ({
-        data: json,
-      })),
-
   // obtener justificativos por alumno
   getJustificativosPorAlumno: (alumnoId) =>
     httpClient(`${API_URL}/justificativos/alumno/${alumnoId}`)
       .then(({ json }) => ({
         data: json,
       })),
+
+  // obtener justificativos por curso
+  getJustificativosPorCurso: (cursoId, id_alumno = null) =>
+    httpClient(`${API_URL}/justificativos/curso/${cursoId}${id_alumno ? `?id_alumno=${id_alumno}` : ''}`)
+      .then(({ json }) => ({
+        data: json,
+      })),
+
+  // crear justificativo
+  crearJustificativo: (formData, idAsistencia) =>
+    httpClient(`${API_URL}/justificativos/asistencia/${idAsistencia}`, {
+      method: 'POST',
+      body: formData,
+    }).then(({ json }) => ({
+      data: { ...json, id: json.id_justificativo || json.insertId },
+    })),
+
+  // actualizar estado de justificativo
+  actualizarEstadoJustificativo: (idJustificativo, estado, motivo_rechazo = null, detalle_justificativo = null) =>
+    httpClient(`${API_URL}/justificativos/${idJustificativo}/estado`, {
+      method: 'PUT',
+      body: JSON.stringify({ estado, motivo_rechazo, detalle_justificativo }),
+    }).then(({ json }) => ({ data: json })),
 }

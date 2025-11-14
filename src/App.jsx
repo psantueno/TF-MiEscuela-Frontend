@@ -8,7 +8,8 @@ import { CustomLayout } from './layout/CustomLayout';
 import { AsistenciasRecientes } from './resources/asistencias/AsistenciasRecientes';
 import { Calificaciones } from './resources/calificaciones/Calificaciones';
 import { CalificacionesHijos } from './resources/calificaciones/CalificacionesHijos';
-import { JustificativosHijos } from './resources/justificativos/JustificativosHijos';
+import { CargarJustificativo } from './resources/justificativos/CargarJustificativo';
+import { ValidarJustificativo } from './resources/justificativos/ValidarJustificativo';
 
 // Contexto de usuario
 import UserProvider from './contexts/UserContext/UserProvider';
@@ -229,8 +230,11 @@ function App() {
                         {allowRoute(role, '/informes-pedagogicos') && (
                           <Route path="/informes-pedagogicos" element={<InformesPedagogicos />} />
                         )}
-                        {allowRoute(role, '/justificativos/hijos') && (
-                          <Route path="/justificativos/hijos" element={<JustificativosHijos />} />
+                        {allowRoute(role, '/justificativos/validar') && (
+                          <Route path="/justificativos/validar" element={<ValidarJustificativo />} />
+                        )}
+                        {allowRoute(role, '/justificativos/cargar') && (
+                          <Route path="/justificativos/cargar" element={<CargarJustificativo />} />
                         )}
                         {allowRoute(role, '/notificaciones') && (
                           <Route path="/notificaciones" element={<div>Notificaciones</div>} />

@@ -277,6 +277,27 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
                 <ListItemText primary="Eliminar asistencia" sx={getTextStyle(isActive('/asistencias/eliminar'))} />
               </ListItemButton>
             )}
+            {/* Submenú: Listado para validación */}
+            {allowMenu(role, 'justificativos-validar') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(isActive('/justificativos/validar')) }}
+                selected={isActive('/justificativos/validar')}
+                onClick={() => handleItemClick({ id: 'justificativos-validar', to: '/justificativos/validar' })}
+              >
+                <ListItemText primary="Validar justificativos" sx={getTextStyle(isActive('/justificativos/validar'))} />
+              </ListItemButton>
+            )}
+
+            {/* Submenú: Hijos */}
+            {allowMenu(role, 'justificativos-cargar') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(isActive('/justificativos/cargar')) }}
+                selected={isActive('/justificativos/cargar')}
+                onClick={() => handleItemClick({ id: 'justificativos-cargar', to: '/justificativos/cargar' })}
+              >
+                <ListItemText primary="Cargar justificativos" sx={getTextStyle(isActive('/justificativos/cargar'))} />
+              </ListItemButton>
+            )}
           </List>
         </Collapse>
 
@@ -404,46 +425,6 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
             <ListItemText primary="Informes pedagógicos" sx={getTextStyle(isActive('/informes-pedagogicos'))} />
           </ListItemButton>
         </ListItem>
-        )}
-
-        {/* Modulo de justificativos */}
-        {(allowMenu(role, 'justificativos') || allowMenu(role, 'justificativos-hijos')) && (
-        <>
-        <ListItem disablePadding>
-          <ListItemButton onClick={() => setOpenJustificativos(!openJustificativos)}>
-            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-              <Grade />
-            </ListItemIcon>
-            <ListItemText primary="Justificativos de asistencia" />
-            {openJustificativos ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={openJustificativos} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            {/* Submenú: Listado para validación */}
-            {allowMenu(role, 'justificativos') && (
-              <ListItemButton
-                sx={{ pl: 6, ...getButtonStyle(isActive('/justificativos')) }}
-                selected={isActive('/justificativos')}
-                onClick={() => handleItemClick({ id: 'justificativos', to: '/justificativos' })}
-              >
-                <ListItemText primary="Validar justificativos" sx={getTextStyle(isActive('/justificativos'))} />
-              </ListItemButton>
-            )}
-
-            {/* Submenú: Hijos */}
-            {allowMenu(role, 'justificativos-hijos') && (
-              <ListItemButton
-                sx={{ pl: 6, ...getButtonStyle(isActive('/justificativos/hijos')) }}
-                selected={isActive('/justificativos/hijos')}
-                onClick={() => handleItemClick({ id: 'justificativos-hijos', to: '/justificativos/hijos' })}
-              >
-                <ListItemText primary="Justificativos de mis hijos" sx={getTextStyle(isActive('/justificativos/hijos'))} />
-              </ListItemButton>
-            )}
-          </List>
-        </Collapse>
-        </>
         )}
 
         {/* Otros custom */}
