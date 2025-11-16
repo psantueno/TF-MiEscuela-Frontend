@@ -16,16 +16,15 @@ import {
     Paper
 } from "@mui/material";
 import { Confirm } from "react-admin";
-import { Save, Edit, Delete, WarningAmberRounded, Check, Add } from "@mui/icons-material";
+import { Save, Edit, Delete, WarningAmberRounded, Check, Add, Construction } from "@mui/icons-material";
 
-export const CustomTable = ({ alumnos, headers, data, defaultValues = [], options = [], keys, onSave = () =>{}, onError = () => {}, editable = false }) =>{
-    const [alumnosState, setAlumnosState] = useState(JSON.parse(JSON.stringify(alumnos)));
-    const [keysState, setKeysState] = useState([...keys]);
-    const [headersState, setHeadersState] = useState([...headers]);
-    const [dataState, setDataState] = useState(() => structuredClone(data));
-    const [optionsState, setOptionsState] = useState(JSON.parse(JSON.stringify(options)));
+export const CustomTable = ({ alumnos, headers, data, defaultValues = [], options = [], onSave = () => {}, onError = () => {}, editable = false }) =>{
+    const [newAlumnos, setNewAlumnos] = useState([]);
+    const [newHeaders, setNewHeaders] = useState([]);
+    const [editedData, setEditedData] = useState([]);
+    const [addedData, setAddedData] = useState([]);
     const [editingRows, setEditingRows] = useState([]);
-    const [tempRowsValues, setTempRowsValues] = useState({});
+    const [tempRowsValues, setTempRowsValues] = useState([]);
     const [hasChanges, setHasChanges] = useState(false);
 
     const [confirmModal, setConfirmModal] = useState({
@@ -42,116 +41,150 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
     const rowRefs = useRef({});
 
     useEffect(() => {
-        setDataState(structuredClone(data));
-    }, [data]);
-
-    useEffect(() => {
-        const dataStateAlumnosCount = Object.keys(dataState).length;
-        const dataAlumnosCount = Object.keys(data).length;
-
-        if(dataAlumnosCount !== dataStateAlumnosCount) {
+        if(editedData.length > 0){
             setHasChanges(true);
             return;
         }
 
-        if(!editable){
-            setHasChanges(false);
+        if(addedData.length > 0){
+            setHasChanges(true);
             return;
         }
 
-        const hasDifferences = Object.keys(dataState).some((alumno) => {
-            const dataStateRow = dataState[alumno];
-            const dataRow = data[alumno];
+        setHasChanges(false);
+    }, [editedData, addedData]);
 
-            const dataRowKeys = Object.keys(dataRow || {});
-            const dataStateRowKeys = Object.keys(dataStateRow || {});
-
-            if(dataRowKeys.length > dataStateRowKeys.length){
-                const extraKeys = dataRowKeys.filter(key => !dataStateRowKeys.includes(key));
-                extraKeys.forEach((key) => {
-                    dataStateRow[key] = dataRow[key];
-                });
-            }
-
-            if(!dataRow) return true;
-            return keysState.some((key) => !dataRow[key.label] || dataRow[key.label].nota !== dataStateRow[key.label].nota);
-        });
-
-        setHasChanges(hasDifferences);
-    }, [data, dataState, editable, keysState]);
-
-    const handleEditRow = (alumno, disabled) => {
+    const handleEditRow = (alumno, disabled = false) => {
         if(disabled) return;
 
-        if(editingRows && editingRows.includes(alumno)){
-            const updatedData = JSON.parse(JSON.stringify(dataState));
-            updatedData[alumno] = { ...updatedData[alumno], ...tempRowsValues[alumno] };
-            setDataState(updatedData);
+        if(editingRows && editingRows.some(r => r === alumno)){
             setEditingRows(prev => prev.filter(r => r !== alumno));
-            setTempRowsValues(prev => {
-                const updatedTemp = { ...prev };
-                delete updatedTemp[alumno];
-                return updatedTemp;
-            });
+            setEditedData((prev) => {
+                const tempValues = tempRowsValues.filter(r => r.alumno === alumno);
 
-            const updatedAlumnos = [...alumnosState];
-            const alumnoIndex = updatedAlumnos.findIndex(a => a.added && a.addedKey === alumno);
-            if(alumnoIndex !== -1){
-                updatedAlumnos[alumnoIndex].alumno = updatedData[alumno].alumno;
-                setAlumnosState(updatedAlumnos);
-            }
+                if(tempValues.length === 0) return prev;
+                
+                tempValues.forEach((temp) => {
+                    const existingIndex = prev.findIndex(item => item.alumno === alumno && item.tipoCalificacion === temp.tipoCalificacion && item.fecha === temp.fecha);
+                    if (existingIndex !== -1) {
+                        const updated = [...prev];
+
+                        updated[existingIndex] = {
+                            ...updated[existingIndex],
+                            nota: temp.nota
+                        };
+
+                        prev = updated;
+                    } else {
+                        prev = [...prev, { alumno: alumno, tipoCalificacion: temp.tipoCalificacion, fecha: temp.fecha, nota: temp.nota }];
+                    }
+                })
+
+
+                const filteredPrev = prev.filter(item => {
+                    const originalData = data.find(c => `${c.alumno.apellido} ${c.alumno.nombre}` === item.alumno && c.tipoCalificacion.descripcion === item.tipoCalificacion && c.fecha === item.fecha);
+
+                    if(!originalData) return false;
+                    return !(originalData && originalData.nota === item.nota);
+                });
+
+                return filteredPrev;
+            })
+            setAddedData((prev) => {
+                const tempValues = tempRowsValues.filter(r => r.alumno === alumno);
+                if(tempValues.length === 0) return prev;
+                
+                tempValues.forEach((temp) => {
+                    const existingIndex = prev.findIndex(item => item.alumno === alumno && item.tipoCalificacion === temp.tipoCalificacion && item.fecha === temp.fecha);
+                    if (existingIndex !== -1) {
+                        const updated = [...prev];
+                        updated[existingIndex] = {
+                            ...updated[existingIndex],
+                            nota: temp.nota
+                        };
+                        prev = updated;
+                    } else {
+                        prev = [...prev, { alumno: alumno, tipoCalificacion: temp.tipoCalificacion, fecha: temp.fecha, nota: temp.nota }];
+                    }
+                })
+
+                const filteredPrev = prev.filter(item => {
+                    const originalData = data.find(c => `${c.alumno.apellido} ${c.alumno.nombre}` === item.alumno && c.tipoCalificacion.descripcion === item.tipoCalificacion && c.fecha === item.fecha);
+
+                    if(originalData || !originalData && item.nota === "") return false;
+                    return true;
+                });
+                return filteredPrev;
+            });
+            setTempRowsValues(prev => prev.filter(r => r.alumno !== alumno || !r.alumno));
         }else{
             setEditingRows(prev => {
-                if(prev.includes(alumno)) return prev.filter(r => r !== alumno);
+                if(prev.some(r => r.alumno === alumno)) return prev.filter(r => r.alumno !== alumno);
                 return [...prev, alumno];
-            } );
-
-            const tempKeysValues = {};
-            keys.forEach((key) => {
-                tempKeysValues[key] = dataState[alumno]?.[key] || "";
             });
-
-            setTempRowsValues(prev => ({
-                ...prev,
-                [alumno]: { ...dataState[alumno],...tempKeysValues },
-            }));
+            [...headers, ...newHeaders].forEach((header) => {
+                const existingTemp = tempRowsValues.find(r => r.alumno === alumno && r.tipoCalificacion === header.label && r.fecha === header.fecha);
+                if(!existingTemp){
+                    const existingEdited = editedData.find(c => c.alumno === alumno && c.tipoCalificacion === header.label && c.fecha === header.fecha);
+                    const existingAdded = addedData.find(c => c.alumno === alumno && c.tipoCalificacion === header.label && c.fecha === header.fecha);
+                    const existingData = data.find(c => `${c.alumno.apellido} ${c.alumno.nombre}` === alumno && c.tipoCalificacion.descripcion === header.label && c.fecha === header.fecha);
+                    setTempRowsValues((prev) => [...prev, { 
+                        alumno: alumno, 
+                        tipoCalificacion: header.label, 
+                        fecha: header.fecha,
+                        nota: existingEdited ? existingEdited.nota : (existingAdded ? existingAdded.nota : (existingData ? existingData.nota : "")) 
+                    }]);
+                }
+            })
         }
     }
 
-    const handleChange = (value, alumno, key) => {
-        if(key === "alumno"){
-            setTempRowsValues(prev => ({
-                ...prev,
-                [alumno]: {
-                    ...prev[alumno],
-                    alumno: value
-                }
-            }));
-
-            const exists = alumnosState.some(a => a.alumno === value);
-            if(exists){
-                const alumnoRefIndex = alumnosState.findIndex(a => a.alumno === value);
-                handleError(alumnoRefIndex, `El alumno "${value}" ya se encuentra en la tabla.`);
-                handleDeleteRow(alumno);
+    const handleChange = (value, alumno, header) => {
+        if(header.label === "Alumno"){
+            if(newAlumnos.some(a => a.alumno === value)){
+                handleError(alumno, `El alumno ${value} ya fue agregado a la tabla.`);
+                return;
             }
-        }else{
-            console.log("nota changed:", value);
-            setTempRowsValues(prev => ({
-                ...prev,
-                [alumno]: {
-                    ...prev[alumno],
-                    [key]: {
-                        nota: value,
-                        id: dataState[alumno]?.[key]?.id || crypto.randomUUID()
+            setNewAlumnos((prev) => {
+                const updated = prev.map((a) => {
+                    if(a.alumno === alumno){
+                        return {
+                            ...a,
+                            alumno: value
+                        };
                     }
-                }
-            }));
+                    return a;
+                });
+                return updated;
+            });
+
+            if(value !== ""){
+                setEditingRows((prev) => {
+                    const filteredPrev = [...prev].filter(r => r !== "");
+                    filteredPrev.push(value);
+                    return filteredPrev;
+                });
+            }
         }
+        setTempRowsValues((prev) => {
+            const existingIndex = prev.findIndex(item => item.alumno === alumno && item.tipoCalificacion === header.label && item.fecha === header.fecha);
+            if (existingIndex !== -1) {
+                const updated = [...prev];
+                updated[existingIndex] = {
+                    ...updated[existingIndex],
+                    nota: value
+                };
+                return updated;
+            } else {
+                return [...prev, { alumno: alumno, tipoCalificacion: header.label, fecha: header.fecha, nota: value }];
+            }
+        });   
     }
 
     const handleNotSavedChangesAdvice = () => {
-        console.log("tempRowsValues before confirm modal:", tempRowsValues);
-        if(tempRowsValues && Object.keys(tempRowsValues).length === 0){
+        const filteredTempRows = [...tempRowsValues].filter(r => r.alumno);
+
+        if(filteredTempRows && Object.keys(filteredTempRows).length === 0){
             handleSave();
             return;
         }
@@ -168,57 +201,36 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
 
     const handleAddRow = () => {
         const newRow = {};
-        newRow.id = null;
-        for(const defaultValue of Object.keys(defaultValues)) {
-            if(defaultValue !== "alumnos"){
-                newRow[defaultValue] = defaultValues[defaultValue];
-            }
-        }
-        keys.forEach(key => {
-            if(!(key.label in newRow)){
-                newRow[key.label] = {
-                    nota: "",
-                    id: crypto.randomUUID()
-                }
-            }
-        });
-        newRow.added = true;
+        newRow.alumno = "";
+        newRow.editable = true;
+        setNewAlumnos(prev => [...prev, newRow]);
 
-        const newAlumno = "";
-
-        setAlumnosState([...alumnosState, { alumno: newAlumno, editable: true, added: true, addedKey: Object.keys(dataState).length }]);
-
-        setDataState({...dataState, [Object.keys(dataState).length]: newRow });
-        setHasChanges(true);
-        handleEditRow(Object.keys(dataState).length);
+        handleEditRow(newRow.alumno);
     };
 
-    const handleDeleteRow = (alumno) => {
-        const updated = JSON.parse(JSON.stringify(dataState));
-        delete updated[alumno];
-        setDataState(updated);
+    const handleDeleteRow = (rowIndex) => {
+        const alumno = newAlumnos[rowIndex];
         if(editingRows.includes(alumno)) setEditingRows(prev => prev.filter(r => r !== alumno));
-        if(tempRowsValues[alumno]) {
-            setTempRowsValues(prev => {
-                const updatedTemp = { ...prev };
-                delete updatedTemp[alumno];
-                return updatedTemp;
-            });
-        }
 
-        const updatedAlumnos = [...alumnosState];
-        const filteredAlumnos = updatedAlumnos.filter(a => !a.addedKey || a.addedKey !== alumno);
-        setAlumnosState(filteredAlumnos);
+        const filteredTempRows = tempRowsValues.filter(r => r.alumno !== alumno.alumno);
+        setTempRowsValues(filteredTempRows);
+
+        const filteredAddedData = addedData.filter(d => d.alumno !== alumno.alumno);
+        setAddedData(filteredAddedData)
+
+        setNewAlumnos((prev) => {
+            return prev.filter(a => a !== alumno)
+        });
         closeConfirmModal();
     }
 
-    const handleDeleteAlumnoAdvice = (alumno) => {
+    const handleDeleteAlumnoAdvice = (rowIndex) => {
         setConfirmModal({
             open: true,
             title: "Confirmar eliminación",
             content: "¿Está seguro que quiere eliminar este registro? La acción no se puede deshacer",
             confirmLabel: "Eliminar",
-            onConfirm: () => handleDeleteRow(alumno),
+            onConfirm: () => handleDeleteRow(rowIndex),
             onCancel: closeConfirmModal
         });
     }
@@ -239,33 +251,17 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
             return;
         }
 
-        if(keysState.some(k => k.label === tipo)){
-            onError(`El tipo de calificación "${tipo}" ya existe en la tabla.`);
-            setAddTipoCalificacionModalOpen(false);
-            return;
+        setNewHeaders(prevHeaders => [...prevHeaders, { label: tipo, editable: true, deletable: true, fecha: new Date().toLocaleDateString() }]);
+        if(data.length === 0){
+            if(newAlumnos.length === 0){
+                const updatedNewAlumnos = options.current_alumnos.map((alumno) => ({
+                    alumno: alumno.label,
+                    editable: true
+                }));
+                setNewAlumnos(updatedNewAlumnos);
+            }
         }
 
-        setKeysState(prevKeys => [...prevKeys, { label: tipo, publicado: false }]);
-        setHeadersState(prevHeaders => [...prevHeaders, { label: tipo, editable: true, deletable: true }]);
-        const dataStateKeys = Object.keys(dataState);
-        const updatedDataState = { ...dataState };
-        if(Object.keys(updatedDataState).length === 0){
-            alumnosState.forEach((alumno) => {
-                updatedDataState[alumno.alumno] = {
-                    id_alumno: alumno.id_alumno || defaultValues.id_alumno || defaultValues.alumnos.find(a => a.alumno === alumno.alumno)?.id_alumno || null,
-                    id_curso: alumno.id_curso || defaultValues.id_curso || null,
-                    id_materia: alumno.id_materia || defaultValues.id_materia || null,
-                    [tipo]: { nota: "", id: crypto.randomUUID() }
-                };
-            });
-        }
-        dataStateKeys.forEach((key) => {
-            updatedDataState[key] = {
-                ...updatedDataState[key],
-                [tipo]: { nota: "", id: crypto.randomUUID() }
-            };
-        });
-        setDataState(updatedDataState);
         setAddTipoCalificacionModalOpen(false);
         setHasChanges(true);
     }
@@ -282,165 +278,106 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
     }
 
     const handleDeleteTipoCalificacion = (tipo) => {
-        const updatedKeys = keysState.filter(k => k.label !== tipo);
-        setKeysState(updatedKeys);
-        const updatedHeaders = headersState.filter(h => h.label !== tipo);
-        setHeadersState(updatedHeaders);
-        const dataStateKeys = Object.keys(dataState);
-        const updatedDataState = { ...dataState };
-        dataStateKeys.forEach((key) => {
-            const {[tipo]: _, ...rest} = updatedDataState[key];
-            updatedDataState[key] = rest;
-        });
-        setDataState(updatedDataState);
-        
-        const updatedAlumnos = [...alumnosState];
-        const leftNewHeaders = updatedHeaders.filter(h => h.deletable);
+        const updatedHeaders = [...newHeaders].filter(h => h.label !== tipo);
+        setNewHeaders(updatedHeaders);
 
-        if(leftNewHeaders.length === 0){
-            updatedAlumnos.forEach((alumno) => {
-                alumno.editable = alumnos.find(a => a.alumno === alumno.alumno)?.editable || false;
-            });
-        }
-
-        if(updatedHeaders.length === 1){
-            setDataState({});
-        }
-        setAlumnosState(updatedAlumnos);
         closeConfirmModal();
     }
 
     const handleSave = () => {
-        const tempRowsKeys = Object.keys(tempRowsValues);
-        const dataRowsKeys = Object.keys(dataState);
+        const updatedRows = [...editedData];
+        const mappedUpdatedRows = updatedRows.map((row) => {
+            const defaultValuesKeys = Object.keys(defaultValues);
+            defaultValuesKeys.forEach((key) => {
+                row[key] = defaultValues[key];
+            });
 
-        const filteredData = {};
+            const idAlumno = options.current_alumnos.find(a => a.label === row.alumno)?.id;
+            const idTipoCalificacion = options.tiposCalificaciones.find(t => t.label === row.tipoCalificacion)?.id;
 
-        dataRowsKeys.forEach((key) => {
-            if(!tempRowsKeys.includes(key.toString())){
-                filteredData[key] = dataState[key];
+            return {
+                ...row,
+                id_alumno: idAlumno,
+                id_tipo_calificacion: idTipoCalificacion
             }
         });
 
-        const updatedRows = {};
-        const filteredDataKeys = Object.keys(filteredData);
-
-        const originalDataKeys = Object.keys(data);
-        originalDataKeys.forEach((key) => {
-            const dataRow = dataState[key];
-            const originalRow = data[key];
-            const originalTipoKeys = Object.keys(originalRow);
-            originalTipoKeys.forEach((tipoKey) => {
-                if(dataRow && originalRow && dataRow[tipoKey] && originalRow[tipoKey] && dataRow[tipoKey].id == originalRow[tipoKey].id && dataRow[tipoKey].nota !== originalRow[tipoKey].nota){
-                    if(updatedRows[key] === undefined){
-                        updatedRows[key] = {};
-                    }
-                    updatedRows[key].id_alumno = dataRow.id_alumno;
-                    updatedRows[key].id_curso = dataRow.id_curso;
-                    updatedRows[key].id_materia = dataRow.id_materia;
-                    updatedRows[key][tipoKey] = dataRow[tipoKey];
-                }
+        if(!validateRequiredFields(mappedUpdatedRows)) return;
+        
+        const addedRows = [...addedData];
+        const mappedAddedRows = addedRows.map((row) => {
+            const defaultValuesKeys = Object.keys(defaultValues);
+            defaultValuesKeys.forEach((key) => {
+                row[key] = defaultValues[key];
             });
-        });
 
-        if(!validateRequiredFields(updatedRows)) return;
+            const idAlumno = options.current_alumnos.find(a => a.label === row.alumno)?.id;
+            const idTipoCalificacion = options.tiposCalificaciones.find(t => t.label === row.tipoCalificacion)?.id;
 
-        const newAddedRows = {};
-        filteredDataKeys.forEach((key) => {
-            const filterDataTipoCalificacionKeys = Object.keys(filteredData[key]).filter(k => headersState.some(header => header.label === k));
-            const originalDataTipoCalificacionKeys = data[key] ? Object.keys(data[key]).filter(k => headersState.some(header => header.label === k)) : [];
-
-            const newTipoCalificacion = filterDataTipoCalificacionKeys.filter(k => !originalDataTipoCalificacionKeys.includes(k));
-
-            const newRow = {};
-            newTipoCalificacion.forEach((tipo) => {
-                if(newRow[key] === undefined){
-                    newRow.id_alumno = dataState[key].id_alumno;
-                    newRow.id_curso = dataState[key].id_curso;
-                    newRow.id_materia = dataState[key].id_materia;
-                }
-                newRow[tipo] = dataState[key][tipo];
-            });
-            if(Object.keys(newRow).length > 0){
-                newAddedRows[key] = { ...newAddedRows[key], ...newRow };
+            return {
+                ...row,
+                id_alumno: idAlumno,
+                id_tipo_calificacion: idTipoCalificacion,
+                fecha: row.fecha
             }
         });
 
-        if(!validateRequiredFields(newAddedRows)) return;
-        const mappedAddedRows = {};
-        const newAddedRowsKeys = Object.keys(newAddedRows);
-        if(newAddedRowsKeys.length > 0) {
-            newAddedRowsKeys.forEach((key) => {
-                const mappedRow = { ...newAddedRows[key] };
-                delete mappedRow.id;
-                const nombreAlumno = alumnosState.find(a => (a.added && a.addedKey.toString() === key.toString()))?.alumno;
-                mappedRow.id_alumno = optionsState.alumnos.find(a => a.label === nombreAlumno)?.id || newAddedRows[key].id_alumno || null;
-                delete mappedRow.alumno;
-                delete mappedRow.added;
-                mappedAddedRows[key] = mappedRow;
-            });
-        }
-        onSave(updatedRows, mappedAddedRows);
+        if(!validateRequiredFields(mappedAddedRows)) return;
+        
+        onSave(mappedUpdatedRows, mappedAddedRows);
         setHasChanges(false);
+        setConfirmModal({
+            open: false,
+            title: "",
+            content: "",
+            onConfirm: null,
+            onCancel: null
+        });
     }
 
-    const validateRequiredFields = (alumnosCalificaciones) => {
-        const alumnosKeys = Object.keys(alumnosCalificaciones);
-        const filteredAlumnosKeys = alumnosKeys.filter(alumnoKey => alumnosState.some(a => a.alumno === alumnoKey && (a.editable || a.creatable)));
-        for (const alumnoKey of filteredAlumnosKeys) {
-            const alumnoRefIndex = alumnosState.findIndex(
-                a => a.alumno === alumnoKey || a.alumno === alumnosCalificaciones[alumnoKey].alumno
-            );
+    const validateRequiredFields = (calificaciones) => {
+        for(const c of calificaciones){
+            if(c.nota === "" || c.nota === null || c.nota === undefined){
+                handleError(c.alumno, `La calificación para el alumno ${c.alumno} en el tipo de calificación ${c.tipoCalificacion} es obligatoria.`);
+                return false;
+            }
+            if(isNaN(c.nota) || c.nota < 0 || c.nota > 10){
+                handleError(c.alumno, `La calificación para el alumno ${c.alumno} en el tipo de calificación ${c.tipoCalificacion} debe ser un número entre 0 y 10.`);
+                return false;
+            }
 
-            const calificacionKeys = Object.keys(alumnosCalificaciones[alumnoKey]).filter(key =>
-                headersState.some(header => header.label === key)
-            );
-
-            for (const calificacionKey of calificacionKeys) {
-                const nota = alumnosCalificaciones[alumnoKey][calificacionKey].nota;
-
-                if (nota === "" || nota === null || nota === undefined) {
-                    handleError(alumnoRefIndex, `El campo "${calificacionKey}" es obligatorio para el alumno "${alumnoKey}".`);
-                    return false;
-                }
-
-                if (isNaN(nota)) {
-                    handleError(alumnoRefIndex, `El campo "${calificacionKey}" debe ser un número válido para el alumno "${alumnoKey}".`);
-                    return false;
-                }
-
-                const num = Number(nota);
-                if (num < 1 || num > 10) {
-                    handleError(alumnoRefIndex, `El campo "${calificacionKey}" debe estar entre 1 y 10 para el alumno "${alumnoKey}".`);
-                    return false;
-                }
+            if(!c.alumno || c.alumno === ""){
+                handleError(c.alumno, `El nombre del alumno es obligatorio.`);
+                return false;
             }
         }
         return true
     }
 
-    const handleError = (rowIndex, message) => {
-        const ref = rowRefs.current[rowIndex];
+    const handleError = (alumno, message) => {
+        const ref = rowRefs.current[alumno];
         if(ref && ref.scrollIntoView) {
             ref.scrollIntoView({ behavior: "smooth", block: "center" });
             ref.classList.add("row-error-pulse");
-            setTimeout(() => ref.classList.remove("row-error-pulse"), 3000);
+            setTimeout(() => ref.classList.remove("row-error-pulse"), 5000);
         }
         onError(message);
     }
 
-    if(Object.keys(dataState).length === 0 && !editable) return null;
+    if(Object.keys(data).length === 0 && !editable) return null;
 
-    //console.log("data:", data);
+    
     //console.log("editingRows:", editingRows);
     //console.log("tempRowsValues:", tempRowsValues);
-    //console.log("dataState:", dataState);
-    //console.log("keysState:", keysState);
     //console.log("alumnos:", alumnos);
+    //console.log("newAlumnos:", newAlumnos);
     //console.log("headers:", headers);
-    //console.log("headersState:", headersState);
+    //console.log("newHeaders:", newHeaders);
+    //console.log("data:", data);
     //console.log("defaultValues:", defaultValues);
-    //console.log("optionsState:", optionsState);
+    //console.log("editedData:", editedData);
+    //console.log("addedData:", addedData);
+    //console.log("options:", options);
 
     return (
         <Box>
@@ -456,7 +393,7 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
                             Agregar calificación
                         </Button>
                     </Grid>
-                    {(Object.keys(dataState).length !== 0  && optionsState.alumnos.length !== 0) && (
+                    {(Object.keys(data).length !== 0  && options.alumnos.length !== 0) && (
                         <Grid item>
                             <Button
                                 variant="contained"
@@ -470,24 +407,39 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
                     )}
                 </Grid>
             }
-            {Object.keys(dataState).length !== 0 && (
+            {([...headers, ...newHeaders].length !== 0 && [...alumnos, ...newAlumnos].length !== 0) && (
                 <Box sx={{ width: '100%', maxHeight: '400px', overflow: 'auto' }}>
                 <Table stickyHeader>
                     <TableHead>
                         <TableRow>
-                            {headersState.map((header, index) => (
-                                <TableCell key={index} align="center" sx={{backgroundColor: "#D9E2EF", minWidth: 150, maxWidth: 200}}>
-                                    {header.deletable ? (
-                                        <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-                                            {header.label}
-                                            <Delete 
-                                                sx={{ cursor: "pointer" }} 
-                                                onClick={() => handleDeleteTipoCalificacionAdvice(header.label)} 
-                                            />
-                                        </Box>
-                                    ):(
-                                        header.label
-                                    )}
+                            <TableCell
+                                align="center" 
+                                sx={{backgroundColor: "#D9E2EF", minWidth: 150, maxWidth: 200}}
+                            >
+                                Alumno
+                            </TableCell>
+                            {headers.map((header, index) => (
+                                <TableCell 
+                                    key={index} 
+                                    align="center" 
+                                    sx={{backgroundColor: "#D9E2EF", minWidth: 150, maxWidth: 200}}
+                                >
+                                    {header.label}
+                                </TableCell>
+                            ))}
+                            {newHeaders.map((header, index) => (
+                                <TableCell 
+                                    key={index} 
+                                    align="center" 
+                                    sx={{backgroundColor: "#D9E2EF", minWidth: 150, maxWidth: 200}}
+                                >
+                                    <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                                        {header.label}
+                                        <Delete 
+                                            sx={{ cursor: "pointer" }} 
+                                            onClick={() => handleDeleteTipoCalificacionAdvice(header.label)} 
+                                        />
+                                    </Box>
                                 </TableCell>
                             ))}
                             {editable && 
@@ -498,29 +450,82 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {dataState && alumnosState.map((alumno, rowIndex) => (
+                        {data && alumnos.map((alumno, rowIndex) => (
                             <TableRow 
                                 key={`alumno-${alumno.alumno}}`}
                                 onKeyDown={(e) => {
                                     if(e.key === "Enter" && editingRows.includes(alumno.alumno)){
                                         handleEditRow(alumno.alumno);
                                     }
-                                    if(e.key === "Enter" && alumno.added && editingRows.includes(alumno.addedKey)){
-                                        handleEditRow(alumno.addedKey);
-                                    }
                                 }}
-                                ref={el => rowRefs.current[rowIndex] = el}
+                                ref={el => rowRefs.current[alumno.alumno] = el}
                             >
                                 <TableCell align="center">
-                                    {(alumno.added && editingRows.includes(alumno.addedKey)) ? (
+                                    {alumno.alumno}
+                                </TableCell>
+                                {[...headers, ...newHeaders].map((header) => (
+                                    <TableCell 
+                                        key={`nota-${alumno.alumno}-${header.label}-${header.fecha}-${rowIndex}`} align="center"
+                                    >
+                                        {(editingRows.includes(alumno.alumno) && header.editable) ? (
+                                            <TextField
+                                                value={
+                                                    tempRowsValues.find(c => c.alumno === alumno.alumno && c.tipoCalificacion === header.label && c.fecha === header.fecha)?.nota || 
+                                                    ""
+                                                }
+                                                type="number"
+                                                onChange={(e) => handleChange(e.target.value , alumno.alumno, header)}
+                                            />
+                                        ) : (
+                                            editedData.find(c => c.alumno === alumno.alumno && c.tipoCalificacion === header.label && c.fecha === header.fecha)?.nota ||
+                                            addedData.find(c => c.alumno === alumno.alumno && c.tipoCalificacion === header.label && c.fecha === header.fecha)?.nota ||
+                                            data.find(c => `${c.alumno.apellido} ${c.alumno.nombre}` === alumno.alumno && c.tipoCalificacion.descripcion === header.label && c.fecha === header.fecha)?.nota || ""
+                                        )}  
+                                    </TableCell>
+                                ))}
+                                {editable &&
+                                    <TableCell align="center">
+                                        {editingRows.includes(alumno.alumno) ? 
+                                            (
+                                                <Check 
+                                                    color="success"
+                                                    onClick={() => handleEditRow(alumno.alumno)}
+                                                    sx={{cursor: "pointer"}}
+                                                />
+                                            ) : (
+                                                <Edit 
+                                                    color={alumno.editable && editable ? "primary" : "disabled"}
+                                                    onClick={
+                                                        () => handleEditRow(alumno.alumno, (!alumno.editable && !alumno.creatable) || !editable)
+                                                    }
+                                                    sx={{cursor: "pointer"}}
+                                                />
+                                            )
+                                        } 
+                                    </TableCell> 
+                                }  
+                            </TableRow>
+                        ))}
+                        {newAlumnos.map((alumno, rowIndex) => (
+                            <TableRow 
+                                key={`alumno-${alumno.alumno}}`}
+                                onKeyDown={(e) => {
+                                    if(e.key === "Enter" && editingRows.includes(alumno.alumno)){
+                                        handleEditRow(alumno.alumno);
+                                    }
+                                }}
+                                ref={el => rowRefs.current[alumno.alumno] = el}
+                            >
+                                <TableCell align="center">
+                                    {editingRows.includes(alumno.alumno) && data.length !== 0 ? (
                                         <Select
-                                            value={tempRowsValues[alumno.addedKey]?.alumno || dataState[alumno.addedKey]?.alumno || ""}
+                                            value={alumno.alumno || ""}
                                             variant="standard"
-                                            size="small"
-                                            onChange={(e) => handleChange(e.target.value , alumno.addedKey, 'alumno')}
+                                            sx={{width: '100%'}}
+                                            onChange={(e) => {handleChange(e.target.value , alumno.alumno, { label: "Alumno" })}}
                                             autoFocus
                                         >
-                                            {optionsState.alumnos.map((option) => (
+                                            {options.alumnos.map((option) => (
                                                 <MenuItem key={option.id} value={option.label}>
                                                     {option.label}
                                                 </MenuItem>
@@ -530,67 +535,48 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
                                         alumno.alumno
                                     )}
                                 </TableCell>
-                                {keysState.map((key) => (
-                                    <TableCell key={`nota-${key.label}-${rowIndex}`} align="center">
-                                        {(editingRows.includes(alumno.alumno) && !dataState[alumno.alumno]?.[key.label]?.publicado && optionsState['current_alumnos'].some(option => option.label === alumno.alumno)) ? (
+                                {[...headers, ...newHeaders].map((header) => (
+                                    <TableCell 
+                                        key={`nota-${alumno.alumno}-${header.label}-${header.fecha}-${rowIndex}`} align="center"
+                                    >
+                                        {(editingRows.includes(alumno.alumno) && header.editable) ? (
                                             <TextField
-                                                value={tempRowsValues[alumno.alumno]?.[key.label]?.nota}
+                                                value={
+                                                    tempRowsValues.find(c => c.alumno === alumno.alumno && c.tipoCalificacion === header.label && c.fecha === header.fecha)?.nota || 
+                                                    ""
+                                                }
                                                 type="number"
-                                                onChange={(e) => handleChange(e.target.value , alumno.alumno, key.label)}
+                                                onChange={(e) => handleChange(e.target.value , alumno.alumno, header)}
                                             />
                                         ) : (
-                                            dataState[alumno.alumno]?.[key.label]?.nota
-                                        )}
-                                        {(editingRows.includes(alumno.addedKey) && !key.publicado) ? (
-                                            <TextField
-                                                value={tempRowsValues[alumno.addedKey]?.[key.label]?.nota}
-                                                type="number"
-                                                onChange={(e) => handleChange(e.target.value , alumno.addedKey, key.label)}
-                                            />
-                                        ) : (
-                                            dataState[alumno.addedKey]?.[key.label]?.nota
-                                        )}    
+                                            addedData.find(c => c.alumno === alumno.alumno && c.tipoCalificacion === header.label && c.fecha === header.fecha)?.nota ||
+                                            data.find(c => `${c.alumno.apellido} ${c.alumno.nombre}` === alumno.alumno && c.tipoCalificacion === header.label && c.fecha === header.fecha)?.nota || ""
+                                        )}  
                                     </TableCell>
                                 ))}
-                                {editable &&
-                                    <TableCell align="center">
-                                        {alumno.added 
-                                            ? editingRows.includes(alumno.addedKey) ? (
-                                                <Check 
-                                                    color="success"
-                                                    onClick={() => handleEditRow(alumno.addedKey)}
-                                                    sx={{cursor: "pointer"}}
-                                                />
-                                            ) : (
-                                                <Edit 
-                                                    color="primary"
-                                                    onClick={() => handleEditRow(alumno.addedKey)}
-                                                    sx={{cursor: "pointer"}}
-                                                />
-                                            )
-                                    
-                                            : editingRows.includes(alumno.alumno) ? (
-                                                <Check 
-                                                    color="success"
-                                                    onClick={() => handleEditRow(alumno.alumno)}
-                                                    sx={{cursor: "pointer"}}
-                                                />
-                                            ) : (
-                                                <Edit 
-                                                    color={alumno.editable && editable ? "primary" : "disabled"}
-                                                    onClick={() => handleEditRow(alumno.alumno, (!alumno.editable && !alumno.creatable) || !editable)}
-                                                    sx={{cursor: "pointer"}}
-                                                />
-                                            )
-                                        } 
-                                        {alumno.added &&
-                                            <Delete 
-                                                sx={{cursor: "pointer", marginLeft: 1}}
-                                                onClick={() => handleDeleteAlumnoAdvice(alumno.addedKey)}
+                                <TableCell align="center">
+                                    {editingRows.includes(alumno.alumno) ? 
+                                        (
+                                            <Check 
+                                                color="success"
+                                                onClick={() => handleEditRow(alumno.alumno)}
+                                                sx={{cursor: "pointer"}}
                                             />
-                                        }
-                                    </TableCell> 
-                                }  
+                                        ) : (
+                                            <Edit 
+                                                color={alumno.editable && editable ? "primary" : "disabled"}
+                                                onClick={
+                                                    () => handleEditRow(alumno.alumno, (!alumno.editable && !alumno.creatable) || !editable)
+                                                }
+                                                sx={{cursor: "pointer"}}
+                                            />
+                                        )
+                                    }
+                                    <Delete 
+                                        sx={{ ml: 2, cursor: "pointer" }} 
+                                        onClick={() => handleDeleteAlumnoAdvice(rowIndex)} 
+                                    /> 
+                                </TableCell> 
                             </TableRow>
                         ))}
                     </TableBody>
