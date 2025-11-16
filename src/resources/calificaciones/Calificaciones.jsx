@@ -42,14 +42,12 @@ export const Calificaciones = () => {
         {
             curso: "",
             materia: "",
-            alumno: "",
         }
     );
     const [calificaciones, setCalificaciones] = useState([]);
     const [calificacionesValues, setCalificacionesValues] = useState({
         id_curso: "",
         id_materia: "",
-        id_alumno: "",
     });
 
     const [uniqueAnios, setUniqueAnios] = useState([]);
@@ -71,10 +69,6 @@ export const Calificaciones = () => {
 
     const { user } = useUser();
     const EDIT_PERMISSION = user.rol === "docente" || user.rol === "admin";
-
-    const TABLE_HEADERS = [
-        { label: "Alumno", editable: false },
-    ];
 
     useEffect(() => {
         dataProvider
@@ -141,10 +135,10 @@ export const Calificaciones = () => {
     }, [alumnos, materias]);
 
     useEffect(() => {
-        const uniqueAnios = [...new Set(calificaciones.map(c => c.ciclo_lectivo))];
+        const uniqueAnios = [...new Set(calificaciones.map(c => c.curso.cicloLectivo))];
         setUniqueAnios(uniqueAnios);
 
-        const uniqueTipos = [...new Set(calificaciones.map(c => c.tipo))];
+        const uniqueTipos = [...new Set(calificaciones.map(c => c.tipoCalificacion.descripcion))];
         setUniqueTipos(uniqueTipos);
 
         const uniqueAlumnos = [...new Set(calificaciones.map(c => c.alumno))].map(alumno => {
@@ -178,7 +172,6 @@ export const Calificaciones = () => {
             {
                 id_curso: filterValues.curso.id_curso ?? "",
                 id_materia: filterValues.materia.id_materia ?? "",
-                id_alumno: filterValues.alumno.id ?? "",
             }
         );
 
@@ -186,26 +179,12 @@ export const Calificaciones = () => {
             .getList("calificaciones", {
                 pagination: { page: 1, perPage: 100 },
                 sort: {},
-                filter: { id_curso: filterValues.curso.id_curso ?? "", id_materia: filterValues.materia.id_materia ?? "", id_alumno: filterValues.alumno.id ?? "" },
+                filter: { id_curso: filterValues.curso.id_curso ?? "", id_materia: filterValues.materia.id_materia ?? "" },
             })
             .then(({ data }) => {
-                const mappedData = data.map((c) => {
-                    return {
-                        ciclo_lectivo: c.materiaCurso.curso.cicloLectivo.anio,
-                        id_materia: c.materiaCurso.id_materia,
-                        materia: c.materiaCurso.materia.nombre,
-                        alumno: `${c.alumno.usuario.apellido} ${c.alumno.usuario.nombre}`,
-                        nota: c.nota,
-                        tipo: c.tipoCalificacion.descripcion,
-                        id: c.id_calificacion,
-                        publicado: c.publicado,
-                        id_alumno: c.alumno.id_alumno,
-                        id_curso: filterValues.curso.id_curso,
-                    }
-                });
-                setCalificaciones(mappedData);
+                setCalificaciones(data);
 
-                if(mappedData.length === 0) setShowEmptyCalificacionesMessage(true);
+                if(data.length === 0) setShowEmptyCalificacionesMessage(true);
                 else setShowEmptyCalificacionesMessage(false);
             })
             .catch(() => {
@@ -219,23 +198,23 @@ export const Calificaciones = () => {
     }
 
     const getPorcentajeAprobadas = (anio, materia = null, curso = null) => {
-        return (calificaciones.filter(c => c.ciclo_lectivo === anio && c.nota >= 6 && (materia ? c.id_materia === materia.id_materia : true) && (curso ? c.id_curso === curso.id_curso : true)).length / calificaciones.filter(c => c.ciclo_lectivo === anio && (materia ? c.id_materia === materia.id_materia : true) && (curso ? c.id_curso === curso.id_curso : true)).length * 100).toFixed(2);
+        return (calificaciones.filter(c => c.curso.cicloLectivo === anio && c.nota >= 6 && (materia ? c.materia.id_materia === materia.id_materia : true) && (curso ? c.curso.id_curso === curso.id_curso : true)).length / calificaciones.filter(c => c.curso.cicloLectivo === anio && (materia ? c.materia.id_materia === materia.id_materia : true) && (curso ? c.curso.id_curso === curso.id_curso : true)).length * 100).toFixed(2);
     }
 
     const getTotalAprobadas = (anio, materia = null, curso = null) => {
-        return `Total: ${calificaciones.filter(c => c.ciclo_lectivo === anio && c.nota >= 6 && (materia ? c.id_materia === materia.id_materia : true) && (curso ? c.id_curso === curso.id_curso : true)).length}`;
+        return `Total: ${calificaciones.filter(c => c.curso.cicloLectivo === anio && c.nota >= 6 && (materia ? c.materia.id_materia === materia.id_materia : true) && (curso ? c.curso.id_curso === curso.id_curso : true)).length}`;
     }
 
     const getPorcentajeReprobadas = (anio, materia = null, curso = null) => {
-        return (calificaciones.filter(c => c.ciclo_lectivo === anio && c.nota < 6 && (materia ? c.id_materia === materia.id_materia : true) && (curso ? c.id_curso === curso.id_curso : true)).length / calificaciones.filter(c => c.ciclo_lectivo === anio && (materia ? c.id_materia === materia.id_materia : true) && (curso ? c.id_curso === curso.id_curso : true)).length * 100).toFixed(2);
+        return (calificaciones.filter(c => c.curso.cicloLectivo === anio && c.nota < 6 && (materia ? c.materia.id_materia === materia.id_materia : true) && (curso ? c.curso.id_curso === curso.id_curso : true)).length / calificaciones.filter(c => c.curso.cicloLectivo === anio && (materia ? c.materia.id_materia === materia.id_materia : true) && (curso ? c.curso.id_curso === curso.id_curso : true)).length * 100).toFixed(2);
     }
 
     const getTotalReprobadas = (anio, materia = null, curso = null) => {
-        return `Total: ${calificaciones.filter(c => c.ciclo_lectivo === anio && c.nota < 6 && (materia ? c.id_materia === materia.id_materia : true) && (curso ? c.id_curso === curso.id_curso : true)).length}`;
+        return `Total: ${calificaciones.filter(c => c.curso.cicloLectivo === anio && c.nota < 6 && (materia ? c.materia.id_materia === materia.id_materia : true) && (curso ? c.curso.id_curso === curso.id_curso : true)).length}`;
     }
 
     const getPromedioGeneral = (anio, materia = null, curso = null) => {
-        return (calificaciones.filter(c => c.ciclo_lectivo === anio && (materia ? c.id_materia === materia.id_materia : true) && (curso ? c.id_curso === curso.id_curso : true)).reduce((acc, curr) => acc + parseFloat(curr.nota), 0) / calificaciones.filter(c => c.ciclo_lectivo === anio && (materia ? c.id_materia === materia.id_materia : true) && (curso ? c.id_curso === curso.id_curso : true)).length).toFixed(2)
+        return (calificaciones.filter(c => c.curso.cicloLectivo === anio && (materia ? c.materia.id_materia === materia.id_materia : true) && (curso ? c.curso.id_curso === curso.id_curso : true)).reduce((acc, curr) => acc + parseFloat(curr.nota), 0) / calificaciones.filter(c => c.curso.cicloLectivo === anio && (materia ? c.materia.id_materia === materia.id_materia : true) && (curso ? c.curso.id_curso === curso.id_curso : true)).length).toFixed(2)
     }
 
     const exportarPDF = async () => {
@@ -247,12 +226,6 @@ export const Calificaciones = () => {
         const defaultValues = {};
         defaultValues["id_curso"] = calificacionesValues.id_curso;
         defaultValues["id_materia"] = calificacionesValues.id_materia || idMateria;
-        defaultValues["id_alumno"] = calificacionesValues.id_alumno;
-        defaultValues["alumnos"] = alumnos.map(a => ({
-            id_alumno: a.id_alumno,
-            alumno: `${a.usuario.apellido} ${a.usuario.nombre}`,
-        }));
-
         return defaultValues;
     }
     
@@ -268,44 +241,27 @@ export const Calificaciones = () => {
     }
 
     const getHeaders = (filteredCalificaciones) => {
-        const newHeaders = [...TABLE_HEADERS];
+        const tiposCalificaciones = [];
+        
+        filteredCalificaciones.forEach((c) => {
+            if(!tiposCalificaciones.some(t => t.label === c.tipoCalificacion.descripcion && t.fecha === c.fecha)){
+                tiposCalificaciones.push({ label: c.tipoCalificacion.descripcion, fecha: c.fecha, editable: !c.publicado });
+            }
+        })
 
-        const tiposCalificaciones = [...new Set(filteredCalificaciones.map(c => c.tipo))];
+        tiposCalificaciones.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
-        tiposCalificaciones.forEach(tipo => {
-            newHeaders.push({ label: tipo, editable: true });
-        });
-
-        return newHeaders;
-    }
-
-    const getKeys = (filteredCalificaciones) => {
-        const tiposCalificaciones = [...new Set(filteredCalificaciones.map(c => c.tipo))];
-        const mappedTipos = tiposCalificaciones.map(tipo => ({ label: tipo, publicado: filteredCalificaciones.some(c => c.tipo === tipo && c.ciclo_lectivo === CURRENT_YEAR && c.publicado === true) }));
-        return mappedTipos;
+        return tiposCalificaciones;
     }
 
     const getAlumnos = (filteredCalificaciones) => {
-        const alumnosSet = new Set();
-        if(filteredCalificaciones.length === 0){
-            if(filterValues.alumno){
-                alumnosSet.add({ alumno: `${filterValues.alumno.usuario.apellido} ${filterValues.alumno.usuario.nombre}`, editable: true });
-            }else{
-                alumnos.forEach(a => {
-                    alumnosSet.add({ alumno: `${a.usuario.apellido} ${a.usuario.nombre}`, editable: true });
-                });
+        const filteredAlumnos = []
+        filteredCalificaciones.forEach((c) => {
+            if(!filteredAlumnos.some(a => a.alumno === `${c.alumno.apellido} ${c.alumno.nombre}`)){
+                filteredAlumnos.push({ alumno: `${c.alumno.apellido} ${c.alumno.nombre}`, editable: alumnos.some(a => `${a.usuario.apellido} ${a.usuario.nombre}` === `${c.alumno.apellido} ${c.alumno.nombre}`)});
             }
-        }else{
-            const uniqueAlumnosInCalificaciones = [...new Set(filteredCalificaciones.map(c => c.alumno))];
-            uniqueAlumnosInCalificaciones.forEach(alumno => {
-                alumnosSet.add({ 
-                    alumno, 
-                    editable: filteredCalificaciones.some(c => c.alumno === alumno && c.ciclo_lectivo === CURRENT_YEAR && c.publicado === false && alumnos.some(al => `${al.usuario.apellido} ${al.usuario.nombre}` === alumno)),
-                    creatable: alumnos.some(al => `${al.usuario.apellido} ${al.usuario.nombre}` === alumno)
-                });
-            });
-        }
-        return [...alumnosSet];
+        });
+        return filteredAlumnos;
     }
 
     const getAlumnosOptions = (filteredCalificaciones) => {
@@ -313,7 +269,7 @@ export const Calificaciones = () => {
         if(filterValues.alumno) return [];
         const filteredAlumnos = alumnos.filter(a => {
             const nombreCompleto = `${a.usuario.apellido} ${a.usuario.nombre}`;
-            return !filteredCalificaciones.some(c => c.alumno === nombreCompleto);
+            return !filteredCalificaciones.some(c => `${c.alumno.apellido} ${c.alumno.nombre}`=== nombreCompleto);
         });
         const mappedAlumnos = filteredAlumnos.map(a => ({
             id: a.id_alumno,
@@ -347,50 +303,33 @@ export const Calificaciones = () => {
     const handleSave = async (updatedRows, addedRows) => {
         setLoading(true);
 
-        console.log("Updated Rows:", updatedRows);
-        console.log("Added Rows:", addedRows);
-
-        const updatedRowsKeys = Object.keys(updatedRows);
-
         const mappedUpdatedRows = [];
-        updatedRowsKeys.forEach(alumnoKey => {
-            const row = {};
-            const calificaciones = Object.keys(updatedRows[alumnoKey]);
+        updatedRows.forEach((c) => {
+            const idCalificacion = calificaciones.find(cal => cal.alumno.id_alumno === c.id_alumno && cal.tipoCalificacion.id_tipo_calificacion === c.id_tipo_calificacion && cal.curso.cicloLectivo === CURRENT_YEAR  && cal.fecha === c.fecha)?.id_calificacion;
             
-            calificaciones.forEach(tipoKey => {
-                if(tipoKey !== "id_alumno" && tipoKey !== "id_curso" && tipoKey !== "id_materia"){
-                    const tipoCalificacion = tiposCalificaciones.find(t => t.descripcion === tipoKey);
-                    row["id_alumno"] = updatedRows[alumnoKey].id_alumno;
-                    row["id_curso"] = updatedRows[alumnoKey].id_curso;
-                    row["id_materia"] = updatedRows[alumnoKey].id_materia;
-                    row["id_tipo_calificacion"] = tipoCalificacion ? tipoCalificacion.id_tipo_calificacion : null;
-                    row["nota"] = updatedRows[alumnoKey][tipoKey].nota;
-                    row["id_calificacion"] = updatedRows[alumnoKey][tipoKey].id || null;
-                }
-            });
-            mappedUpdatedRows.push(row);
-        });
+            if(idCalificacion){
+                mappedUpdatedRows.push({
+                    id_calificacion: idCalificacion,
+                    nota: c.nota,
+                    id_materia: c.id_materia,
+                    id_curso: c.id_curso,
+                });
+            }
+        })
 
         const mappedAddedRows = [];
-        const addedRowsKeys = Object.keys(addedRows);
-        addedRowsKeys.forEach(alumnoKey => {
-            const calificaciones = Object.keys(addedRows[alumnoKey]);
-            for(const tipoKey of calificaciones){
-                if(tipoKey !== "id_alumno" && tipoKey !== "id_curso" && tipoKey !== "id_materia"){
-                    const tipoCalificacion = tiposCalificaciones.find(t => t.descripcion === tipoKey);
-                    if(tipoCalificacion === undefined || addedRows[alumnoKey][tipoKey].nota === ""){
-                        continue;
-                    }
-                    const row = {};
-                    row["id_alumno"] = addedRows[alumnoKey].id_alumno;
-                    row["id_curso"] = addedRows[alumnoKey].id_curso;
-                    row["id_materia"] = addedRows[alumnoKey].id_materia;
-                    row["id_tipo_calificacion"] = tipoCalificacion ? tipoCalificacion.id_tipo_calificacion : null;
-                    row["nota"] = addedRows[alumnoKey][tipoKey].nota;
-                    mappedAddedRows.push(row);
-                }
-            }
-        });
+        addedRows.forEach((c) => {
+            console.log("fecha", c.fecha);
+            console.log("type of fecha", typeof c.fecha);
+            mappedAddedRows.push({
+                id_alumno: c.id_alumno,
+                id_tipo_calificacion: c.id_tipo_calificacion,
+                id_materia: c.id_materia,
+                id_curso: c.id_curso,
+                nota: c.nota,
+                fecha: c.fecha,
+            });
+        })
 
         console.log("Mapped Updated Rows:", mappedUpdatedRows);
         console.log("Mapped Added Rows:", mappedAddedRows);
@@ -413,22 +352,8 @@ export const Calificaciones = () => {
                 sort: {},
                 filter: filter,
             });
-            const mappedData = data.map((c) => {
-                return {
-                    ciclo_lectivo: c.materiaCurso.curso.cicloLectivo.anio,
-                    id_materia: c.materiaCurso.id_materia,
-                    materia: c.materiaCurso.materia.nombre,
-                    alumno: `${c.alumno.usuario.apellido} ${c.alumno.usuario.nombre}`,
-                    nota: c.nota,
-                    tipo: c.tipoCalificacion.descripcion,
-                    id: c.id_calificacion,
-                    publicado: c.publicado,
-                    id_alumno: c.alumno.id_alumno,
-                    id_curso: filterValues.curso.id_curso,
-                };
-            });
-            setCalificaciones(mappedData);
-            if(mappedData.length === 0) setShowEmptyCalificacionesMessage(true);
+            setCalificaciones(data);
+            if(data.length === 0) setShowEmptyCalificacionesMessage(true);
             else setShowEmptyCalificacionesMessage(false);
         }catch(error){
             console.error("Error en la operación de calificaciones:", error);
@@ -466,22 +391,6 @@ export const Calificaciones = () => {
                         renderInput={(params) => <TextField {...params} label="Seleccionar curso" variant="outlined" />}
                     />
                 </Grid>
-
-                {/* Selección de alumno */}
-                {filterValues.curso &&
-                    <Grid item>
-                        <Autocomplete
-                            options={alumnos}
-                            getOptionLabel={(option) => `${option.usuario.apellido} ${option.usuario.nombre} `}
-                            style={{ width: 300 }}
-                            value={alumnos.find(a => a.id_alumno === filterValues.alumno.id_alumno) || null}
-                            onChange={(event, newValue) => {
-                                setFilterValues((prev) => ({...prev, alumno: newValue ? newValue : ""}));
-                            }}
-                            renderInput={(params) => <TextField {...params} label="Seleccionar alumno(opcional)" variant="outlined" />}
-                        />
-                    </Grid>
-                }
 
                 {/* Selección de materia */}
                 {filterValues.curso && 
@@ -596,14 +505,23 @@ export const Calificaciones = () => {
                                                 No hay calificaciones cargadas para esta materia en el ciclo lectivo {new Date().getFullYear().toString()}.
                                             </Typography>
                                             <CustomTable
-                                                alumnos={getAlumnos(calificaciones.filter(c => c.ciclo_lectivo === new Date().getFullYear().toString() && c.id_materia === m.id_materia))}
-                                                headers={getHeaders(calificaciones.filter(c => c.ciclo_lectivo === new Date().getFullYear().toString() && c.id_materia === m.id_materia))}
-                                                data={mapCalificaciones(calificaciones
-                                                    .filter(c => c.ciclo_lectivo === new Date().getFullYear().toString() && c.id_materia === m.id_materia))
+                                                alumnos={
+                                                    getAlumnos(calificaciones
+                                                        .filter(c => c.curso.cicloLectivo === new Date().getFullYear().toString() && c.materia.id_materia === m.id_materia))
+                                                }
+                                                headers={
+                                                    getHeaders(calificaciones
+                                                        .filter(c => c.curso.cicloLectivo === new Date().getFullYear().toString() && c.materia.id_materia === m.id_materia))
+                                                }
+                                                data={
+                                                    calificaciones
+                                                        .filter(c => c.curso.cicloLectivo === new Date().getFullYear().toString() && c.materia.id_materia === m.id_materia)
                                                 }
                                                 defaultValues={getDefaultValues(m.id_materia)}
-                                                options={getOptions(calificaciones.filter(c => c.ciclo_lectivo === new Date().getFullYear().toString() && c.id_materia === m.id_materia))}
-                                                keys={getKeys(calificaciones.filter(c => c.ciclo_lectivo === new Date().getFullYear().toString() && c.id_materia === m.id_materia))}
+                                                options={
+                                                    getOptions(calificaciones
+                                                        .filter(c => c.curso.cicloLectivo === new Date().getFullYear().toString() && c.materia.id_materia === m.id_materia))
+                                                }
                                                 onSave={handleSave}
                                                 onError={handleError}
                                                 editable={EDIT_PERMISSION && new Date().getFullYear().toString().toString() === CURRENT_YEAR}
@@ -619,14 +537,23 @@ export const Calificaciones = () => {
                                         No hay calificaciones cargadas para esta materia en el ciclo lectivo {new Date().getFullYear().toString()}.
                                     </Typography>
                                     <CustomTable
-                                            alumnos={getAlumnos(calificaciones.filter(c => c.ciclo_lectivo === new Date().getFullYear().toString() && c.id_materia === filterValues.materia.id_materia))}
-                                            headers={getHeaders(calificaciones.filter(c => c.ciclo_lectivo === new Date().getFullYear().toString() && c.id_materia === filterValues.materia.id_materia))}
-                                            data={mapCalificaciones(calificaciones
-                                                .filter(c => c.ciclo_lectivo === new Date().getFullYear().toString() && c.id_materia === filterValues.materia.id_materia))
+                                            alumnos={
+                                                    getAlumnos(calificaciones
+                                                            .filter(c => c.curso.cicloLectivo === new Date().getFullYear().toString() && c.materia.id_materia === filterValues.materia.id_materia))
+                                                    }
+                                            headers={
+                                                getHeaders(calificaciones
+                                                    .filter(c => c.curso.cicloLectivo === new Date().getFullYear().toString() && c.materia.id_materia === filterValues.materia.id_materia))
+                                                }
+                                            data={
+                                                calificaciones
+                                                    .filter(c => c.curso.cicloLectivo === new Date().getFullYear().toString() && c.materia.id_materia === filterValues.materia.id_materia)
                                             }
                                             defaultValues={getDefaultValues(filterValues.materia.id_materia)}
-                                            options={getOptions(calificaciones.filter(c => c.ciclo_lectivo === new Date().getFullYear().toString() && c.id_materia === filterValues.materia.id_materia))}
-                                            keys={getKeys(calificaciones.filter(c => c.ciclo_lectivo === new Date().getFullYear().toString() && c.id_materia === filterValues.materia.id_materia))}
+                                            options={
+                                                getOptions(calificaciones
+                                                    .filter(c => c.curso.cicloLectivo === new Date().getFullYear().toString() && c.materia.id_materia === filterValues.materia.id_materia))
+                                            }
                                             onSave={handleSave}
                                             onError={handleError}
                                             editable={EDIT_PERMISSION && new Date().getFullYear().toString().toString() === CURRENT_YEAR}
@@ -663,12 +590,23 @@ export const Calificaciones = () => {
                                     />
                                 </Box>
                                 <CustomTable
-                                    alumnos={getAlumnos(calificaciones.filter(c => c.ciclo_lectivo === anio))}
-                                    headers={getHeaders(calificaciones.filter(c => c.ciclo_lectivo === anio))} 
-                                    data={mapCalificaciones(calificaciones.filter(c => c.ciclo_lectivo === anio))} 
-                                    defaultValues={getDefaultValues}
-                                    options={getOptions(calificaciones.filter(c => c.ciclo_lectivo === anio))}
-                                    keys={getKeys(calificaciones.filter(c => c.ciclo_lectivo === anio))}
+                                    alumnos={
+                                        getAlumnos(calificaciones
+                                            .filter(c => c.curso.cicloLectivo === anio))
+                                    }
+                                    headers={
+                                        getHeaders(calificaciones
+                                            .filter(c => c.curso.cicloLectivo === anio))
+                                    } 
+                                    data={
+                                        calificaciones
+                                            .filter(c => c.curso.cicloLectivo === anio)
+                                    } 
+                                    defaultValues={getDefaultValues(filterValues.materia ? filterValues.materia.id_materia : null)}
+                                    options={
+                                        getOptions(calificaciones
+                                            .filter(c => c.curso.cicloLectivo === anio))
+                                    }
                                     onSave={handleSave}
                                     onError={handleError}
                                     editable={EDIT_PERMISSION && anio === CURRENT_YEAR}
@@ -683,7 +621,7 @@ export const Calificaciones = () => {
                                             <Typography variant="h6">{m.nombre}</Typography>
                                         </AccordionSummary>
                                         <AccordionDetails sx={{backgroundColor: "#F2F6FB"}}>
-                                            {calificaciones.filter(c => c.ciclo_lectivo === anio && c.id_materia === m.id_materia).length === 0 ? (
+                                            {calificaciones.filter(c => c.curso.cicloLectivo === anio && c.materia.id_materia === m.id_materia).length === 0 ? (
                                                 <Typography variant="body2" sx={{ fontStyle: "italic", color: "#616161", mb: 2, mt: 2, textAlign: "center" }}>
                                                     No hay calificaciones cargadas para esta materia en el ciclo lectivo {anio}.
                                                 </Typography>
@@ -711,15 +649,23 @@ export const Calificaciones = () => {
                                             </>
                                             )}
                                             <CustomTable
-                                                alumnos={getAlumnos(calificaciones.filter(c => c.ciclo_lectivo === anio && c.id_materia === m.id_materia))}
-                                                headers={getHeaders(calificaciones
-                                                    .filter(c => c.ciclo_lectivo === anio && c.id_materia === m.id_materia))}
-                                                data={mapCalificaciones(calificaciones
-                                                    .filter(c => c.ciclo_lectivo === anio && c.id_materia === m.id_materia))
+                                                alumnos={
+                                                    getAlumnos(calificaciones
+                                                        .filter(c => c.curso.cicloLectivo === anio && c.materia.id_materia === m.id_materia))
+                                                }
+                                                headers={
+                                                    getHeaders(calificaciones
+                                                        .filter(c => c.curso.cicloLectivo === anio && c.materia.id_materia === m.id_materia))
+                                                }
+                                                data={
+                                                    calificaciones
+                                                        .filter(c => c.curso.cicloLectivo === anio && c.materia.id_materia === m.id_materia)
                                                 }
                                                 defaultValues={getDefaultValues(m.id_materia)}
-                                                options={getOptions(calificaciones.filter(c => c.ciclo_lectivo === anio && c.id_materia === m.id_materia))}
-                                                keys={getKeys(calificaciones.filter(c => c.ciclo_lectivo === anio && c.id_materia === m.id_materia))}
+                                                options={
+                                                    getOptions(calificaciones
+                                                        .filter(c => c.curso.cicloLectivo === anio && c.materia.id_materia === m.id_materia))
+                                                }
                                                 onSave={handleSave}
                                                 onError={handleError}
                                                 editable={EDIT_PERMISSION && anio === CURRENT_YEAR}

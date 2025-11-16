@@ -33,24 +33,11 @@ export const CalificacionesHijos = () => {
                     try {
                         const { data: calificacionesData } = await dataProvider.getCalificacionesPorAlumno(hijo.id_alumno);
 
-                        const calificaciones = calificacionesData.map(c => ({
-                            ciclo_lectivo: c.materiaCurso.curso.cicloLectivo.anio,
-                            id_materia: c.materiaCurso.id_materia,
-                            materia: c.materiaCurso.materia.nombre,
-                            alumno: `${c.alumno.usuario.apellido} ${c.alumno.usuario.nombre}`,
-                            nota: c.nota,
-                            tipo: c.tipoCalificacion.descripcion,
-                            id: c.id_calificacion,
-                            publicado: c.publicado,
-                            id_alumno: c.alumno.id_alumno,
-                            id_curso: c.materiaCurso.id_curso,
-                        }));
-
-                        const anios = [...new Set(calificaciones.map(c => c.ciclo_lectivo))];
+                        const anios = [...new Set(calificacionesData.map(c => c.curso.cicloLectivo))];
 
                         return {
                             alumno: hijo,
-                            calificaciones,
+                            calificaciones: calificacionesData,
                             anios
                         };
                     } catch (error) {
@@ -73,71 +60,45 @@ export const CalificacionesHijos = () => {
 
     const getMejorCalificacion = (calificaciones, anio) => {
         const notas = calificaciones
-            .filter(c => c.ciclo_lectivo == anio)
+            .filter(c => c.curso.cicloLectivo == anio)
             .map(c => parseFloat(c.nota));
         return notas.length ? Math.max(...notas) : 0;
     };
     const getMateriaMejorCalificacion = (calificaciones, anio) => {
         return `Materia: ${
-            calificaciones.map(c => c.ciclo_lectivo == anio && parseFloat(c.nota) === Math.max(...calificaciones.filter(c => c.ciclo_lectivo == anio).map(c => parseFloat(c.nota))) ? c.materia : null).filter(Boolean).join(', ')
+            calificaciones.map(c => c.curso.cicloLectivo == anio && parseFloat(c.nota) === Math.max(...calificaciones.filter(c => c.curso.cicloLectivo == anio).map(c => parseFloat(c.nota))) ? c.materia?.nombre : null).filter(Boolean).join(', ')
         }`
     }
 
     const getPeorCalificacion = (calificaciones, anio) => {
         const notas = calificaciones
-            .filter(c => c.ciclo_lectivo == anio)
+            .filter(c => c.curso.cicloLectivo == anio)
             .map(c => parseFloat(c.nota));
         return notas.length ? Math.min(...notas) : 0;
     };
 
     const getMateriaPeorCalificacion = (calificaciones, anio) => {
-        console.log(calificaciones);
         return `Materia: ${
-            calificaciones.map(c => c.ciclo_lectivo == anio && parseFloat(c.nota) === Math.min(...calificaciones.filter(c => c.ciclo_lectivo == anio).map(c => parseFloat(c.nota))) ? c.materia : null).filter(Boolean).join(', ')
+            calificaciones.map(c => c.curso.cicloLectivo == anio && parseFloat(c.nota) === Math.min(...calificaciones.filter(c => c.curso.cicloLectivo == anio).map(c => parseFloat(c.nota))) ? c.materia?.nombre : null).filter(Boolean).join(', ')
         }`
     }
 
     const getPromedio = (calificaciones, anio) => {
-        return (calificaciones.filter(c => c.ciclo_lectivo == anio).reduce((acc, curr) => acc + parseFloat(curr.nota), 0) / calificaciones.filter(c => c.ciclo_lectivo == anio).length).toFixed(2);
+        return (calificaciones.filter(c => c.curso.cicloLectivo == anio).reduce((acc, curr) => acc + parseFloat(curr.nota), 0) / calificaciones.filter(c => c.curso.cicloLectivo == anio).length).toFixed(2);
     }
 
     const getTableHeaders = (filteredCalificaciones) => {
-        const newHeaders = [...TABLE_HEADERS];
+        const newHeaders = [];
 
-        const tiposCalificaciones = [...new Set(filteredCalificaciones.map(c => c.tipo))];
+        filteredCalificaciones.forEach((c) => {
+            if(!newHeaders.some(t => t.label === c.tipoCalificacion.descripcion && t.fecha === c.fecha)){
+                newHeaders.push({ label: c.tipoCalificacion.descripcion, fecha: c.fecha, editable: !c.publicado });
+            }
+        })
 
-        tiposCalificaciones.forEach(tipo => {
-            newHeaders.push({ label: tipo, editable: true });
-        });
+        newHeaders.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
         return newHeaders;
-    }
-
-    const getKeys = (filteredCalificaciones) => {
-        const tiposCalificaciones = [...new Set(filteredCalificaciones.map(c => c.tipo))];
-        const mappedTipos = tiposCalificaciones.map(tipo => ({ label: tipo, publicado: true }));
-        return mappedTipos;
-    }
-
-    const mapCalificaciones = (filteredCalificaciones, alumno) => {
-        const mapped = {};
-
-        if(filteredCalificaciones.length === 0) return mapped;
-
-        const uniqueTipos = [...new Set(filteredCalificaciones.map(c => c.tipo))];
-
-        mapped[alumno] = {};
-        uniqueTipos.forEach((tipo) => {
-            const calificacion = filteredCalificaciones.find(c => c.alumno === alumno && c.tipo === tipo);
-            mapped[alumno][tipo] = {};
-            mapped[alumno][tipo]['nota'] = calificacion ? calificacion.nota : "";
-            mapped[alumno][tipo]['id'] = calificacion ? calificacion.id : "";
-            mapped[alumno][tipo]['publicado'] = calificacion ? calificacion.publicado : false;
-            mapped[alumno].id_alumno = calificacion ? calificacion.id_alumno : "";
-            mapped[alumno].id_curso = calificacion ? calificacion.id_curso : "";
-            mapped[alumno].id_materia = calificacion ? calificacion.id_materia : "";
-        });
-        return mapped;
     }
 
     return (
@@ -196,9 +157,12 @@ export const CalificacionesHijos = () => {
                                     </Box>
                                     <CustomTable 
                                         alumnos={[{ alumno: `${hijo.alumno.usuario.apellido} ${hijo.alumno.usuario.nombre}` }]}
-                                        headers={getTableHeaders(hijo.calificaciones.filter(c => c.ciclo_lectivo == anio))}
-                                        data={mapCalificaciones(hijo.calificaciones.filter(c => c.ciclo_lectivo == anio), `${hijo.alumno.usuario.apellido} ${hijo.alumno.usuario.nombre}`)}
-                                        keys={getKeys(hijo.calificaciones.filter(c => c.ciclo_lectivo == anio))}
+                                        headers={
+                                            getTableHeaders(hijo.calificaciones.filter(c => c.curso.cicloLectivo == anio))
+                                        }
+                                        data={
+                                            hijo.calificaciones.filter(c => c.curso.cicloLectivo == anio)
+                                        }
                                         editable={false}
                                     />
                                 </Box>
