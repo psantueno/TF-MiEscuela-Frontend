@@ -13,7 +13,8 @@ import {
     Typography,
     Grid,
     Backdrop,
-    Paper
+    Paper,
+    Autocomplete
 } from "@mui/material";
 import { Confirm } from "react-admin";
 import { Save, Edit, Delete, WarningAmberRounded, Check, Add, Construction } from "@mui/icons-material";
@@ -245,13 +246,14 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
         });
     }
 
-    const handleAddTipoCalificacion = (tipo) => {
-        if(!tipo){
+    const handleAddTipoCalificacion = (newHeader) => {
+        if(newHeaders.some(h => h.label === newHeader.tipoCalificacion && h.fecha === newHeader.fecha) || headers.some(h => h.label === newHeader.tipoCalificacion && h.fecha === newHeader.fecha)){
             setAddTipoCalificacionModalOpen(false);
+            handleError(null, `El tipo de calificación ${newHeader.tipoCalificacion} ya fue agregado a la tabla para la fecha ${newHeader.fecha}.`);
             return;
         }
 
-        setNewHeaders(prevHeaders => [...prevHeaders, { label: tipo, editable: true, deletable: true, fecha: new Date().toLocaleDateString() }]);
+        setNewHeaders(prevHeaders => [...prevHeaders, { label: newHeader.tipoCalificacion, editable: true, deletable: true, fecha: newHeader.fecha }]);
         if(data.length === 0){
             if(newAlumnos.length === 0){
                 const updatedNewAlumnos = options.current_alumnos.map((alumno) => ({
@@ -424,7 +426,10 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
                                     align="center" 
                                     sx={{backgroundColor: "#D9E2EF", minWidth: 150, maxWidth: 200}}
                                 >
-                                    {header.label}
+                                    <Box display="flex" flexDirection="column">
+                                        <Typography variant="body2" fontWeight={600}>{header.label}</Typography>
+                                        <Typography variant="caption">{header.fecha}</Typography>
+                                    </Box>
                                 </TableCell>
                             ))}
                             {newHeaders.map((header, index) => (
@@ -433,8 +438,13 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
                                     align="center" 
                                     sx={{backgroundColor: "#D9E2EF", minWidth: 150, maxWidth: 200}}
                                 >
-                                    <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-                                        {header.label}
+                                    <Box display="flex" flexDirection="column" alignItems="center" >
+                                        <Typography variant="body2" fontWeight={600}>
+                                            {header.label}
+                                        </Typography>
+                                        <Typography variant="caption">
+                                            {header.fecha}
+                                        </Typography>
                                         <Delete 
                                             sx={{ cursor: "pointer" }} 
                                             onClick={() => handleDeleteTipoCalificacionAdvice(header.label)} 
@@ -479,7 +489,7 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
                                         ) : (
                                             editedData.find(c => c.alumno === alumno.alumno && c.tipoCalificacion === header.label && c.fecha === header.fecha)?.nota ||
                                             addedData.find(c => c.alumno === alumno.alumno && c.tipoCalificacion === header.label && c.fecha === header.fecha)?.nota ||
-                                            data.find(c => `${c.alumno.apellido} ${c.alumno.nombre}` === alumno.alumno && c.tipoCalificacion.descripcion === header.label && c.fecha === header.fecha)?.nota || ""
+                                            data.find(c => `${c.alumno.apellido} ${c.alumno.nombre}` === alumno.alumno && c.tipoCalificacion.descripcion === header.label && c.fecha === header.fecha)?.nota || "-"
                                         )}  
                                     </TableCell>
                                 ))}
@@ -550,7 +560,7 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
                                             />
                                         ) : (
                                             addedData.find(c => c.alumno === alumno.alumno && c.tipoCalificacion === header.label && c.fecha === header.fecha)?.nota ||
-                                            data.find(c => `${c.alumno.apellido} ${c.alumno.nombre}` === alumno.alumno && c.tipoCalificacion === header.label && c.fecha === header.fecha)?.nota || ""
+                                            data.find(c => `${c.alumno.apellido} ${c.alumno.nombre}` === alumno.alumno && c.tipoCalificacion === header.label && c.fecha === header.fecha)?.nota || "-"
                                         )}  
                                     </TableCell>
                                 ))}
@@ -634,14 +644,36 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
 };
 
 const AddTipoCalificacionModal = ({ options, onSave, onClose }) => {
-    const [selectedTipo, setSelectedTipo] = useState("");
+    const [selectedValues, setSelectedValues] = useState({
+        tipoCalificacion: null,
+        fecha: null
+    });
 
-    const handleChange = (newValue) => {
-        setSelectedTipo(newValue);
+    const [errors, setErrors] = useState({});
+
+    const handleChange = (input, newValue) => {
+        setSelectedValues((prev) => ({
+            ...prev,
+            [input]: newValue
+        }));
+    }
+
+    const validate = () => {
+        const newErrors = {};
+
+        if(!selectedValues.tipoCalificacion) newErrors.tipoCalificacion = "El tipo de calificación es obligatorio.";
+
+        if(!selectedValues.fecha) newErrors.fecha = "La fecha es obligatoria.";
+
+        setErrors(newErrors);
+
+        return Object.keys(newErrors).length === 0;
     }
 
     const handleSave = () => {
-        onSave(selectedTipo);
+        if(!validate()) return;
+
+        onSave(selectedValues);
     }
 
     return (
@@ -653,23 +685,40 @@ const AddTipoCalificacionModal = ({ options, onSave, onClose }) => {
         >
             <Grid container justifyContent="center" alignItems="center" sx={{ height: "100%" }}>
                 <Grid item xs={12} sm={8} md={6}>
-                    <Paper elevation={3} sx={{ padding: 2 }}>
+                    <Paper elevation={3} sx={{ padding: 4 }}>
                         <Typography variant="h6" gutterBottom>
-                            Agregar Tipo de Calificación
+                            Agregar Calificación
                         </Typography>
-                        <Select
-                            value={selectedTipo || ""}
-                            variant="standard"
-                            sx={{width: '100%'}}
-                            onChange={(e) => handleChange(e.target.value)}
-                            autoFocus
+                        <Box 
+                            sx={{
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                gap: 2,
+                                mt: 2
+                            }}
                         >
-                            {options.map((option) => (
-                                <MenuItem key={option.id} value={option.label}>
-                                    {option.label}
-                                </MenuItem>
-                            ))}
-                        </Select>
+                            <Autocomplete 
+                                options={options}
+                                getOptionLabel={(option) => option.label}
+                                value={selectedValues.tipoCalificacion ? options.find(o => o.label === selectedValues.tipoCalificacion) : null}
+                                onChange={(event, newValue) => handleChange("tipoCalificacion", newValue ? newValue.label : null)}
+                                renderInput={(params) => <TextField {...params} variant="standard" label="Tipo de Calificación" 
+                                error={!!errors.tipoCalificacion} helperText={errors.tipoCalificacion} />}
+                            />
+
+                            <TextField
+                                type="date"
+                                variant="standard"
+                                sx={{width: '100%', mt: 2}}
+                                value={selectedValues.fecha || ""}
+                                onChange={(e) => handleChange("fecha", e.target.value)}
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                                label="Fecha"
+                                error={!!errors.fecha} helperText={errors.fecha}
+                            />
+                        </Box>
                         <Grid container justifyContent="flex-end" sx={{mt: 2}}>
                             <Button variant="contained" color="primary" onClick={handleSave}>
                                 Agregar

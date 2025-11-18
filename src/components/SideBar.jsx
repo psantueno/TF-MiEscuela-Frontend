@@ -40,8 +40,6 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
   const [openCalificaciones, setOpenCalificaciones] = useState(false);
   const [openGestionAcademica, setOpenGestionAcademica] = useState(false);
 
-  // Abrir/cerrar submenú justificativos
-  const [openJustificativos, setOpenJustificativos] = useState(false);
 
   // Abrir asistencias/calificaciones automáticamente si estoy en esa ruta
   useEffect(() => {
@@ -80,7 +78,8 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
         def.name !== 'materias' && // si existiera
         def.name !== 'ciclos-lectivos' &&
         def.name !== 'docentes-materias-curso' &&
-        def.name !== 'docentes-sin-asignacion'
+        def.name !== 'docentes-sin-asignacion' &&
+        def.name !== 'auxiliares-curso'
     )
     .map(def => {
       const Icon = def.icon || Home;
@@ -340,13 +339,13 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
                 <ListItemText primary="Materias" sx={getTextStyle(isActive('/materias'))} />
               </ListItemButton>
             )}
-            {allowMenu(role, 'asignar-docentes') && (
+            {allowMenu(role, 'designar-cargos') && (
               <ListItemButton
-                sx={{ pl: 6, ...getButtonStyle(isActive('/docentes-materias-curso')) }}
-                selected={isActive('/docentes-materias-curso') || location.pathname.startsWith('/gestion-academica/asignar-docentes')}
-                onClick={() => handleItemClick({ id: 'asignar-docentes', to: '/gestion-academica/asignar-docentes' })}
+                sx={{ pl: 6, ...getButtonStyle(isActive('/gestion-academica/designar-cargos')) }}
+                selected={isActive('/gestion-academica/designar-cargos')}
+                onClick={() => handleItemClick({ id: 'designar-cargos', to: '/gestion-academica/designar-cargos' })}
               >
-                <ListItemText primary="Designación de docentes" sx={getTextStyle(isActive('/docentes-materias-curso'))} />
+                <ListItemText primary="Designación de cargos" sx={getTextStyle(isActive('/gestion-academica/designar-cargos'))} />
               </ListItemButton>
             )}
             {allowMenu(role, 'asignar-cursos') && (

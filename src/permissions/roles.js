@@ -23,6 +23,7 @@ export const ROLE_PERMISSIONS = {
       'docentes-materias-curso': resourcePerms({ list: true, show: true, create: true, edit: true, delete: true }),
       roles: resourcePerms({ list: true, show: true }),
       'asistencia-estados': resourcePerms({ list: true, show: true }),
+      'auxiliares-curso': resourcePerms({ list: true, show: true, create: true, edit: true, delete: true }),
     },
     routes: new Set([
       '/administracion/roles',
@@ -34,6 +35,7 @@ export const ROLE_PERMISSIONS = {
       '/gestion-academica/asignar-docentes',
       '/gestion-academica/asignar-cursos',
       '/gestion-academica/cambiar-curso',
+      '/gestion-academica/designar-cargos',
       '/asistencias/recientes',
       '/asistencias/registrar',
       '/asistencias/historico',
@@ -64,6 +66,7 @@ export const ROLE_PERMISSIONS = {
       'asignar-docentes',
       'asignar-cursos',
       'cambiar-curso',
+      'designar-cargos',
       'informes-pedagogicos',
       'justificativos-validar',
       'justificativos-cargar',

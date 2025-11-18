@@ -32,7 +32,8 @@ import {
   useDataProvider,
 } from 'react-admin';
 import { useWatch, useFormContext } from 'react-hook-form';
-import { Box, Typography, Alert, Chip } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { Box, Typography, Alert, Chip, Button } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 
 // Helper: ciclo cerrado
@@ -172,10 +173,21 @@ export const DocentesMateriasCursoList = () => (
 
 // Debug helpers removidos para limpiar consola en producción
 
+const CustomListButton = () => {
+    const navigate = useNavigate();
+    return (
+        <Button
+            startIcon={<ArrowBack />}
+            onClick={() => navigate('/gestion-academica/designar-cargos/docentes')}
+        >
+            Volver al listado
+        </Button>
+    );
+};
 
 const EditActions = () => (
   <TopToolbar>
-    <ListButton label="Volver al listado" icon={<ArrowBack />} />
+    <CustomListButton />
   </TopToolbar>
 );
 
@@ -211,13 +223,13 @@ const AsignacionFormFields = () => (
 );
 
 export const DocentesMateriasCursoCreate = () => (
-  <Create title="Crear asignación" actions={<CreateActions />} mutationMode="pessimistic">
+  <Create title="Crear asignación" actions={<CreateActions />} mutationMode="pessimistic" redirect="/gestion-academica/designar-cargos/docentes">
     <CreateAsignacionForm />
   </Create>
 );
 
 export const DocentesMateriasCursoEdit = () => (
-  <Edit title="Editar asignación" actions={<EditActions />} mutationMode="pessimistic">
+  <Edit title="Editar asignación" actions={<EditActions />} mutationMode="pessimistic" redirect="/gestion-academica/designar-cargos/docentes">
     <EditAsignacionForm />
   </Edit>
 );
@@ -230,7 +242,7 @@ export const DocentesMateriasCursoShow = () => (
       </ReferenceField>
       <ReferenceField label="Materia / Curso" source="id_materia_curso" reference="materias-curso" link={false}>
         <FunctionField render={(r) => (r ? `${r.materia_nombre || ''} - ${r.curso_label || `${r.curso_anio_escolar || ''} ${r.curso_division || ''}`}` : '')} />
-      </ReferenceField>
+      </ReferenceField> 
       <TextField source="rol_docente" label="Rol" />
       <DateField source="fecha_inicio" label="Fecha inicio" />
       <DateField source="fecha_fin" label="Fecha fin" />
