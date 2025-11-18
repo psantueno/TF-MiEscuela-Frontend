@@ -84,7 +84,11 @@ export const dataProvider = {
         return item.id_materia_curso ?? item.id;
       case 'docentes-materias-curso':
         // backend expone id sintético string
-        return item.id ?? `${item.id_docente}:${item.id_materia_curso}:${item.fecha_inicio}`;
+        return `${item.id_docente}:${item.id_materia_curso}:${item.fecha_inicio}`;
+      case 'auxiliares-curso':
+        return `${item.id_auxiliar}:${item.curso.id_curso}:${item.fecha_inicio}`;
+      case 'auxiliares':
+        return item.id_auxiliar ?? item.id;
       default:
         return item.id;
     }

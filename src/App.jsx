@@ -10,7 +10,7 @@ import { Calificaciones } from './resources/calificaciones/Calificaciones';
 import { CalificacionesHijos } from './resources/calificaciones/CalificacionesHijos';
 import { CargarJustificativo } from './resources/justificativos/CargarJustificativo';
 import { ValidarJustificativo } from './resources/justificativos/ValidarJustificativo';
-
+import { DesignarCargos } from './resources/designacionCargos/DesignarCargos';
 // Contexto de usuario
 import UserProvider from './contexts/UserContext/UserProvider';
 import useUser from './contexts/UserContext/useUser';
@@ -43,6 +43,7 @@ import { CiclosLectivosList, CiclosLectivosEdit, CiclosLectivosCreate, CiclosLec
 import { CursosList, CursosEdit, CursosCreate, CursosShow } from './resources/cursos';
 import { MateriasList, MateriasEdit, MateriasCreate, MateriasShow } from './resources/materias';
 import { DocentesMateriasCursoList, DocentesMateriasCursoEdit, DocentesMateriasCursoCreate, DocentesMateriasCursoShow } from './resources/docentesMateriasCurso';
+import { AuxiliaresList, AuxiliaresEdit, AuxiliaresCreate, AuxiliaresShow } from './resources/auxiliares';
 import { RegistrarAsistencia } from './resources/asistencias/RegistrarAsistencia';
 import { EliminarAsistencias } from './resources/asistencias/EliminarAsistencias';
 import { AsistenciasHistorico } from './resources/asistencias/AsistenciasHistorico';
@@ -96,7 +97,6 @@ function App() {
               >
                 {(permissions) => {
                   const role = getRole(permissions);
-                  console.log('Current role:', role);
                   return (
                     <>
                       {/* Asistencias */}
@@ -176,6 +176,17 @@ function App() {
                           options={{ label: 'Designar Docentes' }}
                         />
                       )}
+                      {allowResource(role, 'auxiliares-curso', 'list') && (
+                        <Resource
+                          name="auxiliares-curso"
+                          list={AuxiliaresList}
+                          edit={allowResource(role, 'auxiliares-curso', 'edit') ? AuxiliaresEdit : undefined}
+                          create={allowResource(role, 'auxiliares-curso', 'create') ? AuxiliaresCreate : undefined}
+                          show={allowResource(role, 'auxiliares-curso', 'show') ? AuxiliaresShow : undefined}
+                          options={{ label: 'Designar Auxiliares' }}
+                        />
+                      )}
+                      <Route path="/auxiliares-curso/*" element={<Navigate to="/gestion-academica/designar-cargos/auxiliares" replace />} />
 
                       {/* Roles metadata solo si aplica */}
                       {allowResource(role, 'roles', 'list') && <Resource name="roles" />}
@@ -195,6 +206,9 @@ function App() {
                         )}
                         {allowRoute(role, '/gestion-academica/asignar-docentes') && (
                           <Route path="/gestion-academica/asignar-docentes" element={<Navigate to="/docentes-materias-curso" replace />} />
+                        )}
+                        {allowRoute(role, '/gestion-academica/designar-cargos') && (
+                          <Route path="/gestion-academica/designar-cargos/*" element={<DesignarCargos />} />
                         )}
                         {/* ruta 'docentes-sin-asignacion' eliminada */}
                         {allowRoute(role, '/gestion-academica/asignar-cursos') && (

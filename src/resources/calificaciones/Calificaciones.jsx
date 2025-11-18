@@ -41,6 +41,7 @@ export const Calificaciones = () => {
     const [filterValues, setFilterValues] = useState(
         {
             curso: "",
+            alumno: "",
             materia: "",
         }
     );
@@ -51,8 +52,6 @@ export const Calificaciones = () => {
     });
 
     const [uniqueAnios, setUniqueAnios] = useState([]);
-    const [uniqueTipos, setUniqueTipos] = useState([]);
-    const [uniqueAlumnos, setUniqueAlumnos] = useState([]);
 
     const [title, setTitle] = useState("");
     const [displayWithAccordion, setDisplayWithAccordion] = useState(true);
@@ -100,6 +99,8 @@ export const Calificaciones = () => {
             return;
         }
 
+        setFilterValues((prev) => ({...prev, alumno: "", materia: ""}));
+
         dataProvider
             .getMateriasCurso(filterValues.curso.id_curso)
             .then(({ data }) => setMaterias(data))
@@ -138,17 +139,6 @@ export const Calificaciones = () => {
         const uniqueAnios = [...new Set(calificaciones.map(c => c.curso.cicloLectivo))];
         setUniqueAnios(uniqueAnios);
 
-        const uniqueTipos = [...new Set(calificaciones.map(c => c.tipoCalificacion.descripcion))];
-        setUniqueTipos(uniqueTipos);
-
-        const uniqueAlumnos = [...new Set(calificaciones.map(c => c.alumno))].map(alumno => {
-            return {
-                alumno: alumno,
-                editable: calificaciones.some(cal => cal.alumno === alumno && cal.ciclo_lectivo === CURRENT_YEAR && cal.publicado === false)
-            }
-        });
-        setUniqueAlumnos(uniqueAlumnos);
-
         let title = filterValues.curso.name;
         if(filterValues.alumno) title += ` - ${filterValues.alumno.usuario.apellido} ${filterValues.alumno.usuario.nombre}`;
         if(filterValues.materia) title += ` - ${filterValues.materia.nombre}`;
@@ -179,7 +169,7 @@ export const Calificaciones = () => {
             .getList("calificaciones", {
                 pagination: { page: 1, perPage: 100 },
                 sort: {},
-                filter: { id_curso: filterValues.curso.id_curso ?? "", id_materia: filterValues.materia.id_materia ?? "" },
+                filter: { id_curso: filterValues.curso.id_curso ?? "", id_materia: filterValues.materia.id_materia ?? "", id_alumno: filterValues.alumno.id_alumno ?? "" },
             })
             .then(({ data }) => {
                 setCalificaciones(data);
@@ -218,8 +208,7 @@ export const Calificaciones = () => {
     }
 
     const exportarPDF = async () => {
-        const type = filterValues.alumno ? "alumno" : "curso";
-        await generarReportePDF({ type, curso: filterValues.curso, materia: filterValues.materia, calificaciones: calificaciones, alumno: filterValues.alumno });
+        await generarReportePDF({ curso: filterValues.curso, materia: filterValues.materia, alumno: filterValues.alumno, calificaciones: calificaciones });
     }
 
     const getDefaultValues = (idMateria) => {
@@ -277,27 +266,6 @@ export const Calificaciones = () => {
         }));
         
         return mappedAlumnos;
-    }
-
-    const mapCalificaciones = (filteredCalificaciones) => {
-        const mapped = {};
-
-        if(filteredCalificaciones.length === 0) return mapped;
-
-        uniqueAlumnos.forEach((alumno) => {
-            mapped[alumno.alumno] = {};
-            uniqueTipos.forEach((tipo) => {
-                const calificacion = filteredCalificaciones.find(c => c.alumno === alumno.alumno && c.tipo === tipo);
-                mapped[alumno.alumno][tipo] = {};
-                mapped[alumno.alumno][tipo]['nota'] = calificacion ? calificacion.nota : "";
-                mapped[alumno.alumno][tipo]['id'] = calificacion ? calificacion.id : "";
-                mapped[alumno.alumno][tipo]['publicado'] = calificacion ? calificacion.publicado : false;
-                mapped[alumno.alumno].id_alumno = calificacion ? calificacion.id_alumno : "";
-                mapped[alumno.alumno].id_curso = calificacion ? calificacion.id_curso : "";
-                mapped[alumno.alumno].id_materia = calificacion ? calificacion.id_materia : "";
-            });
-        });
-        return mapped;
     }
 
     const handleSave = async (updatedRows, addedRows) => {
@@ -394,18 +362,32 @@ export const Calificaciones = () => {
 
                 {/* Selección de materia */}
                 {filterValues.curso && 
-                    <Grid item>
-                        <Autocomplete
-                            options={materias}
-                            getOptionLabel={(option) => option.nombre || ""}
-                            style={{ width: 300 }}
-                            value={materias.find(m => m.id_materia === filterValues.materia.id_materia) || null}
-                            onChange={(event, newValue) => {
-                                setFilterValues((prev) => ({...prev, materia: newValue ? newValue : ""}));
-                            }}
-                            renderInput={(params) => <TextField {...params} label="Seleccionar materia(opcional)" variant="outlined" />}
-                        />
-                    </Grid>
+                    <>
+                        <Grid item>
+                            <Autocomplete
+                                options={alumnos}
+                                getOptionLabel={(option) => `${option.usuario.apellido} ${option.usuario.nombre}`}
+                                style={{ width: 300 }}
+                                value={alumnos.find(a => a.id_alumno === filterValues.alumno?.id_alumno) || null}
+                                onChange={(event, newValue) => {
+                                    setFilterValues((prev) => ({...prev, alumno: newValue ? newValue : ""}));
+                                }}
+                                renderInput={(params) => <TextField {...params} label="Seleccionar alumno (opcional)" variant="outlined" />}
+                            />
+                        </Grid>
+                        <Grid item>
+                            <Autocomplete
+                                options={materias}
+                                getOptionLabel={(option) => option.nombre || ""}
+                                style={{ width: 300 }}
+                                value={materias.find(m => m.id_materia === filterValues.materia.id_materia) || null}
+                                onChange={(event, newValue) => {
+                                    setFilterValues((prev) => ({...prev, materia: newValue ? newValue : ""}));
+                                }}
+                                renderInput={(params) => <TextField {...params} label="Seleccionar materia(opcional)" variant="outlined" />}
+                            />
+                        </Grid>
+                    </>
                 }
 
                 {/* Botón para buscar */}
