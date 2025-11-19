@@ -662,4 +662,95 @@ export const dataProvider = {
       method: 'PUT',
       body: JSON.stringify({ estado, motivo_rechazo, detalle_justificativo }),
     }).then(({ json }) => ({ data: json })),
+
+  // ============ RENDIMIENTO ACADÉMICO ============
+  _buildRendimientoQuery: (params = {}) => {
+    const qs = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '') return;
+      qs.append(key, value);
+    });
+    return qs.toString();
+  },
+
+  getRendimientoCurso: (filters = {}) => {
+    const query = dataProvider._buildRendimientoQuery({ scope: 'curso', ...filters });
+    return httpClient(`${API_URL}/rendimiento?${query}`).then(({ json }) => ({ data: json }));
+  },
+
+  getRendimientoMateria: (filters = {}) => {
+    const query = dataProvider._buildRendimientoQuery({ scope: 'materia', ...filters });
+    return httpClient(`${API_URL}/rendimiento?${query}`).then(({ json }) => ({ data: json }));
+  },
+
+  getRendimientoAlumno: (filters = {}) => {
+    const query = dataProvider._buildRendimientoQuery({ scope: 'alumno', ...filters });
+    return httpClient(`${API_URL}/rendimiento?${query}`).then(({ json }) => ({ data: json }));
+  },
+
+  getRendimientoAlertas: (filters = {}) => {
+    const query = dataProvider._buildRendimientoQuery({ scope: 'alertas', ...filters });
+    return httpClient(`${API_URL}/rendimiento?${query}`).then(({ json }) => ({ data: json }));
+  },
+
+  getRendimientoHijos: () =>
+    httpClient(`${API_URL}/rendimiento?scope=hijos`).then(({ json }) => ({ data: json })),
+
+  generarInformeRendimiento: (payload) =>
+    httpClient(`${API_URL}/rendimiento/informe`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }).then(({ json }) => ({ data: json })),
+
+  generarInformeRendimientoIA: (payload, { soloPayload = false, format = null } = {}) => {
+    const params = new URLSearchParams();
+    if (soloPayload) params.append('soloPayload', 'true');
+    if (format) params.append('format', format);
+    const queryString = params.toString();
+    const url = `${API_URL}/rendimiento/informe-ia${queryString ? `?${queryString}` : ''}`;
+    const body = JSON.stringify(payload);
+
+    if (format === 'pdf') {
+      const headers = new Headers({
+        Accept: 'application/pdf',
+        'Content-Type': 'application/json',
+      });
+      const csrfToken = sessionStorage.getItem('csrf_token');
+      const accessToken = sessionStorage.getItem('access_token');
+      const refreshToken = sessionStorage.getItem('refresh_token');
+      if (csrfToken) headers.set('X-CSRF-Token', csrfToken);
+      if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
+      if (refreshToken) headers.set('X-Refresh-Token', refreshToken);
+
+      return fetch(url, {
+        method: 'POST',
+        headers,
+        body,
+        credentials: 'include',
+      }).then(async (response) => {
+        if (!response.ok) {
+          let errorBody = null;
+          try {
+            errorBody = await response.json();
+          } catch {
+            // ignore JSON parse error
+          }
+          const error = new Error(errorBody?.error || 'Error generando informe IA');
+          error.status = response.status;
+          error.body = errorBody;
+          throw error;
+        }
+        const blob = await response.blob();
+        const disposition = response.headers.get('Content-Disposition') || '';
+        const match = disposition.match(/filename="?([^"]+)"?/i);
+        const filename = match ? match[1] : null;
+        return { data: blob, filename };
+      });
+    }
+
+    return httpClient(url, {
+      method: 'POST',
+      body,
+    }).then(({ json }) => ({ data: json }));
+  },
 }

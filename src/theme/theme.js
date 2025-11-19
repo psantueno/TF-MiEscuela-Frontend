@@ -20,6 +20,7 @@ export const theme = createTheme({
     text: {
       primary: "#061B46",
       secondary: "#2A2E38",
+      terciary: "#6E6E6E",
     },
     error: {
       main: "#d32f2f",
