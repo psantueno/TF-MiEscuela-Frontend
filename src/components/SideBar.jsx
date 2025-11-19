@@ -20,7 +20,8 @@ import {
   Grade,
   AdminPanelSettings,
   CalendarMonth,
-  PsychologyAlt
+  PsychologyAlt,
+  Insights,
 } from '@mui/icons-material';
 import { usePermissions, useResourceDefinitions } from 'react-admin';
 import { allowMenu, allowResource } from '../permissions/roles';
@@ -40,6 +41,12 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
   const [openCalificaciones, setOpenCalificaciones] = useState(false);
   const [openGestionAcademica, setOpenGestionAcademica] = useState(false);
 
+  // Abrir/cerrar submenú justificativos
+  const [openJustificativos, setOpenJustificativos] = useState(false);
+ // Abrir/cerrar submenú rendimientos
+  const [openRendimiento, setOpenRendimiento] = useState(false);
+
+
 
   // Abrir asistencias/calificaciones automáticamente si estoy en esa ruta
   useEffect(() => {
@@ -51,6 +58,9 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
     }
     if (location.pathname.startsWith('/gestion-academica') || location.pathname.startsWith('/ciclos-lectivos')) {
       setOpenGestionAcademica(true);
+    }
+    if (location.pathname.startsWith('/rendimiento')) {
+      setOpenRendimiento(true);
     }
   }, [location.pathname]);
 
@@ -90,6 +100,8 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
         to: `/${def.name}`,
       };
     });
+
+  const canViewRendimiento = ['rendimiento-cursos','rendimiento-materias','rendimiento-alumnos','rendimiento-alertas','rendimiento-hijos'].some(id => allowMenu(role, id));
 
   const handleItemClick = (item) => {
     if (item?.id) {
@@ -370,7 +382,69 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
           </List>
         </Collapse>
 
-        {/* Modulo de calificaciones */}
+        {/* Rendimiento academico */}
+        {(allowMenu(role, 'rendimiento') || canViewRendimiento) && (
+        <>
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => setOpenRendimiento(!openRendimiento)}>
+            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+              <Insights />
+            </ListItemIcon>
+            <ListItemText primary="Rendimiento académico" />
+            {openRendimiento ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={openRendimiento} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            {allowMenu(role, 'rendimiento-cursos') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(location.pathname.startsWith('/rendimiento/cursos')) }}
+                selected={location.pathname.startsWith('/rendimiento/cursos')}
+                onClick={() => handleItemClick({ id: 'rendimiento-cursos', to: '/rendimiento/cursos' })}
+              >
+                <ListItemText primary="Por curso" sx={getTextStyle(location.pathname.startsWith('/rendimiento/cursos'))} />
+              </ListItemButton>
+            )}
+            {allowMenu(role, 'rendimiento-materias') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(location.pathname.startsWith('/rendimiento/materias')) }}
+                selected={location.pathname.startsWith('/rendimiento/materias')}
+                onClick={() => handleItemClick({ id: 'rendimiento-materias', to: '/rendimiento/materias' })}
+              >
+                <ListItemText primary="Por materia" sx={getTextStyle(location.pathname.startsWith('/rendimiento/materias'))} />
+              </ListItemButton>
+            )}
+            {allowMenu(role, 'rendimiento-alumnos') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(location.pathname.startsWith('/rendimiento/alumnos')) }}
+                selected={location.pathname.startsWith('/rendimiento/alumnos')}
+                onClick={() => handleItemClick({ id: 'rendimiento-alumnos', to: '/rendimiento/alumnos' })}
+              >
+                <ListItemText primary="Por alumno" sx={getTextStyle(location.pathname.startsWith('/rendimiento/alumnos'))} />
+              </ListItemButton>
+            )}
+            {allowMenu(role, 'rendimiento-alertas') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(location.pathname.startsWith('/rendimiento/alertas')) }}
+                selected={location.pathname.startsWith('/rendimiento/alertas')}
+                onClick={() => handleItemClick({ id: 'rendimiento-alertas', to: '/rendimiento/alertas' })}
+              >
+                <ListItemText primary="Alertas" sx={getTextStyle(location.pathname.startsWith('/rendimiento/alertas'))} />
+              </ListItemButton>
+            )}
+            {allowMenu(role, 'rendimiento-hijos') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(location.pathname.startsWith('/rendimiento/hijos')) }}
+                selected={location.pathname.startsWith('/rendimiento/hijos')}
+                onClick={() => handleItemClick({ id: 'rendimiento-hijos', to: '/rendimiento/hijos' })}
+              >
+                <ListItemText primary="Mis hijos" sx={getTextStyle(location.pathname.startsWith('/rendimiento/hijos'))} />
+              </ListItemButton>
+            )}
+          </List>
+        </Collapse>
+        </>
+        )}        {/* Modulo de calificaciones */}
         {(allowMenu(role, 'calificaciones') || allowMenu(role, 'calificaciones-hijos')) && (
         <>
         <ListItem disablePadding>
@@ -473,3 +547,9 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
     </Box>
   );
 };
+
+
+
+
+
+
