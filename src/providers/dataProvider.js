@@ -1,7 +1,6 @@
 import { fetchUtils } from 'react-admin';
 import { stringify } from 'query-string';
 import { api } from "../services/api"
-import { get } from 'react-hook-form';
 
 const API_URL = 'http://localhost:6543/api';
 
@@ -87,6 +86,8 @@ export const dataProvider = {
         return `${item.id_docente}:${item.id_materia_curso}:${item.fecha_inicio}`;
       case 'auxiliares-curso':
         return `${item.id_auxiliar}:${item.curso.id_curso}:${item.fecha_inicio}`;
+      case 'tutores-hijos':
+        return item.id_tutor ?? item.id;
       case 'auxiliares':
         return item.id_auxiliar ?? item.id;
       default:
