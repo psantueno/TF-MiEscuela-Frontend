@@ -51,6 +51,7 @@ import { CursosList, CursosEdit, CursosCreate, CursosShow } from './resources/cu
 import { MateriasList, MateriasEdit, MateriasCreate, MateriasShow } from './resources/materias';
 import { DocentesMateriasCursoList, DocentesMateriasCursoEdit, DocentesMateriasCursoCreate, DocentesMateriasCursoShow } from './resources/docentesMateriasCurso';
 import { AuxiliaresList, AuxiliaresEdit, AuxiliaresCreate, AuxiliaresShow } from './resources/auxiliares';
+import { TutoresList, TutoresShow, TutoresEdit } from './resources/tutores';
 import { RegistrarAsistencia } from './resources/asistencias/RegistrarAsistencia';
 import { EliminarAsistencias } from './resources/asistencias/EliminarAsistencias';
 import { AsistenciasHistorico } from './resources/asistencias/AsistenciasHistorico';
@@ -195,6 +196,21 @@ function App() {
                       )}
                       <Route path="/auxiliares-curso/*" element={<Navigate to="/gestion-academica/designar-cargos/auxiliares" replace />} />
 
+                      {allowResource(role, 'tutores', 'list') && (
+                        <Resource
+                          name="tutores"
+                          list={TutoresList}
+                          show={allowResource(role, 'tutores', 'show') ? TutoresShow : undefined}
+                          options={{ label: 'Asignar Tutores' }}
+                        />
+                      )}
+                      {allowResource(role, 'tutores-hijos', 'edit') && (
+                        <Resource
+                          name="tutores-hijos"
+                          edit={allowResource(role, 'tutores-hijos', 'edit') ? TutoresEdit : undefined}
+                        />
+                      )}
+
                       {/* Roles metadata solo si aplica */}
                       {allowResource(role, 'roles', 'list') && <Resource name="roles" />}
                       {/* recurso 'docentes-sin-asignacion' eliminado */}
@@ -274,9 +290,6 @@ function App() {
                         )}
                         {allowRoute(role, '/notificaciones') && (
                           <Route path="/notificaciones" element={<div>Notificaciones</div>} />
-                        )}
-                        {allowRoute(role, '/mensajes') && (
-                          <Route path="/mensajes" element={<div>Mensajes</div>} />
                         )}
                         {allowRoute(role, '/informes') && (
                           <Route path="/informes" element={<div>Informes</div>} />

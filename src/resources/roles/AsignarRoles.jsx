@@ -76,8 +76,8 @@ const RoleAssignCell = () => {
 export const AsignarRoles = () => {
 
   const RolesListActions = () => (
-    <TopToolbar>␍␊
-      <FilterButton label="Agregar filtros" />␍␊
+    <TopToolbar>
+      <FilterButton label="Agregar filtros" />
       <ExportButton label="Exportar" />
     </TopToolbar>
   );

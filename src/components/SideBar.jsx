@@ -89,7 +89,8 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
         def.name !== 'ciclos-lectivos' &&
         def.name !== 'docentes-materias-curso' &&
         def.name !== 'docentes-sin-asignacion' &&
-        def.name !== 'auxiliares-curso'
+        def.name !== 'auxiliares-curso' &&
+        def.name !== 'tutores'
     )
     .map(def => {
       const Icon = def.icon || Home;
@@ -377,6 +378,15 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
                 onClick={() => handleItemClick({ id: 'cambiar-curso', to: '/gestion-academica/cambiar-curso' })}
               >
                 <ListItemText primary="Cambios de curso" sx={getTextStyle(isActive('/gestion-academica/cambiar-curso'))} />
+              </ListItemButton>
+            )}
+            {allowMenu(role, 'tutores') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(isActive('/tutores')) }}
+                selected={isActive('/tutores')}
+                onClick={() => handleItemClick({ id: 'tutores', to: '/tutores' })}
+              >
+                <ListItemText primary="Asignar tutores" sx={getTextStyle(isActive('/tutores'))} />
               </ListItemButton>
             )}
           </List>
