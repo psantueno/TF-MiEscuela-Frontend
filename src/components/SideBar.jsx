@@ -102,7 +102,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
       };
     });
 
-  const canViewRendimiento = ['rendimiento-cursos','rendimiento-materias','rendimiento-alumnos','rendimiento-alertas','rendimiento-hijos'].some(id => allowMenu(role, id));
+  const canViewRendimiento = ['rendimiento-cursos','rendimiento-alumnos','rendimiento-alertas','rendimiento-hijos'].some(id => allowMenu(role, id));
 
   const handleItemClick = (item) => {
     if (item?.id) {
@@ -413,15 +413,6 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
                 onClick={() => handleItemClick({ id: 'rendimiento-cursos', to: '/rendimiento/cursos' })}
               >
                 <ListItemText primary="Por curso" sx={getTextStyle(location.pathname.startsWith('/rendimiento/cursos'))} />
-              </ListItemButton>
-            )}
-            {allowMenu(role, 'rendimiento-materias') && (
-              <ListItemButton
-                sx={{ pl: 6, ...getButtonStyle(location.pathname.startsWith('/rendimiento/materias')) }}
-                selected={location.pathname.startsWith('/rendimiento/materias')}
-                onClick={() => handleItemClick({ id: 'rendimiento-materias', to: '/rendimiento/materias' })}
-              >
-                <ListItemText primary="Por materia" sx={getTextStyle(location.pathname.startsWith('/rendimiento/materias'))} />
               </ListItemButton>
             )}
             {allowMenu(role, 'rendimiento-alumnos') && (

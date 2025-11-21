@@ -38,7 +38,6 @@ import { Dashboard } from './pages/Dashboard';
 import { InformesPedagogicos } from './resources/pedagogia/InformesPedagogicos';
 import {
   RendimientoCursos,
-  RendimientoMaterias,
   RendimientoAlumnos,
   RendimientoAlertas,
   RendimientoTutor,
@@ -266,9 +265,6 @@ function App() {
                         )}
                         {allowRoute(role, '/rendimiento/cursos') && (
                           <Route path="/rendimiento/cursos" element={<RendimientoCursos />} />
-                        )}
-                        {allowRoute(role, '/rendimiento/materias') && (
-                          <Route path="/rendimiento/materias" element={<RendimientoMaterias />} />
                         )}
                         {allowRoute(role, '/rendimiento/alumnos') && (
                           <Route path="/rendimiento/alumnos" element={<RendimientoAlumnos />} />
