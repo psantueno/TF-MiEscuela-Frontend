@@ -377,6 +377,7 @@ export const UsuariosCreate = () => {
                 id='form-create-usuario' 
                 disableInvalidFormNotification 
                 sanitizeEmptyValues
+                toolbar={<CustomFormToolbar />}
                 onSubmit={handleSubmit}
             >
                 <Typography variant="h6" gutterBottom>Identidad</Typography>

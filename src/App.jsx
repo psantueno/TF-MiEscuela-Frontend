@@ -200,7 +200,7 @@ function App() {
                           name="tutores"
                           list={TutoresList}
                           show={allowResource(role, 'tutores', 'show') ? TutoresShow : undefined}
-                          options={{ label: 'Asignar Tutores' }}
+                          options={{ label: 'Designar Tutores' }}
                         />
                       )}
                       {allowResource(role, 'tutores-hijos', 'edit') && (

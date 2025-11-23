@@ -524,6 +524,17 @@ export const dataProvider = {
         })),
       })),
 
+  getPanelGeneralResumen: () =>
+    httpClient(`${API_URL}/panelGeneral/resumen`)
+      .then(({ json }) => ({
+        data: json,
+      })),
+
+  getPanelPorRol: () =>
+    httpClient(`${API_URL}/panelGeneral/rol`).then(({ json }) => ({
+      data: json,
+    })),
+
   // obtener materias por curso
   getMateriasCurso: (cursoId) =>
     httpClient(`${API_URL}/cursos/${cursoId}/materias`)
