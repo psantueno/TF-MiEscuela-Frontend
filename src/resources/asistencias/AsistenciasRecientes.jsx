@@ -54,10 +54,38 @@ const PALETTE = {
   neutro: { bg: "#F1F3F4", color: "#5F6368", border: "#DADCE0" },
 };
 
+// Normaliza diferencias de claves que pueden venir del backend
+const normalizeAsistencia = (a = {}) => {
+  const alumno = a.alumno || {};
+  const estado = a.estado || {};
+  return {
+    ...a,
+    alumno_apellido:
+      a.alumno_apellido ??
+      alumno.apellido ??
+      alumno.alumno_apellido ??
+      a.apellido ??
+      "",
+    alumno_nombre_prop:
+      a.alumno_nombre_prop ??
+      alumno.nombre_prop ??
+      alumno.nombre ??
+      "",
+    estado_nombre:
+      a.estado_nombre ??
+      estado.descripcion ??
+      estado.nombre ??
+      estado.estado_nombre ??
+      a.estado ??
+      "",
+  };
+};
+
 export const AsistenciasRecientes = () => {
   const dataProvider = useDataProvider();
   const [curso, setCurso] = useState("");
   const [cursos, setCursos] = useState([]);
+  const [cicloAbierto, setCicloAbierto] = useState(null);
   const [asistencias, setAsistencias] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fecha, setFecha] = useState(dayjs());
@@ -65,24 +93,57 @@ export const AsistenciasRecientes = () => {
   const esHoy = fecha.isSame(dayjs(), "day");
 
   // ======================
-  // Cargar cursos
+  // Cargar ciclo abierto y cursos del ciclo
   // ======================
   useEffect(() => {
-    dataProvider
-      .getList("cursos", {
-        pagination: { page: 1, perPage: 100 },
-        sort: { field: "anio_escolar", order: "ASC" },
-        filter: {},
-      })
-      .then(({ data }) =>
+    let mounted = true;
+
+    const loadCursos = async () => {
+      try {
+        const { data: ciclos } = await dataProvider.getList("ciclos-lectivos", {
+          pagination: { page: 1, perPage: 50 },
+          sort: { field: "anio", order: "DESC" },
+          filter: { estado: ["Abierto", "abierto"] },
+        });
+
+        const abierto = ciclos.find(
+          (c) => (c.estado || "").toLowerCase() === "abierto"
+        );
+
+        if (!mounted || !abierto) {
+          setCicloAbierto(null);
+          setCursos([]);
+          setCurso("");
+          return;
+        }
+
+        setCicloAbierto(abierto);
+
+        const { data } = await dataProvider.getCursosPorCiclo(
+          abierto.id_ciclo || abierto.id
+        );
+
+        if (!mounted) return;
+
         setCursos(
           data.map((c) => ({
-            id: c.id_curso,
+            id: c.id_curso ?? c.id,
             name: `${c.anio_escolar}° ${c.division}`,
           }))
-        )
-      )
-      .catch(() => setCursos([]));
+        );
+      } catch {
+        if (!mounted) return;
+        setCicloAbierto(null);
+        setCursos([]);
+        setCurso("");
+      }
+    };
+
+    loadCursos();
+
+    return () => {
+      mounted = false;
+    };
   }, [dataProvider]);
 
   // ======================
@@ -95,10 +156,22 @@ export const AsistenciasRecientes = () => {
       dataProvider
         .getAsistenciaCursoFecha(curso, fechaStr)
         .then(({ data }) => {
-          setAsistencias(data);
+          const normalizadas = data.map((a) => normalizeAsistencia(a));
+          console.log("[AsistenciasRecientes] Respuesta asistencias", {
+            cursoId: curso,
+            fecha: fechaStr,
+            items: normalizadas,
+            raw: data,
+          });
+          setAsistencias(normalizadas);
           setLoading(false);
         })
-        .catch(() => {
+        .catch((error) => {
+          console.error("[AsistenciasRecientes] Error obteniendo asistencias", {
+            cursoId: curso,
+            fecha: fechaStr,
+            error,
+          });
           setAsistencias([]);
           setLoading(false);
         });
@@ -274,6 +347,23 @@ export const AsistenciasRecientes = () => {
         </Typography>
       )}
 
+      {!cicloAbierto && (
+        <Typography
+          variant="body2"
+          sx={{
+            mb: 2,
+            p: 1.2,
+            borderRadius: 1,
+            backgroundColor: "#FFF3CD",
+            color: "#856404",
+            border: "1px solid #FFEEBA",
+          }}
+        >
+          No se encontró un ciclo lectivo en estado <strong>Abierto</strong>.
+          Selecciona un curso cuando haya un ciclo activo.
+        </Typography>
+      )}
+
       {/* === Barra de fechas === */}
       <Box display="flex" gap={1.2} mb={3} justifyContent="center">
         {diasHabilitados.map((d) => {
@@ -310,6 +400,7 @@ export const AsistenciasRecientes = () => {
           borderRadius: "6px",
           border: "1px solid #ccc",
         }}
+        disabled={!cicloAbierto}
       >
         <option value="">Seleccionar curso</option>
         {cursos.map((c) => (

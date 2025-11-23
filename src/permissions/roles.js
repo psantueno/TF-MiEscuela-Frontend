@@ -56,6 +56,7 @@ export const ROLE_PERMISSIONS = {
       '/rendimiento/alertas',
     ]),
     menu: new Set([
+      'general',
       'usuarios',
       'roles',
       'asistencias-registrar',
@@ -105,6 +106,7 @@ export const ROLE_PERMISSIONS = {
       '/gestion-academica/cambiar-curso',
     ]),
     menu: new Set([
+      'general',
       'asistencias-recientes',
       'asistencias-historico',
       'calificaciones',
@@ -140,6 +142,7 @@ export const ROLE_PERMISSIONS = {
       '/rendimiento/alertas',
     ]),
     menu: new Set([
+      'general',
       'asistencias-recientes',
       'asistencias-registrar',
       'asistencias-historico',
@@ -169,6 +172,7 @@ export const ROLE_PERMISSIONS = {
       '/rendimiento/alumnos',
     ]),
     menu: new Set([
+      'general',
       'asistencias-recientes',
       'asistencias-historico',
       'calificaciones',
@@ -188,6 +192,7 @@ export const ROLE_PERMISSIONS = {
       // Optional: add custom route like '/mis-asistencias' if exists
     ]),
     menu: new Set([
+      'general',
       'notificaciones',
       'mensajes',
     ]),
@@ -205,6 +210,7 @@ export const ROLE_PERMISSIONS = {
       '/rendimiento/hijos',
     ]),
     menu: new Set([
+      'general',
       'notificaciones',
       'mensajes',
       'calificaciones-hijos',
@@ -222,6 +228,7 @@ export const ROLE_PERMISSIONS = {
       '/informes-pedagogicos',
     ]),
     menu: new Set([
+      'general',
       'informes-pedagogicos',
     ])
   }

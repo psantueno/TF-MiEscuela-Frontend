@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from 'react-router-dom';
+﻿import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   List,
@@ -12,8 +12,6 @@ import {
 import {
   Home,
   Notifications,
-  Mail,
-  Assessment,
   Today,
   ExpandLess,
   ExpandMore,
@@ -43,10 +41,8 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
 
   // Abrir/cerrar submenú justificativos
   const [openJustificativos, setOpenJustificativos] = useState(false);
- // Abrir/cerrar submenú rendimientos
+  // Abrir/cerrar submenú rendimientos
   const [openRendimiento, setOpenRendimiento] = useState(false);
-
-
 
   // Abrir asistencias/calificaciones automáticamente si estoy en esa ruta
   useEffect(() => {
@@ -181,59 +177,6 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
           </ListItemButton>
         </ListItem>
 
-        {/* Recursos estándar */}
-        {resourceItems.filter(item => allowResource(role, item.id, 'list')).map((item) => (
-          <ListItem disablePadding key={item.id}>
-            <ListItemButton
-              selected={isActive(item.to)}
-              onClick={() => handleItemClick(item)}
-              sx={getButtonStyle(isActive(item.to))}
-            >
-              <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText primary={item.text} sx={getTextStyle(isActive(item.to))} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-
-        {/* Bloque Administración */}
-        {allowMenu(role, 'administracion') && (
-          <>
-            <ListItem disablePadding>
-              <ListItemButton onClick={() => setOpenAdministracion(!openAdministracion)}>
-                <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                  <AdminPanelSettings />
-                </ListItemIcon>
-                <ListItemText primary="Administración" />
-                {openAdministracion ? <ExpandLess /> : <ExpandMore />}
-              </ListItemButton>
-            </ListItem>
-            <Collapse in={openAdministracion} timeout="auto" unmountOnExit>
-              <List component="div" disablePadding>
-                {allowMenu(role, 'usuarios') && (
-                  <ListItemButton
-                    sx={{ pl: 6, ...getButtonStyle(isActive('/usuarios')) }}
-                    selected={isActive('/usuarios') || location.pathname.startsWith('/administracion/usuarios')}
-                    onClick={() => handleItemClick({ id: 'usuarios', to: '/administracion/usuarios' })}
-                  >
-                    <ListItemText primary="Usuarios" sx={getTextStyle(isActive('/usuarios'))} />
-                  </ListItemButton>
-                )}
-                {allowMenu(role, 'roles') && (
-                  <ListItemButton
-                    sx={{ pl: 6, ...getButtonStyle(isActive('/administracion/roles')) }}
-                    selected={isActive('/administracion/roles')}
-                    onClick={() => handleItemClick({ id: 'roles', to: '/administracion/roles' })}
-                  >
-                    <ListItemText primary="Roles" sx={getTextStyle(isActive('/administracion/roles'))} />
-                  </ListItemButton>
-                )}
-              </List>
-            </Collapse>
-          </>
-        )}
-
         {/* Bloque Asistencias */}
         <ListItem disablePadding>
           <ListItemButton onClick={() => setOpenAsistencias(!openAsistencias)}>
@@ -313,6 +256,117 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
           </List>
         </Collapse>
 
+        {/* Modulo de calificaciones */}
+        {(allowMenu(role, 'calificaciones') || allowMenu(role, 'calificaciones-hijos')) && (
+        <>
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => setOpenCalificaciones(!openCalificaciones)}>
+            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+              <Grade />
+            </ListItemIcon>
+            <ListItemText primary="Calificaciones" />
+            {openCalificaciones ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={openCalificaciones} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            {/* Submenú: Listado */}
+            {allowMenu(role, 'calificaciones') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(isActive('/calificaciones')) }}
+                selected={isActive('/calificaciones')}
+                onClick={() => handleItemClick({ id: 'calificaciones', to: '/calificaciones' })}
+              >
+                <ListItemText primary="Listado" sx={getTextStyle(isActive('/calificaciones'))} />
+              </ListItemButton>
+            )}
+
+            {/* Submenú: Hijos */}
+            {allowMenu(role, 'calificaciones-hijos') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(isActive('/calificaciones/hijos')) }}
+                selected={isActive('/calificaciones/hijos')}
+                onClick={() => handleItemClick({ id: 'calificaciones-hijos', to: '/calificaciones/hijos' })}
+              >
+                <ListItemText primary="Calificaciones de mis hijos" sx={getTextStyle(isActive('/calificaciones/hijos'))} />
+              </ListItemButton>
+            )}
+          </List>
+        </Collapse>
+        </>
+        )}
+
+        {/* Informes pedagógicos */}
+        {allowMenu(role, 'informes-pedagogicos') && (
+        <ListItem disablePadding>
+          <ListItemButton
+            selected={isActive('/informes-pedagogicos')}
+            onClick={() => handleItemClick({ id: 'informes-pedagogicos', to: '/informes-pedagogicos' })}
+            sx={getButtonStyle(isActive('/informes-pedagogicos'))}
+          >
+            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+              <PsychologyAlt />
+            </ListItemIcon>
+            <ListItemText primary="Informes pedagógicos" sx={getTextStyle(isActive('/informes-pedagogicos'))} />
+          </ListItemButton>
+        </ListItem>
+        )}
+
+        {/* Rendimiento academico */}
+        {(allowMenu(role, 'rendimiento') || canViewRendimiento) && (
+        <>
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => setOpenRendimiento(!openRendimiento)}>
+            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+              <Insights />
+            </ListItemIcon>
+            <ListItemText primary="Rendimiento académico" />
+            {openRendimiento ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={openRendimiento} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            {allowMenu(role, 'rendimiento-cursos') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(location.pathname.startsWith('/rendimiento/cursos')) }}
+                selected={location.pathname.startsWith('/rendimiento/cursos')}
+                onClick={() => handleItemClick({ id: 'rendimiento-cursos', to: '/rendimiento/cursos' })}
+              >
+                <ListItemText primary="Por curso" sx={getTextStyle(location.pathname.startsWith('/rendimiento/cursos'))} />
+              </ListItemButton>
+            )}
+            {allowMenu(role, 'rendimiento-alumnos') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(location.pathname.startsWith('/rendimiento/alumnos')) }}
+                selected={location.pathname.startsWith('/rendimiento/alumnos')}
+                onClick={() => handleItemClick({ id: 'rendimiento-alumnos', to: '/rendimiento/alumnos' })}
+              >
+                <ListItemText primary="Por alumno" sx={getTextStyle(location.pathname.startsWith('/rendimiento/alumnos'))} />
+              </ListItemButton>
+            )}
+            {allowMenu(role, 'rendimiento-alertas') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(location.pathname.startsWith('/rendimiento/alertas')) }}
+                selected={location.pathname.startsWith('/rendimiento/alertas')}
+                onClick={() => handleItemClick({ id: 'rendimiento-alertas', to: '/rendimiento/alertas' })}
+              >
+                <ListItemText primary="Alertas" sx={getTextStyle(location.pathname.startsWith('/rendimiento/alertas'))} />
+              </ListItemButton>
+            )}
+            {allowMenu(role, 'rendimiento-hijos') && (
+              <ListItemButton
+                sx={{ pl: 6, ...getButtonStyle(location.pathname.startsWith('/rendimiento/hijos')) }}
+                selected={location.pathname.startsWith('/rendimiento/hijos')}
+                onClick={() => handleItemClick({ id: 'rendimiento-hijos', to: '/rendimiento/hijos' })}
+              >
+                <ListItemText primary="Mis hijos" sx={getTextStyle(location.pathname.startsWith('/rendimiento/hijos'))} />
+              </ListItemButton>
+            )}
+          </List>
+        </Collapse>
+        </>
+        )}
+
         {/* Módulo de Gestión académica */}
         <ListItem disablePadding>
           <ListItemButton onClick={() => setOpenGestionAcademica(!openGestionAcademica)}>
@@ -370,7 +424,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
                 <ListItemText primary="Asignar cursos" sx={getTextStyle(isActive('/gestion-academica/asignar-cursos'))} />
               </ListItemButton>
             )}
-            {/* ítem 'docentes-sin-asignacion' eliminado */}
+            {/* Ítem 'docentes-sin-asignacion' eliminado */}
             {allowMenu(role, 'cambiar-curso') && (
               <ListItemButton
                 sx={{ pl: 6, ...getButtonStyle(isActive('/gestion-academica/cambiar-curso')) }}
@@ -386,119 +440,63 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
                 selected={isActive('/tutores')}
                 onClick={() => handleItemClick({ id: 'tutores', to: '/tutores' })}
               >
-                <ListItemText primary="Asignar tutores" sx={getTextStyle(isActive('/tutores'))} />
+                <ListItemText primary="Designar tutores" sx={getTextStyle(isActive('/tutores'))} />
               </ListItemButton>
             )}
           </List>
         </Collapse>
 
-        {/* Rendimiento academico */}
-        {(allowMenu(role, 'rendimiento') || canViewRendimiento) && (
-        <>
-        <ListItem disablePadding>
-          <ListItemButton onClick={() => setOpenRendimiento(!openRendimiento)}>
-            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-              <Insights />
-            </ListItemIcon>
-            <ListItemText primary="Rendimiento académico" />
-            {openRendimiento ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={openRendimiento} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            {allowMenu(role, 'rendimiento-cursos') && (
-              <ListItemButton
-                sx={{ pl: 6, ...getButtonStyle(location.pathname.startsWith('/rendimiento/cursos')) }}
-                selected={location.pathname.startsWith('/rendimiento/cursos')}
-                onClick={() => handleItemClick({ id: 'rendimiento-cursos', to: '/rendimiento/cursos' })}
-              >
-                <ListItemText primary="Por curso" sx={getTextStyle(location.pathname.startsWith('/rendimiento/cursos'))} />
-              </ListItemButton>
-            )}
-            {allowMenu(role, 'rendimiento-alumnos') && (
-              <ListItemButton
-                sx={{ pl: 6, ...getButtonStyle(location.pathname.startsWith('/rendimiento/alumnos')) }}
-                selected={location.pathname.startsWith('/rendimiento/alumnos')}
-                onClick={() => handleItemClick({ id: 'rendimiento-alumnos', to: '/rendimiento/alumnos' })}
-              >
-                <ListItemText primary="Por alumno" sx={getTextStyle(location.pathname.startsWith('/rendimiento/alumnos'))} />
-              </ListItemButton>
-            )}
-            {allowMenu(role, 'rendimiento-alertas') && (
-              <ListItemButton
-                sx={{ pl: 6, ...getButtonStyle(location.pathname.startsWith('/rendimiento/alertas')) }}
-                selected={location.pathname.startsWith('/rendimiento/alertas')}
-                onClick={() => handleItemClick({ id: 'rendimiento-alertas', to: '/rendimiento/alertas' })}
-              >
-                <ListItemText primary="Alertas" sx={getTextStyle(location.pathname.startsWith('/rendimiento/alertas'))} />
-              </ListItemButton>
-            )}
-            {allowMenu(role, 'rendimiento-hijos') && (
-              <ListItemButton
-                sx={{ pl: 6, ...getButtonStyle(location.pathname.startsWith('/rendimiento/hijos')) }}
-                selected={location.pathname.startsWith('/rendimiento/hijos')}
-                onClick={() => handleItemClick({ id: 'rendimiento-hijos', to: '/rendimiento/hijos' })}
-              >
-                <ListItemText primary="Mis hijos" sx={getTextStyle(location.pathname.startsWith('/rendimiento/hijos'))} />
-              </ListItemButton>
-            )}
-          </List>
-        </Collapse>
-        </>
-        )}        {/* Modulo de calificaciones */}
-        {(allowMenu(role, 'calificaciones') || allowMenu(role, 'calificaciones-hijos')) && (
-        <>
-        <ListItem disablePadding>
-          <ListItemButton onClick={() => setOpenCalificaciones(!openCalificaciones)}>
-            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-              <Grade />
-            </ListItemIcon>
-            <ListItemText primary="Calificaciones" />
-            {openCalificaciones ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={openCalificaciones} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            {/* Submenú: Listado */}
-            {allowMenu(role, 'calificaciones') && (
-              <ListItemButton
-                sx={{ pl: 6, ...getButtonStyle(isActive('/calificaciones')) }}
-                selected={isActive('/calificaciones')}
-                onClick={() => handleItemClick({ id: 'calificaciones', to: '/calificaciones' })}
-              >
-                <ListItemText primary="Listado" sx={getTextStyle(isActive('/calificaciones'))} />
-              </ListItemButton>
-            )}
+        {/* Recursos estándar */}
+        {resourceItems.filter(item => allowResource(role, item.id, 'list')).map((item) => (
+          <ListItem disablePadding key={item.id}>
+            <ListItemButton
+              selected={isActive(item.to)}
+              onClick={() => handleItemClick(item)}
+              sx={getButtonStyle(isActive(item.to))}
+            >
+              <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText primary={item.text} sx={getTextStyle(isActive(item.to))} />
+            </ListItemButton>
+          </ListItem>
+        ))}
 
-            {/* Submenú: Hijos */}
-            {allowMenu(role, 'calificaciones-hijos') && (
-              <ListItemButton
-                sx={{ pl: 6, ...getButtonStyle(isActive('/calificaciones/hijos')) }}
-                selected={isActive('/calificaciones/hijos')}
-                onClick={() => handleItemClick({ id: 'calificaciones-hijos', to: '/calificaciones/hijos' })}
-              >
-                <ListItemText primary="Calificaciones de mis hijos" sx={getTextStyle(isActive('/calificaciones/hijos'))} />
+        {/* Bloque Gestión de usuarios y roles */}
+        {allowMenu(role, 'administracion') && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => setOpenAdministracion(!openAdministracion)}>
+                <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                  <AdminPanelSettings />
+                </ListItemIcon>
+                <ListItemText primary="Gestión de usuarios y roles" />
+                {openAdministracion ? <ExpandLess /> : <ExpandMore />}
               </ListItemButton>
-            )}
-          </List>
-        </Collapse>
-        </>
-        )}
-
-        {/* Informes pedagógicos */}
-        {allowMenu(role, 'informes-pedagogicos') && (
-        <ListItem disablePadding>
-          <ListItemButton
-            selected={isActive('/informes-pedagogicos')}
-            onClick={() => handleItemClick({ id: 'informes-pedagogicos', to: '/informes-pedagogicos' })}
-            sx={getButtonStyle(isActive('/informes-pedagogicos'))}
-          >
-            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-              <PsychologyAlt />
-            </ListItemIcon>
-            <ListItemText primary="Informes pedagógicos" sx={getTextStyle(isActive('/informes-pedagogicos'))} />
-          </ListItemButton>
-        </ListItem>
+            </ListItem>
+            <Collapse in={openAdministracion} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                {allowMenu(role, 'usuarios') && (
+                  <ListItemButton
+                    sx={{ pl: 6, ...getButtonStyle(isActive('/usuarios')) }}
+                    selected={isActive('/usuarios') || location.pathname.startsWith('/administracion/usuarios')}
+                    onClick={() => handleItemClick({ id: 'usuarios', to: '/administracion/usuarios' })}
+                  >
+                    <ListItemText primary="Usuarios" sx={getTextStyle(isActive('/usuarios'))} />
+                  </ListItemButton>
+                )}
+                {allowMenu(role, 'roles') && (
+                  <ListItemButton
+                    sx={{ pl: 6, ...getButtonStyle(isActive('/administracion/roles')) }}
+                    selected={isActive('/administracion/roles')}
+                    onClick={() => handleItemClick({ id: 'roles', to: '/administracion/roles' })}
+                  >
+                    <ListItemText primary="Roles" sx={getTextStyle(isActive('/administracion/roles'))} />
+                  </ListItemButton>
+                )}
+              </List>
+            </Collapse>
+          </>
         )}
 
         {/* Otros custom */}
@@ -516,41 +514,8 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
           </ListItemButton>
         </ListItem>
         )}
-        {allowMenu(role, 'mensajes') && (
-        <ListItem disablePadding>
-          <ListItemButton
-            selected={isActive('/mensajes')}
-            onClick={() => handleItemClick({ id: 'mensajes', to: '/mensajes' })}
-            sx={getButtonStyle(isActive('/mensajes'))}
-          >
-            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-              <Mail />
-            </ListItemIcon>
-            <ListItemText primary="Mensajes" sx={getTextStyle(isActive('/mensajes'))} />
-          </ListItemButton>
-        </ListItem>
-        )}
-        {allowMenu(role, 'informes') && (
-        <ListItem disablePadding>
-          <ListItemButton
-            selected={isActive('/informes')}
-            onClick={() => handleItemClick({ id: 'informes', to: '/informes' })}
-            sx={getButtonStyle(isActive('/informes'))}
-          >
-            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-              <Assessment />
-            </ListItemIcon>
-            <ListItemText primary="Informes" sx={getTextStyle(isActive('/informes'))} />
-          </ListItemButton>
-        </ListItem>
-        )}
+        {/* Mensajes e informes removidos al no utilizarse */}
       </List>
     </Box>
   );
 };
-
-
-
-
-
-

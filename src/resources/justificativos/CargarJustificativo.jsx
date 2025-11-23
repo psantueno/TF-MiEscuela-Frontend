@@ -341,7 +341,7 @@ const InasistenciaCard = ({ inasistencia, onAddClick }) => {
         "Aceptado": "green",
         "Rechazado": "red",
         "Pendiente": "#349FDA",
-        "Bloqueado": "gold"
+        "Bloqueado": "#d32f2f"
     };
     const [showImageModal, setShowImageModal] = useState(false);
 
