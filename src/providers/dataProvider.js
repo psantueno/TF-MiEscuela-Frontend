@@ -769,4 +769,9 @@ export const dataProvider = {
       body,
     }).then(({ json }) => ({ data: json }));
   },
+  actualizarNotificacion: (idNotificacion, data) =>
+    httpClient(`${API_URL}/notificaciones/${idNotificacion}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }).then(({ json }) => ({ data: json })),
 }

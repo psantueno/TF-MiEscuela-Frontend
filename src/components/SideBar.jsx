@@ -39,9 +39,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
   const [openCalificaciones, setOpenCalificaciones] = useState(false);
   const [openGestionAcademica, setOpenGestionAcademica] = useState(false);
 
-  // Abrir/cerrar submenú justificativos
-  const [openJustificativos, setOpenJustificativos] = useState(false);
-  // Abrir/cerrar submenú rendimientos
+ // Abrir/cerrar submenú rendimientos
   const [openRendimiento, setOpenRendimiento] = useState(false);
 
   // Abrir asistencias/calificaciones automáticamente si estoy en esa ruta
