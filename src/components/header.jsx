@@ -15,6 +15,7 @@ export const Header = ({ moduloActivo }) => {
     'informes': 'Informes y Reportes',
     'gestion-academica': 'Gestión académica',
     'ciclos-lectivos': 'Gestión académica',
+    'tutores': 'Gestión académica',
     'informes-pedagogicos': 'Informes pedagógicos',
   };
 

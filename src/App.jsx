@@ -14,6 +14,7 @@ import { DesignarCargos } from './resources/designacionCargos/DesignarCargos';
 // Contexto de usuario
 import UserProvider from './contexts/UserContext/UserProvider';
 import useUser from './contexts/UserContext/useUser';
+import NotificationProvider from './contexts/NotificationsContext/NotificationProvider';
 
 // Login
 import { Login } from './pages/Login';
@@ -57,6 +58,7 @@ import { AsistenciasHistorico } from './resources/asistencias/AsistenciasHistori
 import { RolesAdmin } from './resources/roles/RolesAdmin';
 import { AsignarCursos } from './resources/alumnos/AsignarCursos';
 import { CambiarCurso } from './resources/alumnos/CambiarCurso';
+import { Notificaciones } from './resources/notificaciones/Notificaciones';
 import { NotFound } from './pages/NotFound';
 import { NoAccess } from './pages/NoAccess';
 import { getRole, allowResource, allowRoute } from './permissions/roles';
@@ -85,6 +87,7 @@ function App() {
   return (
     <BrowserRouter>
       <UserProvider>
+        <NotificationProvider>
         <RoleRedirector />
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -285,7 +288,7 @@ function App() {
                           <Route path="/justificativos/cargar" element={<CargarJustificativo />} />
                         )}
                         {allowRoute(role, '/notificaciones') && (
-                          <Route path="/notificaciones" element={<div>Notificaciones</div>} />
+                          <Route path="/notificaciones" element={<Notificaciones />} />
                         )}
                         {allowRoute(role, '/informes') && (
                           <Route path="/informes" element={<div>Informes</div>} />
@@ -299,6 +302,7 @@ function App() {
             }
           />
         </Routes>
+      </NotificationProvider>
       </UserProvider>
     </BrowserRouter>
   );

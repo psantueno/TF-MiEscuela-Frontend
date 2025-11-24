@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Avatar,
@@ -23,12 +23,17 @@ import {
   CalendarMonth
 } from '@mui/icons-material';
 import useUser from "../contexts/UserContext/useUser";
+import useNotifications from '../contexts/NotificationsContext/useNotifications';
 import { logout } from '../services/auth';
 import { useNavigate } from 'react-router-dom';
+import { useDataProvider } from 'react-admin';
 
 export const UserMenu = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+
+  const [notificacionesAnchor, setNotificacionesAnchor] = useState(null);
+  const notificacionesOpen = Boolean(notificacionesAnchor);
 
   const { user, setUser } = useUser();
 
@@ -143,6 +148,36 @@ export const UserMenu = () => {
     handleClose();
   };
 
+  // Obtener notificaciones
+  const dataProvider = useDataProvider();
+  const { notifications, setNotifications, setLastClickedNotification } = useNotifications();
+
+  useEffect(() => {
+    dataProvider.getList('notificaciones', { pagination: { page: 1, perPage: 5 }, sort: { field: 'fecha', order: 'DESC' } })
+      .then(({ data }) => {
+        setNotifications(data);
+      })
+      .catch(error => {
+        console.error("Error fetching notifications:", error);
+      });
+  }, [dataProvider]);
+
+  const handleNotificacionClick = async (id) => {
+    setNotificacionesAnchor(null)
+
+    setLastClickedNotification(id);
+
+    /*dataProvider.actualizarNotificacion(id, { leido: true })
+      .then(({ data }) => {
+        console.log("Notificación marcada como leída:", data);
+      })
+      .catch(error => {
+        console.error("Error al marcar notificación como leída:", error);
+      });*/
+
+    navigate('/notificaciones')
+  }
+
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -161,11 +196,98 @@ export const UserMenu = () => {
       </Box>
 
       {/* Notificaciones */}
-      <IconButton size="small" sx={{ color: '#666' }}>
-        <Badge badgeContent={user?.notificaciones || 0} color="error">
+      <IconButton size="small" sx={{ color: '#666' }} onClick={(e) => setNotificacionesAnchor(e.currentTarget)}>
+        <Badge badgeContent={notifications.filter((notif) => !notif.leido).length || 0} color="error">
           <Notifications />
         </Badge>
       </IconButton>
+      {/* Menú de notificaciones */}
+      <Menu
+        anchorEl={notificacionesAnchor}
+        open={notificacionesOpen}
+        onClose={() => setNotificacionesAnchor(null)}
+        PaperProps={{
+          elevation: 3,
+          sx: {
+            overflow: 'visible',
+            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.1))',
+            mt: 1.5,
+            minWidth: 250,
+            '&:before': {
+              content: '""',
+              display: 'block',
+              position: 'absolute',
+              top: 0,
+              right: 14,
+              width: 10,
+              height: 10,
+              bgcolor: 'background.paper',
+              transform: 'translateY(-50%) rotate(45deg)',
+              zIndex: 0,
+            },
+          },
+        }}
+      >
+        <Box sx={{ px: 2, py: 1.5, maxWidth: 400, maxHeight: 400, overflowY: 'auto' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+            Notificaciones
+          </Typography>
+          {notifications.length === 0 ? (
+            <Typography variant="body2" sx={{ mt: 1, textAlign: 'center', color: '#666' }}>
+              No hay notificaciones
+            </Typography>
+          ) : (
+            notifications.map((notificacion) => (
+              <Box 
+                key={notificacion.id_notificacion} 
+                sx={{ 
+                  my: 1, 
+                  backgroundColor: notificacion.leido ? '#f9f9f9' : '#e3f2fd', 
+                  p: 1, borderRadius: 1, 
+                  cursor: 'pointer' 
+                }}
+                onClick={() => handleNotificacionClick(notificacion.id_notificacion)}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  { !notificacion.leido && (
+                    <Box
+                      component="span"
+                      sx={{
+                        display: 'inline-block',
+                        width: 8,
+                        height: 8,
+                        bgcolor: '#1976d2',
+                        borderRadius: '50%',
+                      }}
+                    />
+                  )}
+                  <Typography 
+                    variant="body2" 
+                    sx={{ fontWeight: 600 }}
+                  >
+                    {notificacion.titulo}
+                  </Typography>
+                </Box>
+                <Typography 
+                  variant="body2" 
+                  sx={{
+                    mt: 0.5,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: '100%' // opcional si querés asegurarte del corte
+                  }}
+                >
+                  {notificacion.detalle}
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#666' }}>
+                  {notificacion.fecha}
+                </Typography>
+              </Box>
+            ))
+          )}
+        </Box>
+      </Menu>
 
       {/* Área de usuario clickeable */}
       <Box

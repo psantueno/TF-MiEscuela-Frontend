@@ -222,10 +222,18 @@ export const Calificaciones = () => {
         const options = {};
         options["alumnos"] = getAlumnosOptions(filteredCalificaciones);
         options["tiposCalificaciones"] = tiposCalificaciones.map(t => ({ id: t.id_tipo_calificacion, label: t.descripcion }));
-        options["current_alumnos"] = alumnos.map(a => ({
-            id: a.id_alumno,
-            label: `${a.usuario.apellido} ${a.usuario.nombre}`,
-        }));
+
+        if(filterValues.alumno){
+            options["current_alumnos"] = [{
+                id: filterValues.alumno.id_alumno,
+                label: `${filterValues.alumno.usuario.apellido} ${filterValues.alumno.usuario.nombre}`,
+            }];
+        }else{
+            options["current_alumnos"] = alumnos.map(a => ({
+                id: a.id_alumno,
+                label: `${a.usuario.apellido} ${a.usuario.nombre}`,
+            }));
+        }
         return options;
     }
 
@@ -287,8 +295,6 @@ export const Calificaciones = () => {
 
         const mappedAddedRows = [];
         addedRows.forEach((c) => {
-            console.log("fecha", c.fecha);
-            console.log("type of fecha", typeof c.fecha);
             mappedAddedRows.push({
                 id_alumno: c.id_alumno,
                 id_tipo_calificacion: c.id_tipo_calificacion,
@@ -521,7 +527,7 @@ export const Calificaciones = () => {
                                     <CustomTable
                                             alumnos={
                                                     getAlumnos(calificaciones
-                                                            .filter(c => c.curso.cicloLectivo === new Date().getFullYear().toString() && c.materia.id_materia === filterValues.materia.id_materia))
+                                                        .filter(c => c.curso.cicloLectivo === new Date().getFullYear().toString() && c.materia.id_materia === filterValues.materia.id_materia))
                                                     }
                                             headers={
                                                 getHeaders(calificaciones
