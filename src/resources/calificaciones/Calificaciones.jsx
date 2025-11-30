@@ -76,7 +76,7 @@ export const Calificaciones = () => {
                     setCursos(
                         data.map((c) => ({
                             id_curso: c.id_curso,
-                            name: `${c.anio_escolar}Â° ${c.division}`,
+                            name: `${c.anio_escolar}° ${c.division}`,
                         })));
             })
             .catch(() => setCursos([]))
@@ -255,7 +255,9 @@ export const Calificaciones = () => {
         const filteredAlumnos = []
         filteredCalificaciones.forEach((c) => {
             if(!filteredAlumnos.some(a => a.alumno === `${c.alumno.apellido} ${c.alumno.nombre}`)){
-                filteredAlumnos.push({ alumno: `${c.alumno.apellido} ${c.alumno.nombre}`, editable: alumnos.some(a => `${a.usuario.apellido} ${a.usuario.nombre}` === `${c.alumno.apellido} ${c.alumno.nombre}`)});
+                // Desactivacion temporal de la restriccion de edición por alumno
+                //filteredAlumnos.push({ alumno: `${c.alumno.apellido} ${c.alumno.nombre}`, editable: alumnos.some(a => `${a.usuario.apellido} ${a.usuario.nombre}` === `${c.alumno.apellido} ${c.alumno.nombre}`)});
+                filteredAlumnos.push({ alumno: `${c.alumno.apellido} ${c.alumno.nombre}`, editable: true });
             }
         });
         return filteredAlumnos;
