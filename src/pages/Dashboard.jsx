@@ -333,47 +333,101 @@ const InfoTile = ({ title, value, helper, color = '#0A2E75', fullHeight = true, 
   </Paper>
 );
 
-const SmallList = ({ items }) => (
-  <Grid container spacing={2} sx={{ mt: 1 }}>
-    {items?.length ? (
-      items.map((item) => (
-        <Grid item xs={12} sm={6} key={item.id || item.title || item.alumno || Math.random()}>
-          <Paper sx={{ p: 1.5, border: '1px solid #E0E0E0' }}>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {item.title || item.alumno || item.hijo}
+const SmallList = ({ items, singleColumn = false }) => {
+  const emptyCard = (
+    <Paper sx={{ p: 1.5, border: '1px solid #E0E0E0'}}>
+      <Typography variant="body2" color="textSecondary">
+        Sin datos para mostrar.
+      </Typography>
+    </Paper>
+  );
+
+  const cards = items?.length
+    ? items.map((item) => (
+        <Paper
+          key={item.id || item.title || item.alumno || Math.random()}
+          sx={{ p: 1.5, border: '1px solid #E0E0E0' }}
+        >
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {item.title || item.alumno || item.hijo}
+          </Typography>
+          {(item.curso_anio || item.curso_division) && (
+            <Typography variant="caption" color="textSecondary">
+              Curso: {item.curso_anio ? `${item.curso_anio}�` : ''}{item.curso_division ? ` ${item.curso_division}` : ''}
             </Typography>
-            {(item.curso_anio || item.curso_division) && (
-              <Typography variant="caption" color="textSecondary">
-                Curso: {item.curso_anio ? `${item.curso_anio}°` : ''}{item.curso_division ? ` ${item.curso_division}` : ''}
-              </Typography>
-            )}
-            {item.materia && (
-              <Typography variant="caption" color="textSecondary">
-                {item.materia}
-              </Typography>
-            )}
-            {item.fecha && (
-              <Typography variant="caption" sx={{ color: '#455A64', display: 'block' }}>
-                {item.fecha}
-              </Typography>
-            )}
-            {item.grade && (
-              <Typography variant="caption" color="textSecondary">
-                Nota: {item.grade}
-              </Typography>
-            )}
-          </Paper>
-        </Grid>
+          )}
+          {item.materia && (
+            <Typography variant="caption" color="textSecondary">
+              {item.materia}
+            </Typography>
+          )}
+          {item.fecha && (
+            <Typography variant="caption" sx={{ color: '#455A64', display: 'block' }}>
+              {item.fecha}
+            </Typography>
+          )}
+          {item.grade && (
+            <Typography variant="caption" color="textSecondary">
+              Nota: {item.grade}
+            </Typography>
+          )}
+        </Paper>
       ))
-    ) : (
-      <Grid item xs={12}>
-        <Typography variant="body2" color="textSecondary">
-          Sin datos para mostrar.
-        </Typography>
-      </Grid>
-    )}
-  </Grid>
-);
+    : emptyCard;
+
+  if (singleColumn) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+        {cards}
+      </Box>
+    );
+  }
+
+  return (
+    <Grid container spacing={2} sx={{ mt: 1 }}>
+      {items?.length ? (
+        items.map((item) => (
+          <Grid
+            item
+            xs={12}
+            sm={6}
+            key={item.id || item.title || item.alumno || Math.random()}
+          >
+            <Paper sx={{ p: 1.5, border: '1px solid #E0E0E0' }}>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {item.title || item.alumno || item.hijo}
+              </Typography>
+              {(item.curso_anio || item.curso_division) && (
+                <Typography variant="caption" color="textSecondary">
+                  Curso: {item.curso_anio ? `${item.curso_anio}�` : ''}{item.curso_division ? ` ${item.curso_division}` : ''}
+                </Typography>
+              )}
+              {item.materia && (
+                <Typography variant="caption" color="textSecondary">
+                  {item.materia}
+                </Typography>
+              )}
+              {item.fecha && (
+                <Typography variant="caption" sx={{ color: '#455A64', display: 'block' }}>
+                  {item.fecha}
+                </Typography>
+              )}
+              {item.grade && (
+                <Typography variant="caption" color="textSecondary">
+                  Nota: {item.grade}
+                </Typography>
+              )}
+            </Paper>
+          </Grid>
+        ))
+      ) : (
+        <Grid item xs={12}>
+          {emptyCard}
+        </Grid>
+      )}
+    </Grid>
+  );
+};
 
 const RoleInfoPanel = ({ role, data, loading, error }) => {
   if (!role || role === 'alumno') return null;
@@ -485,7 +539,7 @@ const RoleInfoPanel = ({ role, data, loading, error }) => {
     return (
       <Grid container spacing={2}>
         <Grid item xs={12} md={6}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, margin: 'none'  }}>
             Justificativos pendientes
           </Typography>
           <SmallList items={justificativos} />
@@ -584,41 +638,56 @@ const RoleInfoPanel = ({ role, data, loading, error }) => {
   );
 
   const renderTutor = () => (
-    <Grid container spacing={2}>
-      <Grid item xs={12} md={4} sx={{ maxWidth: 205 }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-          Asistencia promedio
-        </Typography>
-        <InfoTile
-          title="Últimos 30 días"
-          value={`${dataset.asistencia30d ?? '--'}%`}
-          color="#0288D1"
-          fullHeight={false}
-          sx={{ maxWidth: 205 }}
-        />
+    <Grid container spacing={2} alignItems="stretch">
+      <Grid item xs={12} md={4} sx={{ display: 'flex' }}>
+        <Box sx={{ width: '100%', maxWidth: 240 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+            Asistencia promedio
+          </Typography>
+          <InfoTile
+            title="Últimos 30 días"
+            value={`${dataset.asistencia30d ?? '--'}%`}
+            color="#0288D1"
+            fullHeight={false}
+            sx={{ maxWidth: 240 }}
+          />
+        </Box>
       </Grid>
-      <Grid item xs={12} md={4}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-          Calificaciones recientes
-        </Typography>
-        <SmallList
-          items={(Array.isArray(dataset.calificacionesRecientes) ? dataset.calificacionesRecientes.slice(0, 3) : []).map(
-            (item, idx) => ({
+      <Grid item xs={12} md={4} sx={{ display: 'flex' , margin: '0'}}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' , margin: '0'}}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600}}>
+            Calificaciones recientes
+          </Typography>
+          <SmallList
+            singleColumn
+            sx={{ margin: 0}}
+            items={(
+              Array.isArray(dataset.calificacionesRecientes)
+                ? dataset.calificacionesRecientes.slice(0, 3)
+                : []
+            ).map((item, idx) => ({
               ...item,
               id: item.id || idx,
               title: `${item.hijo} - ${item.materia}`,
               grade: item.nota ?? item.grade,
-            })
-          )}
-        />
+            }))}
+          />
+        </Box>
       </Grid>
-      <Grid item xs={12} md={4}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-          Justificativos cargados recientes
-        </Typography>
-        <SmallList
-          items={Array.isArray(dataset.justificativosRecientes) ? dataset.justificativosRecientes.slice(0, 3) : []}
-        />
+      <Grid item xs={12} md={4} sx={{ display: 'flex', margin: '0' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', margin: '0' }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, margin: '0' }}>
+            Justificativos cargados recientes
+          </Typography>
+          <SmallList
+            singleColumn
+            items={
+              Array.isArray(dataset.justificativosRecientes)
+                ? dataset.justificativosRecientes.slice(0, 3)
+                : []
+            }
+          />
+        </Box>
       </Grid>
     </Grid>
   );
@@ -852,3 +921,5 @@ export const Dashboard = () => {
     </Box>
   );
 };
+
+

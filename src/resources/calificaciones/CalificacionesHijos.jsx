@@ -107,7 +107,7 @@ export const CalificacionesHijos = () => {
             {!loading && 
             <>
             <Typography variant="h4" sx={{ mb: 3, mt: 2 }}>
-                Calificaciones de mis hijos
+                Calificaciones de los tutelados
             </Typography>
             <Box sx={{ display: "flex", gap: 1, flexDirection: "column" }} >
                 {hijos.map(hijo => (

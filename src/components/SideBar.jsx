@@ -1,4 +1,4 @@
-﻿import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   List,
@@ -32,17 +32,17 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
   const resourceDefs = useResourceDefinitions();
   const { permissions: role } = usePermissions();
 
-  // Abrir/cerrar submenú asistencias
+  // Abrir/cerrar submen� asistencias
   const [openAsistencias, setOpenAsistencias] = useState(false);
 
-  // Abrir/cerrar submenú calificaciones
+  // Abrir/cerrar submen� calificaciones
   const [openCalificaciones, setOpenCalificaciones] = useState(false);
   const [openGestionAcademica, setOpenGestionAcademica] = useState(false);
 
- // Abrir/cerrar submenú rendimientos
+ // Abrir/cerrar submen� rendimientos
   const [openRendimiento, setOpenRendimiento] = useState(false);
 
-  // Abrir asistencias/calificaciones automáticamente si estoy en esa ruta
+  // Abrir asistencias/calificaciones autom�ticamente si estoy en esa ruta
   useEffect(() => {
     if (location.pathname.startsWith('/asistencias')) {
       setOpenAsistencias(true);
@@ -58,7 +58,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
     }
   }, [location.pathname]);
 
-  // Administración: abrir automáticamente si estoy en usuarios/roles o /administracion
+  // Administraci�n: abrir autom�ticamente si estoy en usuarios/roles o /administracion
   const [openAdministracion, setOpenAdministracion] = useState(false);
   useEffect(() => {
     if (
@@ -210,7 +210,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
                 <ListItemText primary="Asistencias recientes" sx={getTextStyle(isActive('/asistencias/recientes'))} />
               </ListItemButton>
             )}
-            {/* Histórico de asistencias */}
+            {/* Hist�rico de asistencias */}
             {allowMenu(role, 'asistencias-historico') && (
               <ListItemButton
                 sx={{ pl: 6, ...getButtonStyle(isActive('/asistencias/historico')) }}
@@ -230,7 +230,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
                 <ListItemText primary="Eliminar asistencia" sx={getTextStyle(isActive('/asistencias/eliminar'))} />
               </ListItemButton>
             )}
-            {/* Submenú: Listado para validación */}
+            {/* Submen�: Listado para validaci�n */}
             {allowMenu(role, 'justificativos-validar') && (
               <ListItemButton
                 sx={{ pl: 6, ...getButtonStyle(isActive('/justificativos/validar')) }}
@@ -241,7 +241,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
               </ListItemButton>
             )}
 
-            {/* Submenú: Hijos */}
+            {/* Submen�: Hijos */}
             {allowMenu(role, 'justificativos-cargar') && (
               <ListItemButton
                 sx={{ pl: 6, ...getButtonStyle(isActive('/justificativos/cargar')) }}
@@ -268,25 +268,25 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
         </ListItem>
         <Collapse in={openCalificaciones} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            {/* Submenú: Listado */}
+            {/* Submen�: Listado */}
             {allowMenu(role, 'calificaciones') && (
               <ListItemButton
                 sx={{ pl: 6, ...getButtonStyle(isActive('/calificaciones')) }}
                 selected={isActive('/calificaciones')}
                 onClick={() => handleItemClick({ id: 'calificaciones', to: '/calificaciones' })}
               >
-                <ListItemText primary="Listado" sx={getTextStyle(isActive('/calificaciones'))} />
+                <ListItemText primary="Cargar y modificar notas" sx={getTextStyle(isActive('/calificaciones'))} />
               </ListItemButton>
             )}
 
-            {/* Submenú: Hijos */}
+            {/* Submen�: Hijos */}
             {allowMenu(role, 'calificaciones-hijos') && (
               <ListItemButton
                 sx={{ pl: 6, ...getButtonStyle(isActive('/calificaciones/hijos')) }}
                 selected={isActive('/calificaciones/hijos')}
                 onClick={() => handleItemClick({ id: 'calificaciones-hijos', to: '/calificaciones/hijos' })}
               >
-                <ListItemText primary="Calificaciones de mis hijos" sx={getTextStyle(isActive('/calificaciones/hijos'))} />
+                <ListItemText primary="Ver calificaciones" sx={getTextStyle(isActive('/calificaciones/hijos'))} />
               </ListItemButton>
             )}
           </List>
@@ -294,7 +294,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
         </>
         )}
 
-        {/* Informes pedagógicos */}
+        {/* Informes pedag�gicos */}
         {allowMenu(role, 'informes-pedagogicos') && (
         <ListItem disablePadding>
           <ListItemButton
@@ -305,7 +305,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
             <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
               <PsychologyAlt />
             </ListItemIcon>
-            <ListItemText primary="Informes pedagógicos" sx={getTextStyle(isActive('/informes-pedagogicos'))} />
+            <ListItemText primary="Informes pedag�gicos" sx={getTextStyle(isActive('/informes-pedagogicos'))} />
           </ListItemButton>
         </ListItem>
         )}
@@ -357,7 +357,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
                 selected={location.pathname.startsWith('/rendimiento/hijos')}
                 onClick={() => handleItemClick({ id: 'rendimiento-hijos', to: '/rendimiento/hijos' })}
               >
-                <ListItemText primary="Mis hijos" sx={getTextStyle(location.pathname.startsWith('/rendimiento/hijos'))} />
+                <ListItemText primary="Ver rendimiento" sx={getTextStyle(location.pathname.startsWith('/rendimiento/hijos'))} />
               </ListItemButton>
             )}
           </List>
@@ -365,7 +365,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
         </>
         )}
 
-        {/* Módulo de Gestión académica */}
+        {/* M�dulo de Gesti�n acad�mica */}
         {allowMenu(role, 'gestion-academica') && (
         <>
         <ListItem disablePadding>
@@ -373,7 +373,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
             <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
               <CalendarMonth />
             </ListItemIcon>
-            <ListItemText primary="Gestión académica" />
+            <ListItemText primary="Gesti�n acad�mica" />
             {openGestionAcademica ? <ExpandLess /> : <ExpandMore />}
           </ListItemButton>
         </ListItem>
@@ -412,7 +412,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
                 selected={isActive('/gestion-academica/designar-cargos')}
                 onClick={() => handleItemClick({ id: 'designar-cargos', to: '/gestion-academica/designar-cargos' })}
               >
-                <ListItemText primary="Designación de cargos" sx={getTextStyle(isActive('/gestion-academica/designar-cargos'))} />
+                <ListItemText primary="Designaci�n de cargos" sx={getTextStyle(isActive('/gestion-academica/designar-cargos'))} />
               </ListItemButton>
             )}
             {allowMenu(role, 'asignar-cursos') && (
@@ -424,7 +424,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
                 <ListItemText primary="Asignar cursos" sx={getTextStyle(isActive('/gestion-academica/asignar-cursos'))} />
               </ListItemButton>
             )}
-            {/* Ítem 'docentes-sin-asignacion' eliminado */}
+            {/* �tem 'docentes-sin-asignacion' eliminado */}
             {allowMenu(role, 'cambiar-curso') && (
               <ListItemButton
                 sx={{ pl: 6, ...getButtonStyle(isActive('/gestion-academica/cambiar-curso')) }}
@@ -448,7 +448,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
         </>
         )}
 
-        {/* Recursos estándar */}
+        {/* Recursos est�ndar */}
         {resourceItems.filter(item => allowResource(role, item.id, 'list')).map((item) => (
           <ListItem disablePadding key={item.id}>
             <ListItemButton
@@ -464,7 +464,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
           </ListItem>
         ))}
 
-        {/* Bloque Gestión de usuarios y roles */}
+        {/* Bloque Gesti�n de usuarios y roles */}
         {allowMenu(role, 'administracion') && (
           <>
             <ListItem disablePadding>
@@ -472,7 +472,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
                 <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
                   <AdminPanelSettings />
                 </ListItemIcon>
-                <ListItemText primary="Gestión de usuarios y roles" />
+                <ListItemText primary="Gesti�n de usuarios y roles" />
                 {openAdministracion ? <ExpandLess /> : <ExpandMore />}
               </ListItemButton>
             </ListItem>
@@ -521,3 +521,5 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
     </Box>
   );
 };
+
+

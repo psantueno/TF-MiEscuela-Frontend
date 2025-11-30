@@ -233,6 +233,7 @@ export const CiclosLectivosEdit = () => {
   return (
     <Edit
       title="Editar ciclo lectivo"
+      mutationMode="pessimistic"
       transform={(data) => ({ ...data, anio: Number(data.anio) })}
       actions={<CiclosEditActions />}
       mutationOptions={{

@@ -53,7 +53,7 @@ export const Notificaciones = () => {
                 >
                     <NotificationsOff sx={{ fontSize: 60, mb: 1, color: "#9E9E9E" }} />
                     <Typography variant="h6" fontWeight="500">
-                        No tiene notificaciones
+                        No posee notificaciones.
                     </Typography>
                 </Box>
             )}

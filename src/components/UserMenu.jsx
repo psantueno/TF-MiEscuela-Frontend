@@ -43,6 +43,7 @@ export const UserMenu = () => {
   const notificacionesOpen = Boolean(notificacionesAnchor);
 
   const [profileOpen, setProfileOpen] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
 
   const { user, setUser } = useUser();
 
@@ -140,18 +141,26 @@ export const UserMenu = () => {
     setProfileOpen(false);
   };
 
-  const handleLogout = async () => {
-    if (window.confirm('¿Estás seguro que deseas cerrar sesión?')) {
-      try {
-        await logout();
-        setUser(null);
-        sessionStorage.clear();
-        navigate('/login');
-      } catch (error) {
-        console.error("Error al cerrar sesión:", error);
-      }
-    }
+  const handleLogout = () => {
+    setLogoutOpen(true);
     handleClose();
+  };
+
+  const handleLogoutCancel = () => {
+    setLogoutOpen(false);
+  };
+
+  const handleLogoutConfirm = async () => {
+    try {
+      await logout();
+      setUser(null);
+      sessionStorage.clear();
+      navigate('/login');
+    } catch (error) {
+      console.error("Error al cerrar sesion:", error);
+    } finally {
+      setLogoutOpen(false);
+    }
   };
 
   // Obtener notificaciones
@@ -499,6 +508,27 @@ export const UserMenu = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog
+        open={logoutOpen}
+        onClose={handleLogoutCancel}
+        BackdropProps={{ sx: { backgroundColor: 'rgba(0, 0, 0, 0.35)' } }}
+      >
+        <DialogContent dividers>
+          <Typography variant="body1">
+            ¿Está seguro que desea cerrar la sesion?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleLogoutCancel}>
+            Cancelar
+          </Button>
+          <Button onClick={handleLogoutConfirm} color="error" variant="contained">
+            Confirmar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box >
   );
 };
+
