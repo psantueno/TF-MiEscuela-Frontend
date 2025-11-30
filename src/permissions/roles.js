@@ -78,11 +78,11 @@ export const ROLE_PERMISSIONS = {
       'tutores',
       'informes-pedagogicos',
       'justificativos-validar',
-      'justificativos-cargar',
       'rendimiento',
       'rendimiento-cursos',
       'rendimiento-alumnos',
       'rendimiento-alertas',
+      'gestion-academica'
     ]),
   },
 

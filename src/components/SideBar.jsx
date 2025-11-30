@@ -366,6 +366,8 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
         )}
 
         {/* Módulo de Gestión académica */}
+        {allowMenu(role, 'gestion-academica') && (
+        <>
         <ListItem disablePadding>
           <ListItemButton onClick={() => setOpenGestionAcademica(!openGestionAcademica)}>
             <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
@@ -443,6 +445,8 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
             )}
           </List>
         </Collapse>
+        </>
+        )}
 
         {/* Recursos estándar */}
         {resourceItems.filter(item => allowResource(role, item.id, 'list')).map((item) => (

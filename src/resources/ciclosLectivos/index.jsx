@@ -24,7 +24,8 @@ import {
   useRecordContext,
   Toolbar,
   SaveButton,
-  ListButton
+  ListButton,
+  FunctionField,
 } from 'react-admin';
 import { Box, Typography, Grid, Button, Alert } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
@@ -74,6 +75,18 @@ const validateCiclo = (values) => {
   if (isValidDate(values.fecha_inicio) && isValidDate(values.fecha_fin)) {
     if (new Date(values.fecha_fin) < new Date(values.fecha_inicio)) {
       errors.fecha_fin = 'La fecha de fin no puede ser anterior a la de inicio';
+    }
+  }
+
+  if(isValidDate(values.inicio_primer_cuatrimestre) && isValidDate(values.cierre_primer_cuatrimestre)) {
+    if (new Date(values.cierre_primer_cuatrimestre) < new Date(values.inicio_primer_cuatrimestre)) {
+      errors.cierre_primer_cuatrimestre = 'La fecha de fin del primer cuatrimestre no puede ser anterior a la de inicio';
+    }
+  }
+
+  if(isValidDate(values.inicio_segundo_cuatrimestre) && isValidDate(values.cierre_segundo_cuatrimestre)) {
+    if (new Date(values.cierre_segundo_cuatrimestre) < new Date(values.inicio_segundo_cuatrimestre)) {
+      errors.cierre_segundo_cuatrimestre = 'La fecha de fin del segundo cuatrimestre no puede ser anterior a la de inicio';
     }
   }
 
@@ -171,6 +184,20 @@ const FormFields = ({ disabled = false }) => (
       </Grid>
       <Grid size={{ xs: 12, md: 3 }}>
         <SelectInput source="estado" label="Estado" choices={EstadoChoices} disabled={disabled} />
+      </Grid>
+    </Grid>
+    <Grid container sx={{ mt: 2, gap: 1 }}>
+      <Grid size={{ xs: 12, md: 5 }}>
+        <DateInput source="inicio_primer_cuatrimestre" label="Inicio primer cuatrimestre" validate={[required()]} fullWidth disabled={disabled} />
+      </Grid>
+      <Grid size={{ xs: 12, md: 5 }}>
+        <DateInput source="cierre_primer_cuatrimestre" label="Fin primer cuatrimestre" validate={[required()]} fullWidth disabled={disabled} />
+      </Grid>
+      <Grid size={{ xs: 12, md: 5 }}>
+        <DateInput source="inicio_segundo_cuatrimestre" label="Inicio segundo cuatrimestre" validate={[required()]} fullWidth disabled={disabled} />
+      </Grid>
+      <Grid size={{ xs: 12, md: 5 }}>
+        <DateInput source="cierre_segundo_cuatrimestre" label="Fin segundo cuatrimestre" validate={[required()]} fullWidth disabled={disabled} />
       </Grid>
     </Grid>
   </>
@@ -281,6 +308,38 @@ export const CiclosLectivosShow = () => (
       <TextField source="anio" label="Año" />
       <DateField source="fecha_inicio" label="Fecha inicio" />
       <DateField source="fecha_fin" label="Fecha fin" />
+      <FunctionField
+        label="Inicio primer cuatrimestre"
+        render={record =>
+          record.inicio_primer_cuatrimestre
+            ? <DateField record={record} source="inicio_primer_cuatrimestre" />
+            : "No asignado"
+        }
+      />
+      <FunctionField
+        label="Fin primer cuatrimestre"
+        render={record =>
+          record.cierre_primer_cuatrimestre
+            ? <DateField record={record} source="cierre_primer_cuatrimestre" />
+            : "No asignado"
+        }
+      />
+      <FunctionField
+        label="Inicio segundo cuatrimestre"
+        render={record =>
+          record.inicio_segundo_cuatrimestre
+            ? <DateField record={record} source="inicio_segundo_cuatrimestre" />
+            : "No asignado"
+        }
+      />
+      <FunctionField
+        label="Fin segundo cuatrimestre"
+        render={record =>
+          record.cierre_segundo_cuatrimestre
+            ? <DateField record={record} source="cierre_segundo_cuatrimestre" />
+            : "No asignado"
+        }
+      />
       <TextField source="estado" label="Estado" />
     </SimpleShowLayout>
   </Show>
