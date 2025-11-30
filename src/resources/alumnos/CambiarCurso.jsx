@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import {
   List,
   Datagrid,
@@ -19,12 +19,12 @@ import {
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Select, Typography, Chip, Stack } from '@mui/material';
 import { EmptyState } from '../../components/EmptyState';
 
-// Helper para mostrar etiqueta de curso "N° D"
+// Helper para mostrar etiqueta de curso "NÂ° D"
 const formatCursoLabel = (cursoLike) => {
   if (!cursoLike) return '';
   const anio = cursoLike.anio_escolar || cursoLike.anio || '';
   const div = cursoLike.division || '';
-  const label = `${anio ? anio + '°' : ''}${div ? ` ${div}` : ''}`.trim();
+  const label = `${anio ? anio + 'Â°' : ''}${div ? ` ${div}` : ''}`.trim();
   return label;
 };
 
@@ -62,6 +62,7 @@ const CursoFilterInput = ({ source = 'id_curso', label = 'Curso' }) => {
 const BulkMoveCoursesButton = () => {
   const { selectedIds = [], filterValues = {} } = useListContext();
   const notify = useNotify();
+  const notifyOpts = { autoHideDuration: 7000 };
   const refresh = useRefresh();
   const dataProvider = useDataProvider();
   const [open, setOpen] = useState(false);
@@ -79,9 +80,9 @@ const BulkMoveCoursesButton = () => {
   const disabled = !idCiclo || !selectedIds?.length;
 
   const { data: pageRows = [] } = useListContext();
-  const onConfirm = async () => {
+    const onConfirm = async () => {
     if (!curso) {
-      notify('Selecciona un curso destino', { type: 'warning' });
+      notify('Selecciona un curso destino para continuar.', { ...notifyOpts, type: 'warning' });
       return;
     }
     try {
@@ -89,27 +90,33 @@ const BulkMoveCoursesButton = () => {
       const rowsMap = new Map((pageRows || []).map(r => [r.id, r]));
       const blocked = (selectedIds || []).filter(id => rowsMap.get(id)?.cambio_programado);
       const validIds = (selectedIds || []).filter(id => !rowsMap.get(id)?.cambio_programado);
+
       if (blocked.length && !validIds.length) {
-        notify('Todos los seleccionados ya tienen un cambio programado', { type: 'warning' });
+        notify('Todos los seleccionados ya tienen un cambio programado.', { ...notifyOpts, type: 'warning' });
         setSaving(false);
         return;
       }
       if (blocked.length) {
-        notify(`Se excluirán ${blocked.length} alumno(s) con cambio programado`, { type: 'info' });
+        notify(`Se excluirán ${blocked.length} alumno(s) con cambio programado.`, { ...notifyOpts, type: 'info' });
       }
+
       const idsToSend = validIds.length ? validIds : selectedIds;
       const { data } = await dataProvider.moverCursoAlumnos(idsToSend, Number(curso));
       const updated = data?.updated ?? 0;
       const total = idsToSend.length;
       const failed = total - updated;
-      notify(`Movidos ${updated}/${total}${failed ? `, errores: ${failed}` : ''}`, { type: failed ? 'warning' : 'success' });
+
+      notify(
+        `Movidos ${updated}/${total}${failed ? `, errores: ${failed}` : ''}`,
+        { ...notifyOpts, type: failed ? 'warning' : 'success' },
+      );
       refresh();
       setOpen(false);
       setCurso('');
     } catch (e) {
       const msg = e?.body?.error || e?.body?.message || e?.message || 'Error cambiando de curso';
       const tone = e?.status >= 500 ? 'error' : 'warning';
-      notify(msg, { type: tone });
+      notify(msg, { ...notifyOpts, type: tone });
     } finally {
       setSaving(false);
     }
@@ -118,7 +125,7 @@ const BulkMoveCoursesButton = () => {
   return (
     <>
       <Button variant="contained" size="small" onClick={() => setOpen(true)} disabled={disabled}>
-        Mover a curso…
+        Mover a cursoâ€¦
       </Button>
       <Dialog open={open} onClose={() => !saving && setOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>Mover {selectedIds.length} alumno(s) a otro curso</DialogTitle>
@@ -133,12 +140,12 @@ const BulkMoveCoursesButton = () => {
               fullWidth
               disabled={!idCiclo}
             >
-              <MenuItem value="" disabled>Seleccionar curso destino…</MenuItem>
+              <MenuItem value="" disabled>Seleccionar curso destinoâ€¦</MenuItem>
               {cursos.map((c) => {
                 const id = Number(c.id_curso || c.id);
                 const anio = c.anio_escolar || c.anio || '';
                 const div = c.division || '';
-                const label = `${anio ? anio + '°' : ''}${div ? ` ${div}` : ''}`.trim() || `Curso ${id}`;
+                const label = `${anio ? anio + 'Â°' : ''}${div ? ` ${div}` : ''}`.trim() || `Curso ${id}`;
                 return (
                   <MenuItem key={id} value={id}>
                     {label}
@@ -185,7 +192,7 @@ const CambiarCursoContent = ({ defaultCicloId }) => {
       filterDefaultValues={defaultCicloId ? { id_ciclo: defaultCicloId } : undefined}
       perPage={10}
       sort={{ field: 'apellido', order: 'ASC' }}
-      empty={<EmptyState title="Sin resultados" subtitle="No se encontraron alumnos con curso activo según filtros." />}
+      empty={<EmptyState title="Sin resultados" subtitle="No se encontraron alumnos con curso activo segÃºn filtros." />}
     >
       <Datagrid
         rowClick={false}
@@ -194,15 +201,15 @@ const CambiarCursoContent = ({ defaultCicloId }) => {
       >
         <RATextField source="apellido" label="Apellido" />
         <RATextField source="nombre" label="Nombre" />
-        <RATextField source="numero_documento" label="DNI Nº" />
+        <RATextField source="numero_documento" label="DNI NÂº" />
         <FunctionField
           label="Curso actual"
           render={(record) => {
             const cursoObj = record?.cursos?.[0] || record?.curso;
             const anio = cursoObj?.anio_escolar || cursoObj?.anio;
             const div = cursoObj?.division;
-            const label = `${anio ? anio + '°' : ''}${div ? ` ${div}` : ''}`.trim() || record?.curso_actual || record?.nombre_curso || record?.curso;
-            return <strong>{label || '—'}</strong>;
+            const label = `${anio ? anio + 'Â°' : ''}${div ? ` ${div}` : ''}`.trim() || record?.curso_actual || record?.nombre_curso || record?.curso;
+            return <strong>{label || 'â€”'}</strong>;
           }}
         />
         <FunctionField
@@ -212,7 +219,7 @@ const CambiarCursoContent = ({ defaultCicloId }) => {
             const pc = record?.proximo_curso || {};
             const anio = pc?.anio_escolar || pc?.anio;
             const div = pc?.division;
-            const nombre = pc?.nombre_curso || `${anio ? anio + '°' : ''}${div ? ` ${div}` : ''}`.trim();
+            const nombre = pc?.nombre_curso || `${anio ? anio + 'Â°' : ''}${div ? ` ${div}` : ''}`.trim();
             const f = pc?.fecha_inicio ? new Date(pc.fecha_inicio) : null;
             const dd = f ? String(f.getDate()).padStart(2, '0') : '';
             const mm = f ? String(f.getMonth() + 1).padStart(2, '0') : '';
@@ -220,7 +227,7 @@ const CambiarCursoContent = ({ defaultCicloId }) => {
             const fecha = f ? `${dd}/${mm}/${yyyy}` : '';
             return (
               <Stack direction="row" spacing={1}>
-                <Chip size="small" color="warning" label={`Cambiado a ${nombre}${fecha ? ` – desde ${fecha}` : ''}`} />
+                <Chip size="small" color="warning" label={`Cambiado a ${nombre}${fecha ? ` â€“ desde ${fecha}` : ''}`} />
               </Stack>
             );
           }}
@@ -240,3 +247,7 @@ export const CambiarCurso = () => {
   const defaultCicloId = ciclos?.[0]?.id_ciclo || ciclos?.[0]?.id;
   return <CambiarCursoContent defaultCicloId={defaultCicloId} />;
 };
+
+
+
+

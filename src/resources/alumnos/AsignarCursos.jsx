@@ -29,6 +29,7 @@ const AsignarCursosListActions = () => (
 const BulkAssignCoursesButton = () => {
   const { selectedIds = [], filterValues = {} } = useListContext();
   const notify = useNotify();
+  const notifyOpts = { autoHideDuration: 7000 };
   const refresh = useRefresh();
   const dataProvider = useDataProvider();
   const [open, setOpen] = useState(false);
@@ -47,7 +48,7 @@ const BulkAssignCoursesButton = () => {
 
   const onConfirm = async () => {
     if (!curso) {
-      notify('Selecciona un curso', { type: 'warning' });
+      notify('Selecciona un curso destino para continuar.', { ...notifyOpts, type: 'warning' });
       return;
     }
     try {
@@ -56,12 +57,19 @@ const BulkAssignCoursesButton = () => {
       const updated = data?.updated ?? 0;
       const total = selectedIds.length;
       const failed = total - updated;
-      notify(`Asignados ${updated}/${total}${failed ? `, errores: ${failed}` : ''}`, { type: failed ? 'warning' : 'success' });
+      notify(
+        `Asignados ${updated}/${total}${failed ? `, errores: ${failed}` : ''}`,
+        { ...notifyOpts, type: failed ? 'warning' : 'success' },
+      );
       refresh();
       setOpen(false);
       setCurso('');
     } catch (e) {
-      notify(e?.message || 'Error asignando cursos', { type: 'warning' });
+      const detail = e?.body?.error || e?.message;
+      notify(
+        detail ? `No se pudieron asignar algunos cursos: ${detail}` : 'Error asignando cursos.',
+        { ...notifyOpts, type: 'warning' },
+      );
     } finally {
       setSaving(false);
     }

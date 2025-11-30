@@ -17,12 +17,16 @@ import {
   TableCell,
   TableBody,
 } from '@mui/material';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import SearchOffIcon from '@mui/icons-material/SearchOff';
 import dayjs from 'dayjs';
 import { useDataProvider, useNotify } from 'react-admin';
 import { LoaderOverlay } from '../../components/LoaderOverlay';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const formatDate = (value) => dayjs(value).format('YYYY-MM-DD');
+const formatDateHuman = (value) => (value ? dayjs(value).format('DD/MM/YYYY') : 'N/D');
 
 const EmptyTablePlaceholder = ({ colSpan }) => (
   <TableRow>
@@ -40,6 +44,7 @@ const EmptyTablePlaceholder = ({ colSpan }) => (
 export const RendimientoCursos = () => {
   const dataProvider = useDataProvider();
   const notify = useNotify();
+  const notifyOpts = { autoHideDuration: 7000 };
   const [ciclos, setCiclos] = useState([]);
   const [cursos, setCursos] = useState([]);
   const [materias, setMaterias] = useState([]);
@@ -155,11 +160,11 @@ export const RendimientoCursos = () => {
 
   const handleSearch = async () => {
     if (!filters.ciclo) {
-      notify('Selecciona un ciclo lectivo', { type: 'warning' });
+      notify('Selecciona un ciclo lectivo para analizar.', { ...notifyOpts, type: 'warning' });
       return;
     }
     if (!filters.curso) {
-      notify('Selecciona un curso', { type: 'warning' });
+      notify('Selecciona un curso para continuar.', { ...notifyOpts, type: 'warning' });
       return;
     }
     setLoading(true);
@@ -191,10 +196,141 @@ export const RendimientoCursos = () => {
         setEmptyMessage(msg);
         setInfo(null);
       } else {
-        notify('Error obteniendo el rendimiento del curso', { type: 'error' });
+        notify('No se pudo obtener el rendimiento del curso. Intenta nuevamente o ajusta el filtro.', {
+          ...notifyOpts,
+          type: 'error',
+        });
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExportPdf = () => {
+    if (!info) {
+      notify('Genera el análisis primero para poder exportar el PDF.', { ...notifyOpts, type: 'warning' });
+      return;
+    }
+    try {
+      const doc = new jsPDF();
+      const marginLeft = 14;
+      const sectionGap = 8;
+      const pageWidth = doc.internal.pageSize.getWidth();
+
+      doc.setFontSize(16);
+      doc.text('Reporte de rendimiento por curso', pageWidth / 2, 16, { align: 'center' });
+      doc.setFontSize(10);
+      doc.text(`Generado: ${dayjs().format('DD/MM/YYYY HH:mm')}`, pageWidth - marginLeft, 10, {
+        align: 'right',
+      });
+
+      let yCursor = 24;
+      const cursoLabel = `${info.context?.anio_escolar ?? ''} ${info.context?.division ?? ''}`.trim();
+      doc.setFontSize(11);
+      doc.text(
+        `Curso: ${cursoLabel || 'N/D'} - Ciclo lectivo ${info.context?.ciclo ?? 'N/D'}`,
+        marginLeft,
+        yCursor,
+      );
+      yCursor += 6;
+      doc.text(
+        `Rango consultado: ${formatDateHuman(filters.desde)} a ${formatDateHuman(filters.hasta)}`,
+        marginLeft,
+        yCursor,
+      );
+      if (filters.materia) {
+        yCursor += 6;
+        doc.text(
+          `Materia: ${filters.materia?.nombre || filters.materia?.materia || 'Seleccionada'}`,
+          marginLeft,
+          yCursor,
+        );
+      }
+      yCursor += sectionGap;
+
+      doc.setFontSize(12);
+      doc.text('Resumen general', marginLeft, yCursor);
+      doc.setFontSize(10);
+      autoTable(doc, {
+        startY: yCursor + 2,
+        head: [['Indicador', 'Valor']],
+        body: [
+          ['Promedio general', info.kpis?.promedio_general ?? 'N/D'],
+          ['Promedio asistencia', info.kpis?.asistencia != null ? `${info.kpis.asistencia}%` : 'N/D'],
+          ['Cantidad de desaprobaciones', info.kpis?.desaprobados ?? 0],
+          ['Promedio 1er Cuatrimestre', info.kpis?.promedio_primer_cuatrimestre ?? 'N/D'],
+          ['Promedio 2do Cuatrimestre', info.kpis?.promedio_segundo_cuatrimestre ?? 'N/D'],
+          ['Promedio final', info.kpis?.promedio_final ?? 'N/D'],
+        ],
+        styles: { fontSize: 9 },
+        columnStyles: { 0: { cellWidth: 100 } },
+      });
+      yCursor = doc.lastAutoTable.finalY + sectionGap;
+
+      doc.setFontSize(12);
+      doc.text('Aprobaciones por tipo de evaluacion', marginLeft, yCursor);
+      autoTable(doc, {
+        startY: yCursor + 2,
+        head: [['Tipo', 'Aprobadas', 'Total', 'Porcentaje']],
+        body: approvalMetricConfig.map(({ key, title }) => {
+          const stat =
+            info.aprobaciones_por_tipo?.[key] || { total: 0, aprobadas: 0, porcentaje: null };
+          return [
+            title,
+            stat.aprobadas ?? 0,
+            stat.total ?? 0,
+            stat.total > 0 && stat.porcentaje != null ? `${stat.porcentaje}%` : 'Sin datos',
+          ];
+        }),
+        styles: { fontSize: 9 },
+      });
+      yCursor = doc.lastAutoTable.finalY + sectionGap;
+
+      const rankingAlumnoSection = (key, title) => {
+        autoTable(doc, {
+          startY: yCursor,
+          head: [[`${title} - Ranking de alumnos`, 'Promedio']],
+          body: (info.ranking_alumnos_por_periodo?.[key] || []).map((alumno, idx) => [
+            `${idx + 1}. ${alumno.apellido} ${alumno.nombre}`,
+            alumno.promedio ?? 'N/D',
+          ]),
+          styles: { fontSize: 9 },
+          headStyles: { fillColor: [10, 46, 117] },
+          columnStyles: { 0: { cellWidth: 120 } },
+        });
+        yCursor = doc.lastAutoTable.finalY + sectionGap;
+      };
+
+      rankingAlumnoSection('primer_cuatrimestre', '1er Cuatrimestre');
+      rankingAlumnoSection('segundo_cuatrimestre', '2do Cuatrimestre');
+      rankingAlumnoSection('nota_final', 'Calificacion final');
+
+      const rankingMateriaSection = (key, title) => {
+        autoTable(doc, {
+          startY: yCursor,
+          head: [[`${title} - Ranking de materias`, 'Promedio']],
+          body: (materiasPorPeriodo[key] || []).map((row, idx) => [
+            `${idx + 1}. ${row.materia}`,
+            row.promedios?.[key] ?? 'N/D',
+          ]),
+          styles: { fontSize: 9 },
+          headStyles: { fillColor: [10, 46, 117] },
+          columnStyles: { 0: { cellWidth: 120 } },
+        });
+        yCursor = doc.lastAutoTable.finalY + sectionGap;
+      };
+
+      rankingMateriaSection('primer_cuatrimestre', '1er Cuatrimestre');
+      rankingMateriaSection('segundo_cuatrimestre', '2do Cuatrimestre');
+      rankingMateriaSection('nota_final', 'Calificacion final');
+
+      doc.save('reporte-rendimiento-curso.pdf');
+    } catch (error) {
+      console.error(error);
+      notify('No se pudo generar el PDF del rendimiento. Reintenta en unos segundos.', {
+        ...notifyOpts,
+        type: 'error',
+      });
     }
   };
 
@@ -252,6 +388,52 @@ export const RendimientoCursos = () => {
           Analizar
         </Button>
       </Stack>
+      <Box
+        sx={{
+          mb: 3,
+          p: 2,
+          borderRadius: 2,
+          bgcolor: '#f7f9ff',
+          border: '1px solid',
+          borderColor: 'divider',
+          maxWidth: 640,
+        }}
+      >
+        <Stack spacing={2}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <PictureAsPdfIcon sx={{ color: '#0A2E75' }} />
+            <Typography variant="body1" sx={{ fontWeight: 500, color: '#0A2E75' }}>
+              Reporte descargable
+            </Typography>
+          </Stack>
+          <Typography variant="body2" color="text.secondary">
+            Genera un reporte en PDF con los datos que se muestran en pantalla para compartirlo o archivarlo.
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box sx={{ display: 'flex', justifyContent: { xs: 'center', sm: 'flex-start' } }}>
+              <Button
+                variant="contained"
+                startIcon={<PictureAsPdfIcon />}
+                onClick={handleExportPdf}
+                disabled={!info || loading}
+                sx={{ minWidth: 200 }}
+              >
+                Descargar reporte PDF
+              </Button>
+            </Box>
+            {!info && (
+              <Typography variant="caption" color="text.secondary">
+                Ejecuta el análisis para habilitar la descarga del PDF.
+              </Typography>
+            )}
+            {info && (
+              <Typography variant="caption" color="text.secondary">
+                Al generar el archivo se descargará automáticamente un PDF con este resumen.
+              </Typography>
+            )}
+          </Box>
+        </Stack>
+      </Box>
 
       {info ? (
         <Box>

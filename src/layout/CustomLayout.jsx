@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Box, Fade } from '@mui/material';
 import { useLocation } from 'react-router-dom';
+import { Notification } from 'react-admin';
 import { Sidebar } from '../components/SideBar';
 import { Header } from '../components/Header';
 
@@ -59,6 +60,7 @@ export const CustomLayout = ({ children }) => {
           </Fade>
         </Box>
       </Box>
+      <Notification />
     </Box>
   );
 };

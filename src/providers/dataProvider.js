@@ -4,8 +4,8 @@ import { api } from "../services/api"
 
 const API_URL = 'http://localhost:6543/api';
 
-const ENABLE_HTTP_LOGS = false;
-const ENABLE_DP_LOGS = false;
+const ENABLE_HTTP_LOGS = true;
+const ENABLE_DP_LOGS = true;
 const dlog = (...args) => { if (ENABLE_HTTP_LOGS || ENABLE_DP_LOGS) { try { console.log(...args); } catch {} } };
 
 const httpClient = (url, options = {}) => {
