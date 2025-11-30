@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import {
     useDataProvider
 } from "react-admin";
@@ -76,7 +76,7 @@ export const Calificaciones = () => {
                     setCursos(
                         data.map((c) => ({
                             id_curso: c.id_curso,
-                            name: `${c.anio_escolar}° ${c.division}`,
+                            name: `${c.anio_escolar}Â° ${c.division}`,
                         })));
             })
             .catch(() => setCursos([]))
@@ -330,8 +330,8 @@ export const Calificaciones = () => {
             if(data.length === 0) setShowEmptyCalificacionesMessage(true);
             else setShowEmptyCalificacionesMessage(false);
         }catch(error){
-            console.error("Error en la operación de calificaciones:", error);
-            handleError("Error en la operación de calificaciones");
+            console.error("Error en la operaciÃ³n de calificaciones:", error);
+            handleError("Error en la operaciÃ³n de calificaciones");
         }finally{
             setLoading(false);
         }
@@ -352,7 +352,7 @@ export const Calificaciones = () => {
         <Box sx={{paddingBottom: 2}}>
             <LoaderOverlay open={loading} />
             <Grid container spacing={2} alignItems="center">
-                {/* Selección de curso */}
+                {/* SelecciÃ³n de curso */}
                 <Grid item>
                     <Autocomplete
                         options={cursos}
@@ -366,7 +366,7 @@ export const Calificaciones = () => {
                     />
                 </Grid>
 
-                {/* Selección de materia */}
+                {/* SelecciÃ³n de materia */}
                 {filterValues.curso && 
                     <>
                         <Grid item>
@@ -396,7 +396,7 @@ export const Calificaciones = () => {
                     </>
                 }
 
-                {/* Botón para buscar */}
+                {/* BotÃ³n para buscar */}
                 <Grid item>
                     <Button 
                         variant="outlined"
@@ -410,7 +410,7 @@ export const Calificaciones = () => {
                     </Button>
                 </Grid>
 
-                {/* Botón para exportar PDF */}
+                {/* BotÃ³n para exportar PDF */}
                 <Grid item>
                     <Button
                         variant="outlined"
@@ -669,14 +669,14 @@ export const Calificaciones = () => {
 
             <Snackbar
                 open={open}
-                autoHideDuration={3000} // se oculta después de 3 segundos
+                autoHideDuration={7000}
                 onClose={handleClose}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }} // abajo centrado
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
             >
                 <Alert
                     onClose={handleClose}
                     severity={success ? "success" : "error"}
-                    sx={{ width: "100%" }}
+                    sx={{ width: "100%", fontSize: "1rem", "& .MuiAlert-icon": { fontSize: "1.4rem" }, "& .MuiAlert-message": { fontSize: "1rem" } }}
                 >
                     {message}
                 </Alert>
@@ -684,3 +684,4 @@ export const Calificaciones = () => {
         </Box>
     );
 }
+

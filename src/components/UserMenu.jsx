@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react';
 import {
   Box,
   Avatar,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Typography,
   IconButton,
   Menu,
@@ -9,7 +14,9 @@ import {
   Divider,
   ListItemIcon,
   ListItemText,
-  Badge
+  Badge,
+  TextField,
+  Stack
 } from '@mui/material';
 import {
   AccountCircle,
@@ -34,6 +41,8 @@ export const UserMenu = () => {
 
   const [notificacionesAnchor, setNotificacionesAnchor] = useState(null);
   const notificacionesOpen = Boolean(notificacionesAnchor);
+
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const { user, setUser } = useUser();
 
@@ -123,15 +132,12 @@ export const UserMenu = () => {
   };
 
   const handleProfile = () => {
-    console.log('Ir a perfil');
-    // Aquí irías a la página de perfil
+    setProfileOpen(true);
     handleClose();
   };
 
-  const handleSettings = () => {
-    console.log('Ir a configuración');
-    // Aquí irías a configuración
-    handleClose();
+  const handleProfileClose = () => {
+    setProfileOpen(false);
   };
 
   const handleLogout = async () => {
@@ -411,13 +417,6 @@ export const UserMenu = () => {
           <ListItemText primary="Mi Perfil" />
         </MenuItem>
 
-        <MenuItem onClick={handleSettings}>
-          <ListItemIcon>
-            <Settings fontSize="small" />
-          </ListItemIcon>
-          <ListItemText primary="Configuración" />
-        </MenuItem>
-
         <Divider />
 
         <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
@@ -427,6 +426,79 @@ export const UserMenu = () => {
           <ListItemText primary="Cerrar Sesión" />
         </MenuItem>
       </Menu>
+
+      <Dialog
+        open={profileOpen}
+        onClose={handleProfileClose}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Mi Perfil</DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={2}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Avatar
+                src={user?.foto}
+                sx={{
+                  width: 56,
+                  height: 56,
+                  backgroundColor: roleConfig.color
+                }}
+              >
+                {user?.foto ? null : (
+                  getNombreApellido(user).split(' ').map(n => n[0]).join('').substring(0, 2)
+                )}
+              </Avatar>
+              <Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  {getNombreApellido(user) || 'Usuario'}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#666' }}>
+                  {user?.email || 'Sin correo'}
+                </Typography>
+                <Typography variant="caption" sx={{ color: roleConfig.color }}>
+                  {roleConfig.label}
+                </Typography>
+              </Box>
+            </Box>
+
+            <TextField
+              label="Nombre completo"
+              value={getNombreApellido(user) || ''}
+              fullWidth
+              InputProps={{ readOnly: true }}
+            />
+
+            <TextField
+              label="Correo electrónico"
+              value={user?.email || ''}
+              fullWidth
+              InputProps={{ readOnly: true }}
+            />
+
+            <TextField
+              label="Rol"
+              value={roleConfig.label}
+              fullWidth
+              InputProps={{ readOnly: true }}
+            />
+
+            {user?.dni && (
+              <TextField
+                label="Documento"
+                value={user.dni}
+                fullWidth
+                InputProps={{ readOnly: true }}
+              />
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleProfileClose} variant="contained">
+            Cerrar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box >
   );
 };
