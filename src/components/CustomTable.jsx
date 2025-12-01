@@ -283,6 +283,10 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
         const updatedHeaders = [...newHeaders].filter(h => h.label !== tipo);
         setNewHeaders(updatedHeaders);
 
+        if(addedData.length === 0 && editedData.length === 0 && updatedHeaders.length === 0){
+            setHasChanges(false);
+        }
+
         closeConfirmModal();
     }
 
@@ -316,11 +320,14 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
             const idAlumno = options.current_alumnos.find(a => a.label === row.alumno)?.id;
             const idTipoCalificacion = options.tiposCalificaciones.find(t => t.label === row.tipoCalificacion)?.id;
 
+            const [day, month, year] = row.fecha.split("/").map(Number);
+            const dateObj = new Date(year, month - 1, day);
+
             return {
                 ...row,
                 id_alumno: idAlumno,
                 id_tipo_calificacion: idTipoCalificacion,
-                fecha: row.fecha
+                fecha: dateObj
             }
         });
 
@@ -672,6 +679,10 @@ const AddTipoCalificacionModal = ({ options, onSave, onClose }) => {
 
     const handleSave = () => {
         if(!validate()) return;
+
+        const [year, month, day] = selectedValues.fecha.split("-").map(Number);
+        const formattedDate = `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
+        selectedValues.fecha = formattedDate;
 
         onSave(selectedValues);
     }

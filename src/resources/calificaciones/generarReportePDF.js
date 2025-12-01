@@ -35,10 +35,16 @@ const getHeaders = (calificaciones) => {
         }
     });
 
-    const orderedTipos = uniqueTipos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    const orderedTipos = uniqueTipos.sort((a, b) => {
+        const [dayA, monthA, yearA] = a.fecha.split("/").map(Number);
+        const [dayB, monthB, yearB] = b.fecha.split("/").map(Number);
+        const dateA = new Date(yearA, monthA - 1, dayA);
+        const dateB = new Date(yearB, monthB - 1, dayB);
+        return dateA - dateB;
+    });
 
     orderedTipos.forEach((tipo) => {
-        tableColumnHeaders.push(`${tipo.label} (${new Date(tipo.fecha).toLocaleDateString()})`);
+        tableColumnHeaders.push(`${tipo.label} (${tipo.fecha})`);
     });
 
     return { tableColumnHeaders, uniqueTipos: orderedTipos };
@@ -81,7 +87,7 @@ export async function generarReportePDF({ curso = null, calificaciones = [], mat
         doc.text("MiEscuela 4.0", 40, 20);
         doc.setFontSize(12);
         doc.text("Reporte de Calificaciones", 40, 27);
-        doc.setFontSize(12);
+        doc.setFontSize(10);
         doc.text(`Curso: ${curso.name}`, 14, 40);
 
         let lastYIndex = 45;
@@ -99,7 +105,7 @@ export async function generarReportePDF({ curso = null, calificaciones = [], mat
 
         uniqueAnios.forEach((anio) => {
             // Título del ciclo
-            doc.setFontSize(10);
+            doc.setFontSize(12);
             doc.text(`Ciclo lectivo ${anio}`, doc.internal.pageSize.getWidth() / 2, startY, { align: "center" });
 
             let currentY = startY + 10; // posición inicial debajo del título

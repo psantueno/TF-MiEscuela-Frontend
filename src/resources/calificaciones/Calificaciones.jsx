@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from "react";
 import {
-    useDataProvider
+    useDataProvider,
+    useNotify,
 } from "react-admin";
 import {
     Box, 
@@ -14,8 +15,6 @@ import {
     AccordionSummary,
     AccordionDetails,
     Button,
-    Snackbar,
-    Alert,
     CircularProgress,
 } from "@mui/material";
 import { 
@@ -32,6 +31,7 @@ import useUser from "../../contexts/UserContext/useUser";
 
 export const Calificaciones = () => {
     const dataProvider = useDataProvider();
+    const notify = useNotify();
 
     const [cursos, setCursos] = useState([]);
     const [materias, setMaterias] = useState([]);
@@ -60,9 +60,6 @@ export const Calificaciones = () => {
     const [showEmptyCalificacionesMessage, setShowEmptyCalificacionesMessage] = useState(false);
     const [disabledSearchButton, setDisabledSearchButton] = useState(true);
     const [loading, setLoading] = useState(false);
-    const [open, setOpen] = useState(false);
-    const [message, setMessage] = useState("");
-    const [success, setSuccess] = useState(true);
 
     const CURRENT_YEAR = new Date().getFullYear().toString();
 
@@ -248,6 +245,14 @@ export const Calificaciones = () => {
 
         tiposCalificaciones.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
+        tiposCalificaciones.sort((a, b) => {
+            const [dayA, monthA, yearA] = a.fecha.split("/").map(Number);
+            const [dayB, monthB, yearB] = b.fecha.split("/").map(Number);
+            const dateA = new Date(yearA, monthA - 1, dayA);
+            const dateB = new Date(yearB, monthB - 1, dayB);
+            return dateA - dateB;
+        });
+
         return tiposCalificaciones;
     }
 
@@ -315,9 +320,7 @@ export const Calificaciones = () => {
             if(mappedUpdatedRows.length > 0) await dataProvider.updateManyCalificaciones(mappedUpdatedRows);
             if(mappedAddedRows.length > 0) await dataProvider.createManyCalificaciones(mappedAddedRows);
 
-            setSuccess(true);
-            setMessage("Cambios guardados correctamente");
-            setOpen(true);
+            notify("Cambios guardados correctamente", { type: "success" });
 
             const filter = { id_curso: filterValues.curso.id_curso };
             if(filterValues.materia) filter.id_materia = filterValues.materia.id_materia;
@@ -339,15 +342,8 @@ export const Calificaciones = () => {
         }
     }
 
-    const handleClose = (event, reason) => {
-        if (reason === 'clickaway') return;
-        setOpen(false);
-    };
-
     const handleError = (errorMessage) => {
-        setSuccess(false);
-        setMessage(errorMessage);
-        setOpen(true);
+        notify(errorMessage, { type: "error" });
     }
 
     return (
@@ -668,21 +664,6 @@ export const Calificaciones = () => {
                     </Box>
                 ))}
             </Box>
-
-            <Snackbar
-                open={open}
-                autoHideDuration={7000}
-                onClose={handleClose}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-            >
-                <Alert
-                    onClose={handleClose}
-                    severity={success ? "success" : "error"}
-                    sx={{ width: "100%", fontSize: "1rem", "& .MuiAlert-icon": { fontSize: "1.4rem" }, "& .MuiAlert-message": { fontSize: "1rem" } }}
-                >
-                    {message}
-                </Alert>
-            </Snackbar>
         </Box>
     );
 }
