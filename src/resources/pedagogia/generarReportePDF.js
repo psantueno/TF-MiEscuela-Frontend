@@ -36,7 +36,7 @@ export async function generarReportePDF({ curso = null, alumno = null, materia =
         doc.text("Reporte de Calificaciones", 40, y);
         y += 13;
 
-        doc.setFontSize(12);
+        doc.setFontSize(10);
         doc.text(`Alumno: ${alumno.usuario.apellido} ${alumno.usuario.nombre}`, margenIzq, y);
         y += 5;
         doc.text(`Curso: ${curso.name}`, margenIzq, y);
