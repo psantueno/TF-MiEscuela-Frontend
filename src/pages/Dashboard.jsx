@@ -65,6 +65,22 @@ const StatCard = ({ title, value, icon, color, trend }) => (
 
 const HolidayCard = ({ holidays, loading, error }) => {
   const monthLabel = new Date().toLocaleDateString('es-AR', { month: 'long' });
+  const parseHolidayDate = (raw) => {
+    const parts = typeof raw === 'string' ? raw.split('-').map(Number) : [];
+    if (parts.length === 3 && parts.every((n) => !Number.isNaN(n))) {
+      const [y, m, d] = parts;
+      return new Date(y, m - 1, d, 12, 0, 0); // noon local to avoid TZ shifts
+    }
+    const fallback = new Date(raw);
+    return Number.isNaN(fallback.getTime()) ? null : fallback;
+  };
+
+  const sortedHolidays = [...holidays]
+    .map((holiday) => ({ ...holiday, parsedDate: parseHolidayDate(holiday.date) }))
+    .filter((holiday) => holiday.parsedDate)
+    .sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
+
+  const visibleHolidays = sortedHolidays.slice(0, 8);
   let content;
 
   if (loading) {
@@ -101,8 +117,8 @@ const HolidayCard = ({ holidays, loading, error }) => {
             gap: 2,
           }}
         >
-          {holidays.slice(0, 8).map((holiday) => {
-            const date = new Date(holiday.date);
+          {visibleHolidays.map((holiday) => {
+            const date = holiday.parsedDate || parseHolidayDate(holiday.date);
             return (
               <Box key={holiday.date} sx={{ position: 'relative', pl: 2 }}>
                 <Box
@@ -151,7 +167,7 @@ const HolidayCard = ({ holidays, loading, error }) => {
               Total Feriados
             </Typography>
             <Typography variant="h5" sx={{ fontWeight: 600, color: '#455A64' }}>
-              {loading ? '...' : `${total}${total === 1 ? '' : 's'}`}
+              {loading ? '...' : `${total}`}
             </Typography>
           </Box>
           <Box
@@ -353,7 +369,7 @@ const SmallList = ({ items, singleColumn = false }) => {
           </Typography>
           {(item.curso_anio || item.curso_division) && (
             <Typography variant="caption" color="textSecondary">
-              Curso: {item.curso_anio ? `${item.curso_anio}�` : ''}{item.curso_division ? ` ${item.curso_division}` : ''}
+              Curso: {item.curso_anio ? `${item.curso_anio}°` : ''}{item.curso_division ? ` ${item.curso_division}` : ''}
             </Typography>
           )}
           {item.materia && (
@@ -399,7 +415,7 @@ const SmallList = ({ items, singleColumn = false }) => {
               </Typography>
               {(item.curso_anio || item.curso_division) && (
                 <Typography variant="caption" color="textSecondary">
-                  Curso: {item.curso_anio ? `${item.curso_anio}�` : ''}{item.curso_division ? ` ${item.curso_division}` : ''}
+                  Curso: {item.curso_anio ? `${item.curso_anio}°` : ''}{item.curso_division ? ` ${item.curso_division}` : ''}
                 </Typography>
               )}
               {item.materia && (
@@ -808,17 +824,31 @@ export const Dashboard = () => {
         const now = new Date();
         const year = now.getFullYear();
         const currentMonth = now.getMonth();
-        const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/AR`);
-        if (!response.ok) {
-          throw new Error('Respuesta no valida');
-        }
-        const data = await response.json();
-        const monthHolidays = Array.isArray(data)
-          ? data.filter((holiday) => {
-              const holidayDate = new Date(holiday.date);
-              return holidayDate.getMonth() === currentMonth;
-            })
-          : [];
+        const fetchYearHolidays = async (targetYear) => {
+          const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${targetYear}/AR`);
+          if (!response.ok) {
+            throw new Error(`Respuesta no valida para ${targetYear}`);
+          }
+          const data = await response.json();
+          return Array.isArray(data) ? data : [];
+        };
+
+        const currentYearHolidays = await fetchYearHolidays(year);
+        const monthHolidays = currentYearHolidays.filter((holiday) => {
+          const holidayDate = (() => {
+            const parts = typeof holiday.date === 'string' ? holiday.date.split('-').map(Number) : [];
+            if (parts.length === 3 && parts.every((n) => !Number.isNaN(n))) {
+              const [y, m, d] = parts;
+              return new Date(y, m - 1, d, 12, 0, 0);
+            }
+            const fallback = new Date(holiday.date);
+            return Number.isNaN(fallback.getTime()) ? null : fallback;
+          })();
+          if (!holidayDate) return false;
+
+          return holidayDate.getFullYear() === year && holidayDate.getMonth() === currentMonth;
+        });
+
         setHolidays(monthHolidays);
       } catch (error) {
         console.error('Error obteniendo feriados:', error);

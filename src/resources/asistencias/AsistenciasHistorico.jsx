@@ -1,4 +1,4 @@
-// src/resources/asistencias/AsistenciasHistorico.jsx
+﻿// src/resources/asistencias/AsistenciasHistorico.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import {
     Box,
@@ -13,6 +13,7 @@ import {
     Card,
     CardContent,
     CircularProgress,
+    Tooltip as MuiTooltip,
 } from "@mui/material";
 import {
     ResponsiveContainer,
@@ -36,12 +37,67 @@ import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 // === helpers ===
+const HelperCard = ({ title, items }) => (
+    <Card
+        sx={{
+            display: "flex",
+            gap: 1.5,
+            p: 2,
+            mb: 2.5,
+            border: "1px dashed #90CAF9",
+            backgroundColor: "#F8FBFF",
+            alignItems: "flex-start",
+        }}
+    >
+        <InfoOutlinedIcon sx={{ color: "#0B6BCB", mt: 0.5 }} />
+        <Box>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#0B6BCB" }}>
+                {title}
+            </Typography>
+            <Box
+                component="ul"
+                sx={{
+                    m: 0,
+                    mt: 0.5,
+                    pl: 2,
+                    color: "#37474F",
+                    "& li": { mb: 0.5 },
+                }}
+            >
+                {items.map((text) => (
+                    <li key={text}>
+                        <Typography variant="body2">{text}</Typography>
+                    </li>
+                ))}
+            </Box>
+        </Box>
+    </Card>
+);
+
 const toISO = (d) => new Date(d).toISOString().slice(0, 10);
 const hoyAR = () => toISO(new Date());
+const formatFechaEje = (value) => {
+    if (!value) return "";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return value;
+    return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" });
+};
+const formatFechaLarga = (value) => {
+    if (!value) return "";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return value;
+    return d.toLocaleDateString("es-AR", { year: "numeric", month: "2-digit", day: "2-digit" });
+};
+const pieLabelPct = ({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`;
+const pieTooltipFormatter = (_value, name, props) => [
+    `${((props?.payload?.percent || 0) * 100).toFixed(1)}%`,
+    name,
+];
 
-// Mapeo de estado (string) a valor numérico para graficar
+// Mapeo de estado (string) a valor numÃ©rico para graficar
 const estadoToValue = (estado) => {
     const e = (estado || "").toUpperCase();
     if (e.includes("PRES")) return 3; // Presente
@@ -60,7 +116,7 @@ const valueToEstadoLabel = (v) => {
     return "";
 };
 
-// === Cálculo de métricas generales ===
+// === CÃ¡lculo de mÃ©tricas generales ===
 const calcMetrics = (items) => {
     const registrosValidos = items.filter(
         (i) => i.id_estado !== null && i.estado_nombre
@@ -79,18 +135,23 @@ const calcMetrics = (items) => {
     });
 
     const pct = (n) => (total ? Math.round((n * 10000) / total) / 100 : 0);
+    const asistenciaConTarde = count.P + count.T;
 
     return {
         totalRegistros: total,
         totalClases,
-        pctAsistencia: pct(count.P),
+        pctAsistencia: pct(asistenciaConTarde), // Tarde cuenta como presente
         pctTardanzas: pct(count.T),
         pctAusJust: pct(count.AJ),
         pctAusNoJust: pct(count.A),
+        countPresentes: count.P,
+        countTardes: count.T,
+        countAusJust: count.AJ,
+        countAusNoJust: count.A,
     };
 };
 
-// === Agrupación para gráficos ===
+// === AgrupaciÃ³n para grÃ¡ficos ===
 const groupForCharts = (items) => {
     const buckets = {};
     items.forEach((i) => {
@@ -104,7 +165,7 @@ const groupForCharts = (items) => {
     return Object.values(buckets);
 };
 
-// === Métricas por alumno ===
+// === MÃ©tricas por alumno ===
 const calcMetricsPorAlumno = (items) => {
     const registrosValidos = items.filter(
         (i) => i.id_estado !== null && i.estado_nombre
@@ -139,16 +200,57 @@ const calcMetricsPorAlumno = (items) => {
         const pct = (n) => (a.total ? Math.round((n * 10000) / a.total) / 100 : 0);
         return {
             alumno: a.alumno,
-            pctAsistencia: pct(a.P),
+            pctAsistencia: pct(a.P + a.T), // Tarde se computa como presente
             pctTardanzas: pct(a.T),
             pctAusJust: pct(a.AJ),
             pctAusNoJust: pct(a.A),
             total: a.total,
             promAlu: a.promedioAlumno,
             promCur: a.promedioCurso, 
+            countPresentes: a.P,
+            countTardes: a.T,
+            countAusJust: a.AJ,
+            countAusNoJust: a.A,
         };
     });
     return resultado.sort((a, b) => b.pctAsistencia - a.pctAsistencia);
+};
+
+// === Heatmap de asistencia por día ===
+const buildHeatmapData = (items) => {
+    const map = {};
+    items.forEach((i) => {
+        const fecha = i.fecha;
+        const estado = (i.estado_nombre || "").toUpperCase();
+        if (!map[fecha]) {
+            map[fecha] = { fecha, present: 0, absent: 0 };
+        }
+        if (estado.includes("PRES")) map[fecha].present++;
+        else if (estado.includes("AUS")) map[fecha].absent++;
+    });
+    return Object.values(map).sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+};
+
+// === Estadísticas semanales ===
+const buildWeeklyStats = (items) => {
+    const weekMap = {};
+    items.forEach((i) => {
+        const date = new Date(i.fecha);
+        const weekStart = new Date(date);
+        weekStart.setDate(date.getDate() - date.getDay() + 1); // lunes
+        const weekKey = weekStart.toISOString().slice(0, 10);
+        
+        const estado = (i.estado_nombre || "").toUpperCase();
+        if (!weekMap[weekKey]) {
+            weekMap[weekKey] = { week: weekKey, present: 0, total: 0 };
+        }
+        weekMap[weekKey].total++;
+        if (estado.includes("PRES")) weekMap[weekKey].present++;
+    });
+    
+    return Object.values(weekMap)
+        .map((w) => ({ ...w, pct: w.total ? Math.round((w.present * 10000) / w.total) / 100 : 0 }))
+        .sort((a, b) => new Date(a.week) - new Date(b.week));
 };
 
 // === COMPONENTE PRINCIPAL ===
@@ -183,7 +285,7 @@ export const AsistenciasHistorico = () => {
                 setCursos(
                     data.map((c) => ({
                         id: c.id_curso,
-                        name: `${c.anio_escolar}° ${c.division}`,
+                        name: `${c.anio_escolar}Â° ${c.division}`,
                     }))
                 )
             )
@@ -205,13 +307,13 @@ export const AsistenciasHistorico = () => {
             .getAlumnosCurso(cursoId, fechaRef)
             .then(({ data }) => {
                 setAlumnos(data);
-                setSinAlumnos(data.length === 0); // ✅ marcar si no hay alumnos
+                setSinAlumnos(data.length === 0); // âœ… marcar si no hay alumnos
                 setLoading(false);
             })
             .catch((err) => {
                 console.error("Error cargando alumnos del curso:", err);
                 setAlumnos([]);
-                setSinAlumnos(true); // también mostrar mensaje en error
+                setSinAlumnos(true); // tambiÃ©n mostrar mensaje en error
                 setLoading(false);
             });
     }, [cursoId, hasta]);
@@ -252,18 +354,26 @@ export const AsistenciasHistorico = () => {
         }
     };
 
-    const exportarPDF = async () => {
-        await generarReportePDF({
-            tipo: alumnoId ? "alumno" : "curso",
-            cursos,
-            cursoId,
-            alumno: alumnoNombre,
-            desde,
-            hasta,
-            metrics,
-            rows,
-        });
-    };
+    const exportarPDF = async () => {                                                                             
+        const alumnoNombreResolvido = (() => {
+            if (alumnoNombre) return alumnoNombre;
+            const r = rows.find((row) => String(row.alumno_id) === String(alumnoId));
+            if (!r) return "";
+            const compuesto = `${r.alumno_apellido || ""} ${r.alumno_nombre_prop || ""}`.trim();
+            return r.alumno_nombre || r.alumno || compuesto;
+        })();
+
+        await generarReportePDF({                                                                                 
+            tipo: alumnoId ? "alumno" : "curso",                                                                  
+            cursos,                                                                                               
+            cursoId,                                                                                              
+            alumno: alumnoNombreResolvido,                                                                                 
+            desde,                                                                                                
+            hasta,                                                                                                
+            metrics,                                                                                              
+            rows,                                                                                                 
+        });                                                                                                       
+    };                                                                                                            
 
 
     // ======================
@@ -272,8 +382,19 @@ export const AsistenciasHistorico = () => {
     return (
         <Box p={3}>
             <Typography variant="h5" fontWeight={600} mb={2}>
-                Asistencias históricas
+                Asistencias histÃ³ricas
             </Typography>
+
+            <HelperCard
+                title="GuÃ­a rÃ¡pida"
+                items={[
+                    "ElegÃ­ un curso obligatoriamente; puedes filtrar por un alumno puntual de ese curso.",
+                    "Define el rango de fechas Desde / Hasta antes de buscar (por defecto Ãºltimos 30 dÃ­as).",
+                    "Presiona Buscar para cargar grÃ¡ficos y mÃ©tricas; si eliges un alumno, verÃ¡s su evoluciÃ³n individual.",
+                    "Genera el PDF cuando tengas resultados para compartir el resumen.",
+                    "Usa Volver al anÃ¡lisis del curso para salir del modo alumno.",
+                ]}
+            />
 
             {/* === Filtros === */}
             <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="center" mb={3}>
@@ -305,16 +426,17 @@ export const AsistenciasHistorico = () => {
                         value={alumnoId}
                         label="Alumno (opcional)"
                         onChange={(e) => {
-                            const id = e.target.value;
+                            const id = String(e.target.value || "");
                             setAlumnoId(id);
                             const a = alumnos.find((x) => String(x.id_alumno) === id);
-                            setAlumnoNombre(`${a?.alumno_apellido || ''} ${a?.alumno_nombre_prop || ''}`.trim());
+                            const nombre = `${a?.alumno_apellido || ""} ${a?.alumno_nombre_prop || ""}`.trim();
+                            setAlumnoNombre(nombre);
                             setBusquedaEjecutada(false);
                             setRows([]);
                         }}
                         disabled={!alumnos.length}
                     >
-                        <MenuItem value="">— Todos —</MenuItem>
+                        <MenuItem value="">â€” Todos â€”</MenuItem>
                         {[...alumnos]
                             .sort((a, b) => {
                                 const apA = (a?.alumno_apellido || '').toLocaleLowerCase();
@@ -398,7 +520,7 @@ export const AsistenciasHistorico = () => {
             {/* === Resultados === */}
             {busquedaEjecutada && rows.length > 0 && (
                 <>
-                    {/* === Modo alumno: botón volver === */}
+                    {/* === Modo alumno: botÃ³n volver === */}
                     {isAlumnoSeleccionado && (
                         <Button
                             startIcon={<ArrowBackIcon />}
@@ -410,16 +532,16 @@ export const AsistenciasHistorico = () => {
                             }}
                             sx={{ mb: 2 }}
                         >
-                            Volver al análisis del curso
+                            Volver al anÃ¡lisis del curso
                         </Button>
                     )}
 
                     {/* === Cards === */}
                     <Stack direction="row" spacing={2} flexWrap="wrap" mb={3}>
-                        <MetricCard title="% Asistencia" value={`${metrics.pctAsistencia}%`} bg="#E6F4EA" color="#1E8E3E" />
-                        <MetricCard title="% Tardanzas" value={`${metrics.pctTardanzas}%`} bg="#FEF7E0" color="#F9AB00" />
-                        <MetricCard title="% Aus. Just." value={`${metrics.pctAusJust}%`} bg="#E8F0FE" color="#1967D2" />
-                        <MetricCard title="% Aus. No Just." value={`${metrics.pctAusNoJust}%`} bg="#FDECEA" color="#D93025" />
+                        <MetricCard title="Asistencia (incluye tardanzas)" value={`${metrics.pctAsistencia}%`} bg="#EEF7EE" color="#60A05A" fontColor="#2E7D32" />
+                        <MetricCard title="Tardanzas" value={`${metrics.pctTardanzas}%`} bg="#FFF7EB" color="#F9C26B" fontColor="#F57C00" />
+                        <MetricCard title="Ausencias justificadas" value={`${metrics.pctAusJust}%`} bg="#EEF7FB" color="#64B5F6" fontColor="#1976D2" />
+                        <MetricCard title="Ausencias No justificadas" value={`${metrics.pctAusNoJust}%`} bg="#FCEDEE" color="#E57373" fontColor="#C62828" />
                     </Stack>
 
                     <Stack direction="row" justifyContent="center" mb={3}>
@@ -433,12 +555,12 @@ export const AsistenciasHistorico = () => {
                         </Card>
                     </Stack>
 
-                    {/* === GRÁFICOS === */}
+                    {/* === GRÃFICOS === */}
                     {!isAlumnoSeleccionado ? (
                         <>
                             {/* --- MODO CURSO --- */}
                             <Box display="grid" gridTemplateColumns={{ xs: "1fr", md: "1fr 1fr" }} gap={3} mb={4}>
-                                <ChartBox title="Días con más faltas">
+                                <ChartBox title="DÃ­as con mÃ¡s faltas">
                                     <ResponsiveContainer width="100%" height={280}>
                                         <BarChart data={grouped}>
                                             <CartesianGrid strokeDasharray="3 3" />
@@ -450,7 +572,7 @@ export const AsistenciasHistorico = () => {
                                     </ResponsiveContainer>
                                 </ChartBox>
 
-                                <ChartBox title="Días con más tardanzas">
+                                <ChartBox title="DÃ­as con mÃ¡s tardanzas">
                                     <ResponsiveContainer width="100%" height={280}>
                                         <BarChart data={grouped}>
                                             <CartesianGrid strokeDasharray="3 3" />
@@ -463,20 +585,20 @@ export const AsistenciasHistorico = () => {
                                 </ChartBox>
                             </Box>
 
-                            <ChartBox title="Distribución general de asistencias">
+                            <ChartBox title="DistribuciÃ³n general de asistencias">
                                 <ResponsiveContainer width="100%" height={250}>
                                     <PieChart>
                                         <Pie
                                             data={[
-                                                { name: "Presente", value: metrics.pctAsistencia },
-                                                { name: "Tarde", value: metrics.pctTardanzas },
-                                                { name: "Aus. Just.", value: metrics.pctAusJust },
-                                                { name: "Aus. No Just.", value: metrics.pctAusNoJust },
+                                                { name: "Presente", value: metrics.countPresentes ?? 0 },
+                                                { name: "Tarde", value: metrics.countTardes ?? 0 },
+                                                { name: "Aus. Just.", value: metrics.countAusJust ?? 0 },
+                                                { name: "Aus. No Just.", value: metrics.countAusNoJust ?? 0 },
                                             ]}
                                             cx="50%"
                                             cy="50%"
                                             outerRadius={80}
-                                            label
+                                            label={pieLabelPct}
                                             dataKey="value"
                                         >
                                             <Cell fill="#1E8E3E" />
@@ -484,7 +606,7 @@ export const AsistenciasHistorico = () => {
                                             <Cell fill="#1967D2" />
                                             <Cell fill="#D93025" />
                                         </Pie>
-                                        <Tooltip />
+                                        <Tooltip formatter={pieTooltipFormatter} />
                                         <Legend />
                                     </PieChart>
                                 </ResponsiveContainer>
@@ -493,77 +615,73 @@ export const AsistenciasHistorico = () => {
                     ) : (
                         <>
                             {/* --- MODO ALUMNO --- */}
-                            <ChartBox title={`Evolución de ${alumnoNombre}`}>
-                                <ResponsiveContainer width="100%" height={280}>
-                                    <LineChart
-                                        data={rows
-                                            .filter((r) => String(r.alumno_id) === String(alumnoId))
-                                            .map((r) => ({
-                                                fecha: r.fecha,
-                                                estadoValor: estadoToValue(r.estado_nombre),
-                                            }))}
-                                    >
-                                        <XAxis dataKey="fecha" />
-                                        <YAxis domain={[0, 3]} ticks={[0, 1, 2, 3]} tickFormatter={valueToEstadoLabel} />
-                                        <Tooltip formatter={(v) => valueToEstadoLabel(v)} labelFormatter={(l) => `Fecha: ${l}`} />
-                                        <Line type="monotone" dataKey="estadoValor" stroke="#2b3e4c" dot />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </ChartBox>
+                            {/* Heatmap eliminado según petición: se mantienen solo los gráficos principales */}
 
-                            <ChartBox title="Distribución de asistencias del alumno">
-                                <ResponsiveContainer width="100%" height={250}>
-                                    <PieChart>
-                                        <Pie
-                                            data={[
-                                                { name: "Presente", value: metrics.pctAsistencia },
-                                                { name: "Tarde", value: metrics.pctTardanzas },
-                                                { name: "Aus. Just.", value: metrics.pctAusJust },
-                                                { name: "Aus. No Just.", value: metrics.pctAusNoJust },
-                                            ]}
-                                            cx="50%"
-                                            cy="50%"
-                                            outerRadius={80}
-                                            label
-                                            dataKey="value"
-                                        >
-                                            <Cell fill="#1E8E3E" />
-                                            <Cell fill="#F9AB00" />
-                                            <Cell fill="#1967D2" />
-                                            <Cell fill="#D93025" />
-                                        </Pie>
-                                        <Tooltip />
-                                        <Legend />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </ChartBox>
+                            {/* Asistencia semanal eliminado según petición */}
+
+                            <Box display="grid" gridTemplateColumns={{ xs: "1fr", md: "1fr 1fr" }} gap={3}>
+                                <ChartBox title="Presentes vs Ausentes">
+                                    <ResponsiveContainer width="100%" height={250}>
+                                        <PieChart>
+                                            <Pie
+                                                data={[
+                                                    { name: "Presentes", value: (metrics.countPresentes ?? 0) + (metrics.countTardes ?? 0) },
+                                                    { name: "Ausentes", value: (metrics.countAusJust ?? 0) + (metrics.countAusNoJust ?? 0) },
+                                                ]}
+                                                cx="50%"
+                                                cy="50%"
+                                                outerRadius={80}
+                                                label={pieLabelPct}
+                                                dataKey="value"
+                                            >
+                                                <Cell fill="#1E8E3E" />
+                                                <Cell fill="#D93025" />
+                                            </Pie>
+                                            <Tooltip formatter={pieTooltipFormatter} />
+                                            <Legend />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </ChartBox>
+
+                                <ChartBox title="Presencialidad: En horario vs Tarde">
+                                    <ResponsiveContainer width="100%" height={250}>
+                                        <PieChart>
+                                            <Pie
+                                                data={[
+                                                    { name: "En horario", value: metrics.countPresentes ?? 0 },
+                                                    { name: "Tarde", value: metrics.countTardes ?? 0 },
+                                                ]}
+                                                cx="50%"
+                                                cy="50%"
+                                                outerRadius={80}
+                                                label={pieLabelPct}
+                                                dataKey="value"
+                                            >
+                                                <Cell fill="#1E8E3E" />
+                                                <Cell fill="#F9AB00" />
+                                            </Pie>
+                                            <Tooltip formatter={pieTooltipFormatter} />
+                                            <Legend />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </ChartBox>
+                            </Box>
 
                             <ChartBox title="Comparación con promedio del curso">
-                                <ResponsiveContainer width="100%" height={250}>
-                                    <LineChart data={promedios.map(p => ({
-                                        id: p.id_alumno,
-                                        alumno: p.nombre_completo,
-                                        promedio: p.promedio
-                                    }))}>
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="alumno" hide />
-                                        <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`}/>
-                                        <Tooltip formatter={(value) => `${value}%`}/>
-                                        <Legend />
-                                        <ReferenceLine y={metrics.pctAsistencia} stroke="#9EA3A8" strokeDasharray="3 3" label={{ value: "Promedio del curso", position: "left", fill: "#6b7280" }} />
-                                        <Line type="monotone" dataKey="promedio" stroke="#1E88E5" name="% asistencia alumno" 
-                                            dot={({ payload }) => (
-                                                <circle
-                                                cx={payload.cx}
-                                                cy={payload.cy}
-                                                r={payload.id === alumnoId ? 6 : 3} // más grande si es el alumno seleccionado
-                                                fill={payload.id === alumnoId ? "#E53935" : "#1E88E5"} // rojo si es el alumno seleccionado
-                                                />
-                                            )}
-                                            activeDot={{ r: 7 }}
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
+                                <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
+                                    <Box sx={{ p: 3, backgroundColor: "#E6F4EA", borderRadius: 1, borderLeft: "4px solid #1E8E3E" }}>
+                                        <Typography variant="body2" sx={{ color: "#757575", mb: 0.5 }}>Tu asistencia</Typography>
+                                        <Typography variant="h5" sx={{ fontWeight: 700, color: "#2E7D32" }}>
+                                            {metrics.pctAsistencia.toFixed(1)}%
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ p: 3, backgroundColor: "#E8F0FE", borderRadius: 1, borderLeft: "4px solid #1967D2" }}>
+                                        <Typography variant="body2" sx={{ color: "#757575", mb: 0.5 }}>Promedio del curso</Typography>
+                                        <Typography variant="h5" sx={{ fontWeight: 700, color: "#1976D2" }}>
+                                            {(promedios?.[0]?.promedio || metrics.pctAsistencia).toFixed(1)}%
+                                        </Typography>
+                                    </Box>
+                                </Box>
                             </ChartBox>
                         </>
                     )}
@@ -622,20 +740,21 @@ export const AsistenciasHistorico = () => {
 };
 
 // === Subcomponentes ===
-const MetricCard = ({ title, value, bg, color }) => (
+const MetricCard = ({ title, value, bg, color, fontColor }) => (
     <Card
         sx={{
             minWidth: 150,
             flex: 1,
             borderTop: `4px solid ${color}`,
             backgroundColor: bg,
+            // keep border/background colors as provided; text color is controlled via `fontColor`
             color,
             textAlign: "center",
             boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
         }}
     >
         <CardContent sx={{ py: 1.5 }}>
-            <Typography variant="h6" fontWeight={700}>
+            <Typography variant="h6" fontWeight={700} sx={{ color: fontColor || color }}>
                 {value}
             </Typography>
             <Typography variant="body2">{title}</Typography>
@@ -660,3 +779,4 @@ const ChartBox = ({ title, children }) => (
         {children}
     </Box>
 );
+

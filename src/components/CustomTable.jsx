@@ -201,12 +201,54 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
     }
 
     const handleAddRow = () => {
-        const newRow = {};
-        newRow.alumno = "";
-        newRow.editable = true;
+        const newRow = { alumno: "", editable: true };
         setNewAlumnos(prev => [...prev, newRow]);
-
         handleEditRow(newRow.alumno);
+    };
+
+    const handleAddAllRows = () => {
+        if (!options.alumnos || options.alumnos.length === 0) return;
+
+        // Evita duplicados con alumnos ya presentes en tabla o nuevos
+        const existingLabels = new Set([
+            ...alumnos.map(a => a.alumno),
+            ...newAlumnos.map(a => a.alumno),
+        ]);
+
+        const bulkRows = options.alumnos
+            .filter(opt => !existingLabels.has(opt.label))
+            .map(opt => ({ alumno: opt.label, editable: true }));
+
+        if (bulkRows.length === 0) return;
+
+        // Prepara celdas vacías para cada header existente
+        const targetHeaders = [...headers, ...newHeaders];
+        setTempRowsValues(prev => {
+            const updated = [...prev];
+            bulkRows.forEach(row => {
+                targetHeaders.forEach(header => {
+                    const already = updated.some(
+                        item =>
+                            item.alumno === row.alumno &&
+                            item.tipoCalificacion === header.label &&
+                            item.fecha === header.fecha
+                    );
+                    if (!already) {
+                        updated.push({
+                            alumno: row.alumno,
+                            tipoCalificacion: header.label,
+                            fecha: header.fecha,
+                            nota: "",
+                        });
+                    }
+                });
+            });
+            return updated;
+        });
+
+        setNewAlumnos(prev => [...prev, ...bulkRows]);
+        setEditingRows(prev => [...prev, ...bulkRows.map(r => r.alumno)]);
+        setHasChanges(true);
     };
 
     const handleDeleteRow = (rowIndex) => {
@@ -396,6 +438,7 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
                         </Button>
                     </Grid>
                     {(Object.keys(data).length !== 0  && options.alumnos.length !== 0) && (
+                        <>
                         <Grid item>
                             <Button
                                 variant="contained"
@@ -406,6 +449,17 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
                                 Agregar alumno
                             </Button>
                         </Grid>
+                        <Grid item>
+                            <Button
+                                variant="contained"
+                                color="secondary"
+                                startIcon={<Add />}
+                                onClick={handleAddAllRows}
+                            >
+                                Agregar todos
+                            </Button>
+                        </Grid>
+                        </>
                     )}
                 </Grid>
             }
