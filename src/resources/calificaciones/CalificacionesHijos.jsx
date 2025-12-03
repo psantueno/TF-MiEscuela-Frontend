@@ -96,9 +96,19 @@ export const CalificacionesHijos = () => {
             }
         })
 
-        newHeaders.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+        newHeaders.sort((a, b) => {
+            const [dayA, monthA, yearA] = a.fecha.split("/").map(Number);
+            const [dayB, monthB, yearB] = b.fecha.split("/").map(Number);
+            const dateA = new Date(yearA, monthA - 1, dayA);
+            const dateB = new Date(yearB, monthB - 1, dayB);
+            return dateA - dateB;
+        });
 
         return newHeaders;
+    }
+
+    const getMateriasUnique = (calificaciones, anio) => {
+        return [...new Set(calificaciones.filter(c => c.curso.cicloLectivo == anio).map(c => c.materia.nombre))];
     }
 
     return (
@@ -111,32 +121,21 @@ export const CalificacionesHijos = () => {
             </Typography>
             <Box sx={{ display: "flex", gap: 1, flexDirection: "column" }} >
                 {hijos.map(hijo => (
-                    <Accordion sx={{backgroundColor: "#E8EEF7"}} key={hijo.alumno.id_alumno}>
-                        <AccordionSummary sx={{backgroundColor: "#F5F7FA"}} expandIcon={<ExpandMore />}>
-                            <Box>
-                                <Typography variant="h6">
-                                    {`${hijo.alumno.usuario.apellido} ${hijo.alumno.usuario.nombre}`}
-                                </Typography>
-                                <Typography variant="subtitle1">
-                                    Curso: {hijo?.alumno?.curso?.[0] ? `${hijo.alumno.curso[0].anio_escolar}° ${hijo.alumno.curso[0].division}` : 'Sin curso'}
-                                </Typography>
-                                <Typography variant="subtitle2">
-                                    {hijo.alumno.tutor.parentesco}
-                                </Typography>
-                            </Box>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                            {hijo.calificaciones.length === 0 && (
-                                <Typography variant="body1">
-                                    No se encontraron calificaciones para este alumno.
-                                </Typography>
-                            )}
-                            {hijo.anios.map(anio => (
+                    <>
+                        <Typography variant="h4" sx={{ fontSize: 30 }}>
+                            {`${hijo.alumno.usuario.apellido} ${hijo.alumno.usuario.nombre} - ${hijo.alumno.curso[0].anio_escolar}° ${hijo.alumno.curso[0].division}`}
+                        </Typography>
+                        {hijo.calificaciones.length === 0 && (
+                            <Typography variant="body1" sx={{ mb: 2 }}>
+                                No se encontraron calificaciones para este alumno.
+                            </Typography>
+                        )}
+                        {hijo.anios.map(anio => (
                                 <Box key={anio}>
                                     <Divider key={anio} sx={{ mb: 2, mt:2 }}>
                                         <Chip label={anio} sx={{backgroundColor: "#061B46", color: "#fff"}}/>
                                     </Divider>
-                                    <Box sx={{ display: "flex", gap: 2, mt: 2, mb: 2 }}>
+                                    <Box sx={{ display: "flex", gap: 2, mt: 2, mb: 2, backgroundColor: "#F5F5F5", padding: 2, borderRadius: 2 }}>
                                         <SummaryCard 
                                             title="Mejor calificación"
                                             mainContent={getMejorCalificacion(hijo.calificaciones, anio)}
@@ -155,20 +154,33 @@ export const CalificacionesHijos = () => {
                                             type="info"
                                         />
                                     </Box>
-                                    <CustomTable 
-                                        alumnos={[{ alumno: `${hijo.alumno.usuario.apellido} ${hijo.alumno.usuario.nombre}` }]}
-                                        headers={
-                                            getTableHeaders(hijo.calificaciones.filter(c => c.curso.cicloLectivo == anio))
-                                        }
-                                        data={
-                                            hijo.calificaciones.filter(c => c.curso.cicloLectivo == anio)
-                                        }
-                                        editable={false}
-                                    />
-                                </Box>
-                            ))}
-                        </AccordionDetails>
-                    </Accordion>
+                                    {getMateriasUnique(hijo.calificaciones, anio).map(materia => (
+                                        <Accordion key={materia} sx={{backgroundColor: "#F5F5F5", mb: 2}}>
+                                            <AccordionSummary
+                                                expandIcon={<ExpandMore />}
+                                                aria-controls={`panel-${materia}-content`}
+                                                id={`panel-${materia}-header`}
+                                                sx={{backgroundColor: "#E8EEF7"}}
+                                            >
+                                                <Typography variant="h6">{materia}</Typography>
+                                            </AccordionSummary>
+                                            <AccordionDetails sx={{backgroundColor: "#F2F6FB"}}>
+                                                <CustomTable 
+                                                    alumnos={[{ alumno: `${hijo.alumno.usuario.apellido} ${hijo.alumno.usuario.nombre}` }]}
+                                                    headers={
+                                                        getTableHeaders(hijo.calificaciones.filter(c => c.curso.cicloLectivo == anio && c.materia.nombre === materia))
+                                                    }
+                                                    data={
+                                                        hijo.calificaciones.filter(c => c.curso.cicloLectivo == anio && c.materia.nombre === materia)
+                                                    }
+                                                    editable={false}
+                                                />
+                                            </AccordionDetails>
+                                        </Accordion>
+                                    ))}
+                            </Box>
+                        ))}
+                    </>
                 ))}
             </Box>
             </>}
