@@ -272,9 +272,7 @@ export const Calificaciones = () => {
         const filteredAlumnos = []
         filteredCalificaciones.forEach((c) => {
             if(!filteredAlumnos.some(a => a.alumno === `${c.alumno.apellido} ${c.alumno.nombre}`)){
-                // Desactivacion temporal de la restriccion de edición por alumno
-                //filteredAlumnos.push({ alumno: `${c.alumno.apellido} ${c.alumno.nombre}`, editable: alumnos.some(a => `${a.usuario.apellido} ${a.usuario.nombre}` === `${c.alumno.apellido} ${c.alumno.nombre}`)});
-                filteredAlumnos.push({ alumno: `${c.alumno.apellido} ${c.alumno.nombre}`, editable: true });
+                filteredAlumnos.push({ alumno: `${c.alumno.apellido} ${c.alumno.nombre}`, editable: alumnos.some(a => `${a.usuario.apellido} ${a.usuario.nombre}` === `${c.alumno.apellido} ${c.alumno.nombre}`)});
             }
         });
         return filteredAlumnos;
@@ -300,7 +298,7 @@ export const Calificaciones = () => {
 
         const mappedUpdatedRows = [];
         updatedRows.forEach((c) => {
-            const idCalificacion = calificaciones.find(cal => cal.alumno.id_alumno === c.id_alumno && cal.tipoCalificacion.id_tipo_calificacion === c.id_tipo_calificacion && cal.curso.cicloLectivo === CURRENT_YEAR  && cal.fecha === c.fecha)?.id_calificacion;
+            const idCalificacion = c.id_calificacion;
             
             if(idCalificacion){
                 mappedUpdatedRows.push({

@@ -174,7 +174,7 @@ export const CalificacionesHijos = () => {
                                             >
                                                 <Typography variant="h6">{materia}</Typography>
                                             </AccordionSummary>
-                                            <AccordionDetails sx={{backgroundColor: "#F2F6FB"}}>
+                                            <AccordionDetails sx={{backgroundColor: "#F2F6FB", py: 2}}>
                                                 <CustomTable 
                                                     alumnos={[{ alumno: `${hijo.alumno.usuario.apellido} ${hijo.alumno.usuario.nombre}` }]}
                                                     headers={
