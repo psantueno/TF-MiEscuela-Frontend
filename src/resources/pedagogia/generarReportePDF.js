@@ -33,7 +33,7 @@ export async function generarReportePDF({ curso = null, alumno = null, materia =
         doc.text("MiEscuela 4.0", 40, y);
         y += 7;
         doc.setFontSize(12);
-        doc.text("Reporte de Calificaciones", 40, y);
+        doc.text("Informe pedagógico", 40, y);
         y += 13;
 
         doc.setFontSize(10);
@@ -82,6 +82,31 @@ export async function generarReportePDF({ curso = null, alumno = null, materia =
             y += 10; // espacio entre informes
         }
 
+        const pageCount = doc.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+
+            // Altura dinámica según orientación
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const footerY = pageHeight - 10; // margen de 10 mm desde el borde inferior
+
+            doc.text(
+                `Generado por MiEscuela 4.0 — ${formatearFecha(new Date().toISOString())}`,
+                14,
+                footerY
+            );
+
+            // Usar el ancho dinámico para alinear a la derecha
+            const pageWidth = doc.internal.pageSize.getWidth();
+            doc.text(
+                `Página ${i} de ${pageCount}`,
+                pageWidth - 14,
+                footerY,
+                { align: "right" }
+            );
+        }
+
 
         // ——— Guardar PDF ———
         const fileNameParts = ["Reporte_Informes_Pedagogicos"];
@@ -93,4 +118,15 @@ export async function generarReportePDF({ curso = null, alumno = null, materia =
     }catch(error){
         console.error("Error generando reporte PDF de informes pedagógicos:", error);
     }
+}
+
+function formatearFecha(fechaISO) {
+    if (!fechaISO) return "—";
+    const d = new Date(fechaISO);
+    if (isNaN(d)) return "—";
+    return d.toLocaleDateString("es-AR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    });
 }
