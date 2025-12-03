@@ -315,7 +315,7 @@ export const AsistenciasHistorico = () => {
                 setCursos(
                     data.map((c) => ({
                         id: c.id_curso,
-                        name: `${c.anio_escolar}Â° ${c.division}`,
+                        name: `${c.anio_escolar}° ${c.division}`,
                     }))
                 )
             )
@@ -489,7 +489,7 @@ export const AsistenciasHistorico = () => {
                         }}
                         disabled={!alumnos.length}
                     >
-                        <MenuItem value="">â€” Todos â€”</MenuItem>
+                        <MenuItem value="">Todos</MenuItem>
                         {[...alumnos]
                             .sort((a, b) => {
                                 const apA = (a?.alumno_apellido || '').toLocaleLowerCase();

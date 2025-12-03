@@ -342,11 +342,11 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
 
             const idAlumno = options.current_alumnos.find(a => a.label === row.alumno)?.id;
             const idTipoCalificacion = options.tiposCalificaciones.find(t => t.label === row.tipoCalificacion)?.id;
+            const idCalificacion = data.find(c => c.alumno.id_alumno === idAlumno && c.tipoCalificacion.id_tipo_calificacion === idTipoCalificacion && c.fecha === row.fecha)?.id_calificacion;
 
             return {
                 ...row,
-                id_alumno: idAlumno,
-                id_tipo_calificacion: idTipoCalificacion
+                id_calificacion: idCalificacion
             }
         });
 
