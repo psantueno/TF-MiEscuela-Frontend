@@ -15,6 +15,7 @@ import {
     CircularProgress,
     Tooltip as MuiTooltip,
 } from "@mui/material";
+
 import {
     ResponsiveContainer,
     BarChart,
@@ -36,46 +37,53 @@ import { generarReportePDF } from "./generarReportePDF";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import HelperCard from "../../components/HelperCard";
 
-// === helpers ===
-const HelperCard = ({ title, items }) => (
-    <Card
-        sx={{
-            display: "flex",
-            gap: 1.5,
-            p: 2,
-            mb: 2.5,
-            border: "1px dashed #90CAF9",
-            backgroundColor: "#F8FBFF",
-            alignItems: "flex-start",
-        }}
-    >
-        <InfoOutlinedIcon sx={{ color: "#0B6BCB", mt: 0.5 }} />
-        <Box>
-            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#0B6BCB" }}>
-                {title}
-            </Typography>
-            <Box
-                component="ul"
-                sx={{
-                    m: 0,
-                    mt: 0.5,
-                    pl: 2,
-                    color: "#37474F",
-                    "& li": { mb: 0.5 },
-                }}
-            >
-                {items.map((text) => (
-                    <li key={text}>
-                        <Typography variant="body2">{text}</Typography>
-                    </li>
-                ))}
-            </Box>
-        </Box>
-    </Card>
-);
+// Paleta para gráficos inspirada en el formato "Bueno / Regular / Malo" de Excel (tonos suaves)
+const palette = {
+    // Verde tipo Excel "Bueno"
+    good: {
+        fill: "#468b40ff",      // Excel Good background
+        bg: "#C6EFCE",        // Igual que Excel
+        text: "#006100",      // Excel Good text
+        border: "#7FBA7A"     // Borde suave verde
+    },
+
+    // Amarillo tipo Excel "Advertencia / Regular"
+    warning: {
+        fill: "#FFEB9C",      // Excel Neutral background
+        bg: "#ffeb9c9f",
+        text: "#9C5700",      // Excel Warning/Note text
+        border: "#cc9f1aff"     // Borde coherente
+    },
+
+    // Azul suave → Adaptación del estilo “Neutral” manteniendo contraste
+    neutral: {
+        fill: "#E4EBF9",      // Tu azul soft como fondo
+        bg: "#bfd1f5d3",
+        text: "#061B46",      // Azul profundo para buen contraste
+        border: "#283c68ff"     // Borde suave azul
+    },
+
+    // Rojo "malo" con más rojo y menos rosa/bordó
+    bad: {
+        fill: "#D64545",      // Rojo marcado para barras/sectores
+        bg: "#FFC7CE",        // Base clara tipo Excel
+        text: "#9A1B1B",      // Texto rojo profundo para contraste
+        border: "#F2A0A5"     // Borde suave a juego
+    },
+};
+
+
+const chartGridColor = "#e6ebf2";
+const chartTickColor = "#4B5563";
+const tooltipStyle = {
+    borderRadius: 10,
+    border: `1px solid ${chartGridColor}`,
+    boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
+};
 
 const toISO = (d) => new Date(d).toISOString().slice(0, 10);
 const hoyAR = () => toISO(new Date());
@@ -91,13 +99,35 @@ const formatFechaLarga = (value) => {
     if (Number.isNaN(d.getTime())) return value;
     return d.toLocaleDateString("es-AR", { year: "numeric", month: "2-digit", day: "2-digit" });
 };
+const formatPct2 = (value) => `${(Number(value) || 0).toFixed(2)}%`;
+const RADIAN = Math.PI / 180;
+const pieLabelBold = ({ cx, cy, midAngle, outerRadius, percent, name, payload }) => {
+    // Posiciona el label fuera del radio para mejor lectura, en negrita y con el color del segmento
+    const radius = outerRadius + 14;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    const textColor = payload?.fill || payload?.color || "#374151";
+    return (
+        <text
+            x={x}
+            y={y}
+            fill={textColor}
+            textAnchor={x > cx ? "start" : "end"}
+            dominantBaseline="central"
+            fontWeight={700}
+            fontSize={16}
+        >
+            {pieLabelPct({ name, percent })}
+        </text>
+    );
+};
 const pieLabelPct = ({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`;
 const pieTooltipFormatter = (_value, name, props) => [
     `${((props?.payload?.percent || 0) * 100).toFixed(1)}%`,
     name,
 ];
 
-// Mapeo de estado (string) a valor numÃ©rico para graficar
+// Mapeo de estado (string) a valor numérico para graficar
 const estadoToValue = (estado) => {
     const e = (estado || "").toUpperCase();
     if (e.includes("PRES")) return 3; // Presente
@@ -116,7 +146,7 @@ const valueToEstadoLabel = (v) => {
     return "";
 };
 
-// === CÃ¡lculo de mÃ©tricas generales ===
+// === Cálculo de métricas generales ===
 const calcMetrics = (items) => {
     const registrosValidos = items.filter(
         (i) => i.id_estado !== null && i.estado_nombre
@@ -151,7 +181,7 @@ const calcMetrics = (items) => {
     };
 };
 
-// === AgrupaciÃ³n para grÃ¡ficos ===
+// === Agrupación para gráficos ===
 const groupForCharts = (items) => {
     const buckets = {};
     items.forEach((i) => {
@@ -165,7 +195,7 @@ const groupForCharts = (items) => {
     return Object.values(buckets);
 };
 
-// === MÃ©tricas por alumno ===
+// === Métricas por alumno ===
 const calcMetricsPorAlumno = (items) => {
     const registrosValidos = items.filter(
         (i) => i.id_estado !== null && i.estado_nombre
@@ -313,7 +343,7 @@ export const AsistenciasHistorico = () => {
             .catch((err) => {
                 console.error("Error cargando alumnos del curso:", err);
                 setAlumnos([]);
-                setSinAlumnos(true); // tambiÃ©n mostrar mensaje en error
+                setSinAlumnos(true); // también mostrar mensaje en error
                 setLoading(false);
             });
     }, [cursoId, hasta]);
@@ -381,18 +411,41 @@ export const AsistenciasHistorico = () => {
     // ======================
     return (
         <Box p={3}>
-            <Typography variant="h5" fontWeight={600} mb={2}>
-                Asistencias histÃ³ricas
-            </Typography>
+          
+            <Box
+        display="flex"
+        alignItems="center"
+        gap={1.5}
+        sx={{
+          mb: 2,
+          p: 2,
+          borderRadius: 2,
+          background: "linear-gradient(90deg, #E3F2FD 0%, #BBDEFB 100%)",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          transition: "background 0.3s ease",
+        }}
+      >
+        <CalendarMonthIcon
+          sx={{ color: "#1976d2", fontSize: 32 }}
+        />
+        <Typography
+          variant="h5"
+          fontWeight="600"
+          color="primary"
+        >
+          Reporte de Asistencias Histórico
+        </Typography>
+      </Box>
+                  
 
             <HelperCard
-                title="GuÃ­a rÃ¡pida"
+                title="Guía rápida"
                 items={[
-                    "ElegÃ­ un curso obligatoriamente; puedes filtrar por un alumno puntual de ese curso.",
-                    "Define el rango de fechas Desde / Hasta antes de buscar (por defecto Ãºltimos 30 dÃ­as).",
-                    "Presiona Buscar para cargar grÃ¡ficos y mÃ©tricas; si eliges un alumno, verÃ¡s su evoluciÃ³n individual.",
+                    "Elegí un curso obligatoriamente; puedes filtrar por un alumno puntual de ese curso.",
+                    "Define el rango de fechas Desde / Hasta antes de buscar (por defecto últimos 30 días).",
+                    "Presiona Buscar para cargar gráficos y métricas; si eliges un alumno, verás su evolución individual.",
                     "Genera el PDF cuando tengas resultados para compartir el resumen.",
-                    "Usa Volver al anÃ¡lisis del curso para salir del modo alumno.",
+                    "Usa Volver al análisis del curso para salir del modo alumno.",
                 ]}
             />
 
@@ -520,7 +573,7 @@ export const AsistenciasHistorico = () => {
             {/* === Resultados === */}
             {busquedaEjecutada && rows.length > 0 && (
                 <>
-                    {/* === Modo alumno: botÃ³n volver === */}
+                    {/* === Modo alumno: botón volver === */}
                     {isAlumnoSeleccionado && (
                         <Button
                             startIcon={<ArrowBackIcon />}
@@ -532,20 +585,44 @@ export const AsistenciasHistorico = () => {
                             }}
                             sx={{ mb: 2 }}
                         >
-                            Volver al anÃ¡lisis del curso
+                            Volver al análisis del curso
                         </Button>
                     )}
 
                     {/* === Cards === */}
                     <Stack direction="row" spacing={2} flexWrap="wrap" mb={3}>
-                        <MetricCard title="Asistencia (incluye tardanzas)" value={`${metrics.pctAsistencia}%`} bg="#EEF7EE" color="#60A05A" fontColor="#2E7D32" />
-                        <MetricCard title="Tardanzas" value={`${metrics.pctTardanzas}%`} bg="#FFF7EB" color="#F9C26B" fontColor="#F57C00" />
-                        <MetricCard title="Ausencias justificadas" value={`${metrics.pctAusJust}%`} bg="#EEF7FB" color="#64B5F6" fontColor="#1976D2" />
-                        <MetricCard title="Ausencias No justificadas" value={`${metrics.pctAusNoJust}%`} bg="#FCEDEE" color="#E57373" fontColor="#C62828" />
+                        <MetricCard
+                            title="Asistencia (incluye tardanzas)"
+                            value={formatPct2(metrics.pctAsistencia)}
+                            palette={palette.good}
+                        />
+                        <MetricCard
+                            title="Tardanzas"
+                            value={formatPct2(metrics.pctTardanzas)}
+                            palette={palette.warning}
+                        />
+                        <MetricCard
+                            title="Ausencias justificadas"
+                            value={formatPct2(metrics.pctAusJust)}
+                            palette={palette.neutral}
+                        />
+                        <MetricCard
+                            title="Ausencias No justificadas"
+                            value={formatPct2(metrics.pctAusNoJust)}
+                            palette={palette.bad}
+                        />
                     </Stack>
 
                     <Stack direction="row" justifyContent="center" mb={3}>
-                        <Card sx={{ width: "100%", backgroundColor: "#F1F3F4", textAlign: "center", borderTop: "4px solid #9EA3A8" }}>
+                        <Card
+                            sx={{
+                                width: "100%",
+                                background: "linear-gradient(135deg, #F8FAFD 0%, #EFF3F9 100%)",
+                                textAlign: "center",
+                                borderTop: `4px solid ${palette.neutral.border}`,
+                                color: palette.neutral.text,
+                            }}
+                        >
                             <CardContent>
                                 <Typography variant="h6" fontWeight={700}>
                                     {metrics.totalClases}
@@ -555,37 +632,59 @@ export const AsistenciasHistorico = () => {
                         </Card>
                     </Stack>
 
-                    {/* === GRÃFICOS === */}
+                    {/* === GRÁFICOS === */}
                     {!isAlumnoSeleccionado ? (
                         <>
                             {/* --- MODO CURSO --- */}
-                            <Box display="grid" gridTemplateColumns={{ xs: "1fr", md: "1fr 1fr" }} gap={3} mb={4}>
-                                <ChartBox title="DÃ­as con mÃ¡s faltas">
+                            <Box display="grid" gridTemplateColumns={{ xs: "1fr", md: "1fr 1fr" }} gap={3.5} mb={4}>
+                                <ChartBox title="Días con más faltas">
                                     <ResponsiveContainer width="100%" height={280}>
                                         <BarChart data={grouped}>
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis dataKey="key" />
-                                            <YAxis />
-                                            <Tooltip />
-                                            <Bar dataKey="faltas" fill="#D93025" />
+                                            <CartesianGrid stroke={chartGridColor} strokeDasharray="2 6" vertical={false} />
+                                            <XAxis
+                                                dataKey="key"
+                                                tickFormatter={formatFechaEje}
+                                                tick={{ fill: chartTickColor, fontSize: 12 }}
+                                                axisLine={{ stroke: chartGridColor }}
+                                                tickLine={{ stroke: chartGridColor }}
+                                            />
+                                            <YAxis
+                                                tick={{ fill: chartTickColor, fontSize: 12 }}
+                                                axisLine={{ stroke: chartGridColor }}
+                                                tickLine={{ stroke: chartGridColor }}
+                                                allowDecimals={false}
+                                            />
+                                            <Tooltip contentStyle={tooltipStyle} />
+                                            <Bar dataKey="faltas" fill={palette.bad.fill} radius={[8, 8, 0, 0]} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </ChartBox>
 
-                                <ChartBox title="DÃ­as con mÃ¡s tardanzas">
+                                <ChartBox title="Días con más tardanzas">
                                     <ResponsiveContainer width="100%" height={280}>
                                         <BarChart data={grouped}>
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis dataKey="key" />
-                                            <YAxis />
-                                            <Tooltip />
-                                            <Bar dataKey="tardanzas" fill="#F9AB00" />
+                                            <CartesianGrid stroke={chartGridColor} strokeDasharray="2 6" vertical={false} />
+                                            <XAxis
+                                                dataKey="key"
+                                                tickFormatter={formatFechaEje}
+                                                tick={{ fill: chartTickColor, fontSize: 12 }}
+                                                axisLine={{ stroke: chartGridColor }}
+                                                tickLine={{ stroke: chartGridColor }}
+                                            />
+                                            <YAxis
+                                                tick={{ fill: chartTickColor, fontSize: 12 }}
+                                                axisLine={{ stroke: chartGridColor }}
+                                                tickLine={{ stroke: chartGridColor }}
+                                                allowDecimals={false}
+                                            />
+                                            <Tooltip contentStyle={tooltipStyle} />
+                                            <Bar dataKey="tardanzas" fill={palette.warning.border} radius={[8, 8, 0, 0]} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </ChartBox>
                             </Box>
 
-                            <ChartBox title="DistribuciÃ³n general de asistencias">
+                            <ChartBox title="Distribución general de asistencias">
                                 <ResponsiveContainer width="100%" height={250}>
                                     <PieChart>
                                         <Pie
@@ -597,16 +696,16 @@ export const AsistenciasHistorico = () => {
                                             ]}
                                             cx="50%"
                                             cy="50%"
-                                            outerRadius={80}
-                                            label={pieLabelPct}
+                                            outerRadius={90}
+                                            label={pieLabelBold}
                                             dataKey="value"
                                         >
-                                            <Cell fill="#1E8E3E" />
-                                            <Cell fill="#F9AB00" />
-                                            <Cell fill="#1967D2" />
-                                            <Cell fill="#D93025" />
+                                            <Cell fill={palette.good.fill} />
+                                            <Cell fill={palette.warning.border} />
+                                            <Cell fill={palette.neutral.text} />
+                                            <Cell fill={palette.bad.fill} />
                                         </Pie>
-                                        <Tooltip formatter={pieTooltipFormatter} />
+                                        <Tooltip formatter={pieTooltipFormatter} contentStyle={tooltipStyle} />
                                         <Legend />
                                     </PieChart>
                                 </ResponsiveContainer>
@@ -615,11 +714,8 @@ export const AsistenciasHistorico = () => {
                     ) : (
                         <>
                             {/* --- MODO ALUMNO --- */}
-                            {/* Heatmap eliminado según petición: se mantienen solo los gráficos principales */}
 
-                            {/* Asistencia semanal eliminado según petición */}
-
-                            <Box display="grid" gridTemplateColumns={{ xs: "1fr", md: "1fr 1fr" }} gap={3}>
+                            <Box display="grid" gridTemplateColumns={{ xs: "1fr", md: "1fr 1fr" }} gap={3.5}>
                                 <ChartBox title="Presentes vs Ausentes">
                                     <ResponsiveContainer width="100%" height={250}>
                                         <PieChart>
@@ -630,14 +726,14 @@ export const AsistenciasHistorico = () => {
                                                 ]}
                                                 cx="50%"
                                                 cy="50%"
-                                                outerRadius={80}
-                                                label={pieLabelPct}
+                                                outerRadius={90}
+                                                label={pieLabelBold}
                                                 dataKey="value"
                                             >
-                                                <Cell fill="#1E8E3E" />
-                                                <Cell fill="#D93025" />
+                                                <Cell fill={palette.good.fill} />
+                                                <Cell fill={palette.bad.fill} />
                                             </Pie>
-                                            <Tooltip formatter={pieTooltipFormatter} />
+                                            <Tooltip formatter={pieTooltipFormatter} contentStyle={tooltipStyle} />
                                             <Legend />
                                         </PieChart>
                                     </ResponsiveContainer>
@@ -653,14 +749,14 @@ export const AsistenciasHistorico = () => {
                                                 ]}
                                                 cx="50%"
                                                 cy="50%"
-                                                outerRadius={80}
-                                                label={pieLabelPct}
-                                                dataKey="value"
+                                                outerRadius={90}
+                                                label={pieLabelBold}
+                                            dataKey="value"
                                             >
-                                                <Cell fill="#1E8E3E" />
-                                                <Cell fill="#F9AB00" />
+                                                <Cell fill={palette.good.fill} />
+                                                <Cell fill={palette.warning.border} />
                                             </Pie>
-                                            <Tooltip formatter={pieTooltipFormatter} />
+                                            <Tooltip formatter={pieTooltipFormatter} contentStyle={tooltipStyle} />
                                             <Legend />
                                         </PieChart>
                                     </ResponsiveContainer>
@@ -669,16 +765,30 @@ export const AsistenciasHistorico = () => {
 
                             <ChartBox title="Comparación con promedio del curso">
                                 <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
-                                    <Box sx={{ p: 3, backgroundColor: "#E6F4EA", borderRadius: 1, borderLeft: "4px solid #1E8E3E" }}>
-                                        <Typography variant="body2" sx={{ color: "#757575", mb: 0.5 }}>Tu asistencia</Typography>
-                                        <Typography variant="h5" sx={{ fontWeight: 700, color: "#2E7D32" }}>
-                                            {metrics.pctAsistencia.toFixed(1)}%
+                                    <Box
+                                        sx={{
+                                            p: 3,
+                                            backgroundColor: palette.good.bg,
+                                            borderRadius: 1,
+                                            borderLeft: `4px solid ${palette.good.border}`,
+                                        }}
+                                    >
+                                        <Typography variant="body2" sx={{ color: palette.good.text, mb: 0.5 }}>Tu asistencia</Typography>
+                                        <Typography variant="h5" sx={{ fontWeight: 700, color: palette.good.text }}>
+                                            {formatPct2(metrics.pctAsistencia)}
                                         </Typography>
                                     </Box>
-                                    <Box sx={{ p: 3, backgroundColor: "#E8F0FE", borderRadius: 1, borderLeft: "4px solid #1967D2" }}>
-                                        <Typography variant="body2" sx={{ color: "#757575", mb: 0.5 }}>Promedio del curso</Typography>
-                                        <Typography variant="h5" sx={{ fontWeight: 700, color: "#1976D2" }}>
-                                            {(promedios?.[0]?.promedio || metrics.pctAsistencia).toFixed(1)}%
+                                    <Box
+                                        sx={{
+                                            p: 3,
+                                            backgroundColor: palette.neutral.bg,
+                                            borderRadius: 1,
+                                            borderLeft: `4px solid ${palette.neutral.border}`,
+                                        }}
+                                    >
+                                        <Typography variant="body2" sx={{ color: palette.neutral.text, mb: 0.5 }}>Promedio del curso</Typography>
+                                        <Typography variant="h5" sx={{ fontWeight: 700, color: palette.neutral.text }}>
+                                            {formatPct2(promedios?.[0]?.promedio ?? metrics.pctAsistencia)}
                                         </Typography>
                                     </Box>
                                 </Box>
@@ -723,10 +833,10 @@ export const AsistenciasHistorico = () => {
                                         <tr key={r.alumno}>
                                             <td>{i + 1}</td>
                                             <td>{r.alumno}</td>
-                                            <td>{r.pctAsistencia}%</td>
-                                            <td>{r.pctTardanzas}%</td>
-                                            <td>{r.pctAusJust}%</td>
-                                            <td>{r.pctAusNoJust}%</td>
+                                            <td>{formatPct2(r.pctAsistencia)}</td>
+                                            <td>{formatPct2(r.pctTardanzas)}</td>
+                                            <td>{formatPct2(r.pctAusJust)}</td>
+                                            <td>{formatPct2(r.pctAusNoJust)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -740,40 +850,44 @@ export const AsistenciasHistorico = () => {
 };
 
 // === Subcomponentes ===
-const MetricCard = ({ title, value, bg, color, fontColor }) => (
-    <Card
-        sx={{
-            minWidth: 150,
-            flex: 1,
-            borderTop: `4px solid ${color}`,
-            backgroundColor: bg,
-            // keep border/background colors as provided; text color is controlled via `fontColor`
-            color,
-            textAlign: "center",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
-        }}
-    >
-        <CardContent sx={{ py: 1.5 }}>
-            <Typography variant="h6" fontWeight={700} sx={{ color: fontColor || color }}>
-                {value}
-            </Typography>
-            <Typography variant="body2">{title}</Typography>
-        </CardContent>
-    </Card>
-);
+const MetricCard = ({ title, value, palette: tone }) => {
+    const p = tone || palette.neutral;
+    return (
+        <Card
+            sx={{
+                minWidth: 150,
+                flex: 1,
+                borderTop: `4px solid ${p.border}`,
+                backgroundColor: p.bg,
+                color: p.text,
+                textAlign: "center",
+                boxShadow: "0 6px 16px rgba(0,0,0,0.08)",
+            }}
+        >
+            <CardContent sx={{ py: 1.5 }}>
+                <Typography variant="h6" fontWeight={700} sx={{ color: p.text }}>
+                    {value}
+                </Typography>
+                <Typography variant="body2" sx={{ color: p.text }}>
+                    {title}
+                </Typography>
+            </CardContent>
+        </Card>
+    );
+};
 
 
 const ChartBox = ({ title, children }) => (
     <Box
         sx={{
-            background: "#fff",
-            borderRadius: 2,
-            p: 2,
-            border: "1px solid #e0e0e0",
-            boxShadow: "0 1px 3px rgba(0,0,0,.05)",
+            background: "linear-gradient(135deg, #ffffff 0%, #f9fbfd 100%)",
+            borderRadius: 2.5,
+            p: 2.5,
+            border: "1px solid #dfe4ec",
+            boxShadow: "0 16px 34px rgba(15,23,42,0.08)",
         }}
     >
-        <Typography variant="subtitle1" fontWeight={600} mb={1}>
+        <Typography variant="subtitle1" fontWeight={600} mb={1.5}>
             {title}
         </Typography>
         {children}

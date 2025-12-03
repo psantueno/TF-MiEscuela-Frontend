@@ -37,12 +37,7 @@ import {
 import { Dashboard } from './pages/Dashboard';
 
 import { InformesPedagogicos } from './resources/pedagogia/InformesPedagogicos';
-import {
-  RendimientoCursos,
-  RendimientoAlumnos,
-  RendimientoAlertas,
-  RendimientoTutor,
-} from './resources/rendimiento';
+import { RendimientoCursos, RendimientoAlumnos, RendimientoTutor } from './resources/rendimiento';
 
 // Iconos
 import { Today, School, Person, Class, CalendarMonth } from '@mui/icons-material';
@@ -271,9 +266,6 @@ function App() {
                         )}
                         {allowRoute(role, '/rendimiento/alumnos') && (
                           <Route path="/rendimiento/alumnos" element={<RendimientoAlumnos />} />
-                        )}
-                        {allowRoute(role, '/rendimiento/alertas') && (
-                          <Route path="/rendimiento/alertas" element={<RendimientoAlertas />} />
                         )}
                         {allowRoute(role, '/rendimiento/hijos') && (
                           <Route path="/rendimiento/hijos" element={<RendimientoTutor />} />

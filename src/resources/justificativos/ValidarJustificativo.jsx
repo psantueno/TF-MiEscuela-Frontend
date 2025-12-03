@@ -13,8 +13,10 @@ import {
 } from "@mui/material"
 import { LoaderOverlay } from "../../components/LoaderOverlay";
 import { Search, SearchOff } from "@mui/icons-material";
+import FactCheckIcon from "@mui/icons-material/FactCheck";
 import { useState, useEffect } from "react";
 import { useDataProvider, useNotify } from "react-admin";
+import HelperCard from "../../components/HelperCard";
 
 export const ValidarJustificativo = () => {
     const dataProvider = useDataProvider();
@@ -114,6 +116,37 @@ export const ValidarJustificativo = () => {
 
     return(
         <Box>
+            <Box
+                display="flex"
+                alignItems="center"
+                gap={1.5}
+                sx={{
+                    mb: 2,
+                    p: 2,
+                    borderRadius: 2,
+                    background: "linear-gradient(90deg, #E3F2FD 0%, #BBDEFB 100%)",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    transition: "background 0.3s ease",
+                }}
+            >
+                <FactCheckIcon sx={{ color: "#1976d2", fontSize: 32 }} />
+                <Typography
+                    variant="h5"
+                    fontWeight="600"
+                    color="primary"
+                >
+                    Validar justificativos
+                </Typography>
+            </Box>
+            <HelperCard
+                title="Guía rápida"
+                items={[
+                    "Selecciona un curso para habilitar la búsqueda; el alumno es opcional para filtrar.",
+                    "Presiona Buscar para traer los justificativos pendientes del curso/alumno elegido.",
+                    "Revisa cada tarjeta y usa Aceptar o Rechazar (deberás indicar motivo al rechazar).",
+                    "Si no hay resultados se mostrará un mensaje para que ajustes los filtros.",
+                ]}
+            />
             <Grid container spacing={2} alignItems="center">
                 <Grid item>
                     <Autocomplete

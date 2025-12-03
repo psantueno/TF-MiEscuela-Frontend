@@ -21,46 +21,7 @@ import dayjs from "dayjs";
 import "dayjs/locale/es";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import Skeleton from "@mui/material/Skeleton";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-
-
-
-// ====================
-const HelperCard = ({ title, items }) => (
-  <Paper
-    sx={{
-      display: "flex",
-      gap: 1.5,
-      p: 2,
-      mb: 2,
-      border: "1px dashed #90CAF9",
-      backgroundColor: "#F8FBFF",
-    }}
-  >
-    <InfoOutlinedIcon sx={{ color: "#0B6BCB", mt: 0.5 }} />
-    <Box>
-      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#0B6BCB" }}>
-        {title}
-      </Typography>
-      <Box
-        component="ul"
-        sx={{
-          m: 0,
-          mt: 0.5,
-          pl: 2,
-          color: "#37474F",
-          "& li": { mb: 0.5 },
-        }}
-      >
-        {items.map((text) => (
-          <li key={text}>
-            <Typography variant="body2">{text}</Typography>
-          </li>
-        ))}
-      </Box>
-    </Box>
-  </Paper>
-);
+import HelperCard from "../../components/HelperCard";
 
 // ====================
 // Funciones auxiliares

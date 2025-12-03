@@ -4,6 +4,7 @@ import {
     AccordionDetails,
     AccordionSummary,
     Typography,
+    Chip,
 } from "@mui/material";
 import { 
     Timeline,
@@ -41,9 +42,20 @@ export const InformePedagogicoTimeline = ({ informes }) => {
                         <TimelineContent>
                             <Accordion sx={{ mb: 2 }}>
                                 <AccordionSummary expandIcon={<ExpandMore />} sx={{backgroundColor: "#E8EEF7"}}>
-                                    <Typography>
-                                        {informe.titulo}
-                                    </Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                                        <Typography>
+                                            {informe.titulo}
+                                        </Typography>
+                                        <Chip
+                                            size="small"
+                                            label={informe.materia ? informe.materia : "General"}
+                                            sx={{
+                                                backgroundColor: "#0A2E75",
+                                                color: "#fff",
+                                                fontWeight: 700,
+                                            }}
+                                        />
+                                    </Box>
                                 </AccordionSummary>
                                 <AccordionDetails sx={{backgroundColor: "#F2F6FB"}}>
                                     <Typography>

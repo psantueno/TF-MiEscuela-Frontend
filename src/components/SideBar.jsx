@@ -31,6 +31,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
   const location = useLocation();
   const resourceDefs = useResourceDefinitions();
   const { permissions: role } = usePermissions();
+  const calificacionesLabel = role === 'docente' ? 'Cargar notas' : 'Ver notas';
 
   // Abrir/cerrar submenu asistencias
   const [openAsistencias, setOpenAsistencias] = useState(false);
@@ -275,7 +276,7 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
                 selected={isActive('/calificaciones')}
                 onClick={() => handleItemClick({ id: 'calificaciones', to: '/calificaciones' })}
               >
-                <ListItemText primary="Cargar y modificar notas" sx={getTextStyle(isActive('/calificaciones'))} />
+                <ListItemText primary={calificacionesLabel} sx={getTextStyle(isActive('/calificaciones'))} />
               </ListItemButton>
             )}
 
@@ -340,15 +341,6 @@ export const Sidebar = ({ moduloActivo, onModuleChange }) => {
                 onClick={() => handleItemClick({ id: 'rendimiento-alumnos', to: '/rendimiento/alumnos' })}
               >
                 <ListItemText primary="Por alumno" sx={getTextStyle(location.pathname.startsWith('/rendimiento/alumnos'))} />
-              </ListItemButton>
-            )}
-            {allowMenu(role, 'rendimiento-alertas') && (
-              <ListItemButton
-                sx={{ pl: 6, ...getButtonStyle(location.pathname.startsWith('/rendimiento/alertas')) }}
-                selected={location.pathname.startsWith('/rendimiento/alertas')}
-                onClick={() => handleItemClick({ id: 'rendimiento-alertas', to: '/rendimiento/alertas' })}
-              >
-                <ListItemText primary="Alertas" sx={getTextStyle(location.pathname.startsWith('/rendimiento/alertas'))} />
               </ListItemButton>
             )}
             {allowMenu(role, 'rendimiento-hijos') && (
