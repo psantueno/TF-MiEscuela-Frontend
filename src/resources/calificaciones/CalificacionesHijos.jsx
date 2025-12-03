@@ -10,6 +10,7 @@ import {
     Chip
 } from "@mui/material"
 import { ExpandMore } from "@mui/icons-material"
+import HelperCard from "../../components/HelperCard"
 import { LoaderOverlay } from "../../components/LoaderOverlay"
 import { CustomTable } from "../../components/CustomTable"
 import { SummaryCard } from "../../components/SummaryCard"
@@ -116,6 +117,15 @@ export const CalificacionesHijos = () => {
             <LoaderOverlay open={loading} />
             {!loading && 
             <>
+            <HelperCard
+                title="Guía rápida"
+                items={[
+                    "Cada tarjeta corresponde a un alumno tutelado; expándela para ver sus calificaciones.",
+                    "Dentro de cada año podés revisar el mejor/peor resultado y el promedio general.",
+                    "Las tablas muestran todas las instancias de evaluación; son solo de lectura para tutores.",
+                    "Si no aparecen calificaciones, aún no se cargaron notas para ese alumno o ciclo.",
+                ]}
+            />
             <Typography variant="h4" sx={{ mb: 3, mt: 2 }}>
                 Calificaciones de los tutelados
             </Typography>

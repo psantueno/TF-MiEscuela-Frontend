@@ -14,14 +14,16 @@ import {
     Backdrop,
     TextareaAutosize
 } from "@mui/material";
-import { 
+import {
     Search,
     PictureAsPdf,
     Add,
-    SearchOff
+    SearchOff,
+    AutoStories,
 } from "@mui/icons-material";
 import { InformePedagogicoTimeline } from "../../components/InformePedagogicoTimeline";
 import { LoaderOverlay } from "../../components/LoaderOverlay";
+import HelperCard from "../../components/HelperCard";
 import useUser from "../../contexts/UserContext/useUser";
 import { generarReportePDF } from "./generarReportePDF";
 
@@ -192,6 +194,37 @@ export const InformesPedagogicos = () => {
 
     return(
         <Box>
+            <Box
+                display="flex"
+                alignItems="center"
+                gap={1.5}
+                sx={{
+                    mb: 2,
+                    p: 2,
+                    borderRadius: 2,
+                    background: "linear-gradient(90deg, #E3F2FD 0%, #BBDEFB 100%)",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    transition: "background 0.3s ease",
+                }}
+            >
+                <AutoStories sx={{ color: "#1976d2", fontSize: 32 }} />
+                <Typography
+                    variant="h5"
+                    fontWeight="600"
+                    color="primary"
+                >
+                    Informes pedagógicos
+                </Typography>
+            </Box>
+            <HelperCard
+                title="Guía rápida"
+                items={[
+                    "Selecciona curso y alumno para habilitar la búsqueda; materia es opcional para acotar resultados.",
+                    "Presiona Buscar para ver informes existentes y habilitar la exportación a PDF si hay datos.",
+                    "Usa Agregar informe para cargar uno nuevo: toma como referencia los filtros actuales.",
+                    "Si no aparecen registros, ajusta los filtros o crea un nuevo informe pedagógico.",
+                ]}
+            />
             <Grid container spacing={2} alignItems="center">
                 {/* Selección de curso */}
                 <Grid>
@@ -370,15 +403,29 @@ const AddModal = ({ alumno, curso, materia = null, onSave, onCancel, inputs }) =
     }
 
     return (
-        <Backdrop open={true}>
-            <Box sx={{ bgcolor: 'background.paper', p: 4, borderRadius: 2, minWidth: 300 }}>
+        <Backdrop open={true} sx={{ zIndex: (theme) => theme.zIndex.modal + 1 }}>
+            <Box
+                sx={{
+                    bgcolor: 'background.paper',
+                    p: 4,
+                    borderRadius: 2,
+                    minWidth: 300,
+                    width: { xs: '90vw', sm: 760, md: 900 },
+                    maxWidth: '95vw',
+                    boxShadow: 6,
+                }}
+            >
                 <Typography variant="h6" gutterBottom>
                     {message}
                 </Typography>
                 <Box>
-                    <Grid container spacing={2} sx={{ display: inputs.asesores && inputs.materias ? 'flex' : 'none', mt: 2, mb: 2 }}>
+                    <Grid
+                        container
+                        spacing={2}
+                        sx={{ display: inputs.asesores && inputs.materias ? 'flex' : 'none', mt: 2, mb: 2 }}
+                    >
                         {inputs.materias.length > 0 && (
-                            <Grid size={4}>
+                            <Grid item xs={12} sm={6} md={4}>
                                 <Autocomplete
                                     options={inputs.materias}
                                     getOptionLabel={(option) => option.nombre || ""}
@@ -393,7 +440,7 @@ const AddModal = ({ alumno, curso, materia = null, onSave, onCancel, inputs }) =
                             </Grid>
                         )}
                         {inputs.asesores.length > 0 && (
-                            <Grid size={4} sx={{ display: inputs.asesores ? 'block' : 'none' }}>
+                            <Grid item xs={12} sm={6} md={4} sx={{ display: inputs.asesores ? 'block' : 'none' }}>
                                 <Autocomplete
                                     options={inputs.asesores}
                                     getOptionLabel={(option) => `${option.usuario.apellido} ${option.usuario.nombre}`}
@@ -407,7 +454,7 @@ const AddModal = ({ alumno, curso, materia = null, onSave, onCancel, inputs }) =
                                 {errors.asesor && <Typography color="error" variant="body2">{errors.asesor}</Typography>}
                             </Grid>
                         )}
-                        <Grid>
+                        <Grid item xs={12} sm={6} md={4}>
                             <TextField
                                 label="Titulo"
                                 type="text"

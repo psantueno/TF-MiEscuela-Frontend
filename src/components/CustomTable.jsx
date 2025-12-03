@@ -472,12 +472,13 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
             }
             {([...headers, ...newHeaders].length !== 0 && [...alumnos, ...newAlumnos].length !== 0) && (
                 <Box sx={{ width: '100%', maxHeight: '400px', overflow: 'auto' }}>
-                <Table stickyHeader>
+                <Table stickyHeader size="small">
                     <TableHead>
                         <TableRow>
                             <TableCell
                                 align="center" 
-                                sx={{backgroundColor: "#D9E2EF", minWidth: 150, maxWidth: 200}}
+                                padding="none"
+                                sx={{backgroundColor: "#D9E2EF", minWidth: 120, maxWidth: 160}}
                             >
                                 Alumno
                             </TableCell>
@@ -485,7 +486,8 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
                                 <TableCell 
                                     key={index} 
                                     align="center" 
-                                    sx={{backgroundColor: "#D9E2EF", minWidth: 150, maxWidth: 200}}
+                                    padding="none"
+                                    sx={{backgroundColor: "#D9E2EF", minWidth: 120, maxWidth: 160}}
                                 >
                                     <Box display="flex" flexDirection="column">
                                         <Typography variant="body2" fontWeight={600}>{header.label}</Typography>
@@ -497,7 +499,8 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
                                 <TableCell 
                                     key={index} 
                                     align="center" 
-                                    sx={{backgroundColor: "#D9E2EF", minWidth: 150, maxWidth: 200}}
+                                    padding="none"
+                                    sx={{backgroundColor: "#D9E2EF", minWidth: 120, maxWidth: 160}}
                                 >
                                     <Box display="flex" flexDirection="column" alignItems="center" >
                                         <Typography variant="body2" fontWeight={600}>
@@ -514,7 +517,7 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
                                 </TableCell>
                             ))}
                             {editable && 
-                                <TableCell align="center" sx={{backgroundColor: "#D9E2EF", minWidth: 150, maxWidth: 200}}>
+                                <TableCell align="center" padding="none" sx={{backgroundColor: "#D9E2EF", minWidth: 120, maxWidth: 160}}>
                                     Acciones
                                 </TableCell>
                             }
@@ -531,12 +534,12 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
                                 }}
                                 ref={el => rowRefs.current[alumno.alumno] = el}
                             >
-                                <TableCell align="center">
+                                <TableCell align="center" padding="none">
                                     {alumno.alumno}
                                 </TableCell>
                                 {[...headers, ...newHeaders].map((header) => (
                                     <TableCell 
-                                        key={`nota-${alumno.alumno}-${header.label}-${header.fecha}-${rowIndex}`} align="center"
+                                        key={`nota-${alumno.alumno}-${header.label}-${header.fecha}-${rowIndex}`} align="center" padding="none"
                                     >
                                         {(editingRows.includes(alumno.alumno) && header.editable) ? (
                                             <TextField
@@ -555,7 +558,7 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
                                     </TableCell>
                                 ))}
                                 {editable &&
-                                    <TableCell align="center">
+                                    <TableCell align="center" padding="none">
                                         {editingRows.includes(alumno.alumno) ? 
                                             (
                                                 <Check 
@@ -587,7 +590,7 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
                                 }}
                                 ref={el => rowRefs.current[alumno.alumno] = el}
                             >
-                                <TableCell align="center">
+                                <TableCell align="center" padding="none">
                                     {editingRows.includes(alumno.alumno) && data.length !== 0 ? (
                                         <Select
                                             value={alumno.alumno || ""}
@@ -608,7 +611,7 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
                                 </TableCell>
                                 {[...headers, ...newHeaders].map((header) => (
                                     <TableCell 
-                                        key={`nota-${alumno.alumno}-${header.label}-${header.fecha}-${rowIndex}`} align="center"
+                                        key={`nota-${alumno.alumno}-${header.label}-${header.fecha}-${rowIndex}`} align="center" padding="none"
                                     >
                                         {(editingRows.includes(alumno.alumno) && header.editable) ? (
                                             <TextField
@@ -625,7 +628,7 @@ export const CustomTable = ({ alumnos, headers, data, defaultValues = [], option
                                         )}  
                                     </TableCell>
                                 ))}
-                                <TableCell align="center">
+                                <TableCell align="center" padding="none">
                                     {editingRows.includes(alumno.alumno) ? 
                                         (
                                             <Check 

@@ -19,9 +19,11 @@ import {
 } from '@mui/material';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import SearchOffIcon from '@mui/icons-material/SearchOff';
+import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import dayjs from 'dayjs';
 import { useDataProvider, useNotify } from 'react-admin';
 import { LoaderOverlay } from '../../components/LoaderOverlay';
+import HelperCard from '../../components/HelperCard';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -337,9 +339,33 @@ export const RendimientoCursos = () => {
   return (
     <Box>
       {loading && <LoaderOverlay />}
-      <Typography variant="h4" sx={{ mb: 2, color: '#0A2E75', fontWeight: 600 }}>
-        Rendimiento por curso
-      </Typography>
+      <Box
+        display="flex"
+        alignItems="center"
+        gap={1.5}
+        sx={{
+          mb: 2,
+          p: 2,
+          borderRadius: 2,
+          background: 'linear-gradient(90deg, #E3F2FD 0%, #BBDEFB 100%)',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          transition: 'background 0.3s ease',
+        }}
+      >
+        <QueryStatsIcon sx={{ color: '#1976d2', fontSize: 32 }} />
+        <Typography variant="h5" fontWeight="600" color="primary">
+          Rendimiento por curso
+        </Typography>
+      </Box>
+      <HelperCard
+        title="Guía rápida"
+        items={[
+          'Selecciona ciclo y curso; materia es opcional para focalizar el análisis.',
+          'Ajusta el rango de fechas y presiona Buscar para ver promedios y rankings.',
+          'Genera el PDF cuando tengas datos cargados para compartir el resumen.',
+          'Si no aparecen resultados, revisa filtros o extiende el período consultado.',
+        ]}
+      />
 
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 3 }}>
         <Autocomplete

@@ -23,6 +23,8 @@ import {
     PictureAsPdf,
     SearchOff
 } from "@mui/icons-material";
+import GradingIcon from "@mui/icons-material/Grading";
+import HelperCard from "../../components/HelperCard";
 import { SummaryCard } from "../../components/SummaryCard";
 import { CustomTable } from "../../components/CustomTable";
 import { LoaderOverlay } from "../../components/LoaderOverlay";
@@ -204,6 +206,16 @@ export const Calificaciones = () => {
         return (calificaciones.filter(c => c.curso.cicloLectivo === anio && (materia ? c.materia.id_materia === materia.id_materia : true) && (curso ? c.curso.id_curso === curso.id_curso : true)).reduce((acc, curr) => acc + parseFloat(curr.nota), 0) / calificaciones.filter(c => c.curso.cicloLectivo === anio && (materia ? c.materia.id_materia === materia.id_materia : true) && (curso ? c.curso.id_curso === curso.id_curso : true)).length).toFixed(2)
     }
 
+    const getTotalCalificaciones = (anio, materia = null, curso = null) => {
+        const total = calificaciones.filter(
+            c =>
+                c.curso.cicloLectivo === anio &&
+                (materia ? c.materia.id_materia === materia.id_materia : true) &&
+                (curso ? c.curso.id_curso === curso.id_curso : true)
+        ).length;
+        return `Total: ${total}`;
+    }
+
     const exportarPDF = async () => {
         await generarReportePDF({ curso: filterValues.curso, materia: filterValues.materia, alumno: filterValues.alumno, calificaciones: calificaciones });
     }
@@ -349,6 +361,37 @@ export const Calificaciones = () => {
     return (
         <Box sx={{paddingBottom: 2}}>
             <LoaderOverlay open={loading} />
+            <Box
+                display="flex"
+                alignItems="center"
+                gap={1.5}
+                sx={{
+                    mb: 2,
+                    p: 2,
+                    borderRadius: 2,
+                    background: "linear-gradient(90deg, #E3F2FD 0%, #BBDEFB 100%)",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    transition: "background 0.3s ease",
+                }}
+            >
+                <GradingIcon sx={{ color: "#1976d2", fontSize: 32 }} />
+                <Typography
+                    variant="h5"
+                    fontWeight="600"
+                    color="primary"
+                >
+                    Cargar notas
+                </Typography>
+            </Box>
+            <HelperCard
+                title="Guía rápida"
+                items={[
+                    "Selecciona un curso para habilitar alumno y materia (ambos opcionales).",
+                    "Presiona Buscar para cargar las calificaciones filtradas; si eliges una materia verás solo esa tabla.",
+                    "Usa Generar PDF para descargar el reporte con los filtros actuales cuando haya resultados.",
+                    "Si no hay datos cargados, aparecerán mensajes indicando qué falta cargar en el curso.",
+                ]}
+            />
             <Grid container spacing={2} alignItems="center">
                 {/* SelecciÃ³n de curso */}
                 <Grid item>
@@ -558,23 +601,28 @@ export const Calificaciones = () => {
                             <Box sx={{backgroundColor: "#F2F6FB", p: 2, borderRadius: 1, mt: 2}}>
                                 <Box sx={{ display: "flex", gap: 2, mt: 2, mb: 2 }}>
                                     <SummaryCard
-                                        title="% Notas >= 6"
-                                        mainContent={getPorcentajeAprobadas(anio)}
+                                        title="Notas aprobadas"
+                                        mainContent={`${getPorcentajeAprobadas(anio)}%`}
                                         secondaryContent={getTotalAprobadas(anio)}
                                         type="success"
                                     />
                                     <SummaryCard
-                                        title="% Notas < 6"
-                                        mainContent={getPorcentajeReprobadas(anio)}
+                                        title="Notas desaprobadas"
+                                        mainContent={`${getPorcentajeReprobadas(anio)}%`}
                                         secondaryContent={getTotalReprobadas(anio)}
                                         type="error"
                                     />
                                     <SummaryCard
                                         title="Promedio general"
                                         mainContent={getPromedioGeneral(anio)}
+                                        secondaryContent={getTotalCalificaciones(anio)}
                                         type="info"
                                     />
                                 </Box>
+                                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
+                                    (*) Aprobado: nota igual o mayor a 6. Desaprobado: nota menor a 6.
+                                    <br />(**) El promedio general se calcula con el total de notas cargadas del curso.
+                                </Typography>
                                 <CustomTable
                                     alumnos={
                                         getAlumnos(calificaciones
@@ -615,23 +663,28 @@ export const Calificaciones = () => {
                                             <>
                                                 <Box sx={{ display: "flex", gap: 2, mt: 2, mb: 2 }}>
                                                     <SummaryCard 
-                                                        title="% Notas >= 6" 
-                                                        mainContent={(getPorcentajeAprobadas(anio, m))}
+                                                        title="Notas aprobadas" 
+                                                        mainContent={`${getPorcentajeAprobadas(anio, m)}%`}
                                                         secondaryContent={getTotalAprobadas(anio, m)} 
                                                         type="success" 
                                                     />
                                                     <SummaryCard
-                                                        title="% Notas < 6"
-                                                        mainContent={(getPorcentajeReprobadas(anio, m))}
+                                                        title="Notas desaprobadas"
+                                                        mainContent={`${getPorcentajeReprobadas(anio, m)}%`}
                                                         secondaryContent={getTotalReprobadas(anio, m)}
                                                         type="error"
                                                     />
                                                     <SummaryCard
                                                         title="Promedio general"
                                                         mainContent={(getPromedioGeneral(anio, m))}
+                                                        secondaryContent={getTotalCalificaciones(anio, m)}
                                                         type="info"
                                                     />
                                                 </Box>
+                                                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, mb: '2rem' }}>
+                                                    (*) Aprobado: nota igual o mayor a 6. Desaprobado: nota menor a 6.
+                                                    <br />(**) El promedio general se calcula con el total de notas cargadas del curso.
+                                                </Typography>
                                             </>
                                             )}
                                             <CustomTable

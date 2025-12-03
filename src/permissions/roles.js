@@ -53,7 +53,8 @@ export const ROLE_PERMISSIONS = {
       '/justificativos/cargar',
       '/rendimiento/cursos',
       '/rendimiento/alumnos',
-      '/rendimiento/alertas',
+      '/rendimiento/hijos',
+      '/calificaciones/hijos',
     ]),
     menu: new Set([
       'general',
@@ -67,6 +68,7 @@ export const ROLE_PERMISSIONS = {
       'mensajes',
       'informes',
       'calificaciones',
+      'calificaciones-hijos',
       'administracion',
       'ciclos-lectivos',
       'cursos',
@@ -78,10 +80,11 @@ export const ROLE_PERMISSIONS = {
       'tutores',
       'informes-pedagogicos',
       'justificativos-validar',
+      'justificativos-cargar',
       'rendimiento',
       'rendimiento-cursos',
       'rendimiento-alumnos',
-      'rendimiento-alertas',
+      'rendimiento-hijos',
       'gestion-academica'
     ]),
   },
@@ -100,7 +103,6 @@ export const ROLE_PERMISSIONS = {
       '/calificaciones',
       '/rendimiento/cursos',
       '/rendimiento/alumnos',
-      '/rendimiento/alertas',
       '/gestion-academica/cursos',
       '/gestion-academica/asignar-cursos',
       '/gestion-academica/cambiar-curso',
@@ -113,7 +115,6 @@ export const ROLE_PERMISSIONS = {
       'rendimiento',
       'rendimiento-cursos',
       'rendimiento-alumnos',
-      'rendimiento-alertas',
       'cursos',
       'asignar-cursos',
       'cambiar-curso',
@@ -139,7 +140,6 @@ export const ROLE_PERMISSIONS = {
       '/justificativos/validar',
       '/rendimiento/cursos',
       '/rendimiento/alumnos',
-      '/rendimiento/alertas',
     ]),
     menu: new Set([
       'general',
@@ -154,7 +154,6 @@ export const ROLE_PERMISSIONS = {
       'rendimiento',
       'rendimiento-cursos',
       'rendimiento-alumnos',
-      'rendimiento-alertas',
     ]),
   },
 
@@ -226,10 +225,19 @@ export const ROLE_PERMISSIONS = {
     },
     routes: new Set([
       '/informes-pedagogicos',
+      '/asistencias/historico',
+      '/calificaciones',
+      '/rendimiento/cursos',
+      '/rendimiento/alumnos',
     ]),
     menu: new Set([
       'general',
       'informes-pedagogicos',
+      'asistencias-historico',
+      'calificaciones',
+      'rendimiento',
+      'rendimiento-cursos',
+      'rendimiento-alumnos',
     ])
   }
 };

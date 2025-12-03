@@ -21,8 +21,8 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Skeleton from "@mui/material/Skeleton";
+import HelperCard from "../../components/HelperCard";
 
 import dayjs from "dayjs";
 import "dayjs/locale/es";
@@ -54,42 +54,6 @@ const PALETTE = {
   justificado: { bg: "#E8F0FE", color: "#1967D2", border: "#A0C3FF" },
   neutro: { bg: "#F1F3F4", color: "#5F6368", border: "#DADCE0" },
 };
-
-const HelperCard = ({ title, items }) => (
-  <Paper
-    sx={{
-      display: "flex",
-      gap: 1.5,
-      p: 2,
-      mb: 2,
-      border: "1px dashed #90CAF9",
-      backgroundColor: "#F8FBFF",
-    }}
-  >
-    <InfoOutlinedIcon sx={{ color: "#0B6BCB", mt: 0.5 }} />
-    <Box>
-      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#0B6BCB" }}>
-        {title}
-      </Typography>
-      <Box
-        component="ul"
-        sx={{
-          m: 0,
-          mt: 0.5,
-          pl: 2,
-          color: "#37474F",
-          "& li": { mb: 0.5 },
-        }}
-      >
-        {items.map((text) => (
-          <li key={text}>
-            <Typography variant="body2">{text}</Typography>
-          </li>
-        ))}
-      </Box>
-    </Box>
-  </Paper>
-);
 
 // Normaliza diferencias de claves que pueden venir del backend
 const normalizeAsistencia = (a = {}) => {

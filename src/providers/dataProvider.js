@@ -704,11 +704,6 @@ export const dataProvider = {
     return httpClient(`${API_URL}/rendimiento?${query}`).then(({ json }) => ({ data: json }));
   },
 
-  getRendimientoAlertas: (filters = {}) => {
-    const query = dataProvider._buildRendimientoQuery({ scope: 'alertas', ...filters });
-    return httpClient(`${API_URL}/rendimiento?${query}`).then(({ json }) => ({ data: json }));
-  },
-
   getRendimientoHijos: () =>
     httpClient(`${API_URL}/rendimiento?scope=hijos`).then(({ json }) => ({ data: json })),
 
