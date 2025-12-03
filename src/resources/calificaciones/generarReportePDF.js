@@ -44,7 +44,7 @@ const getHeaders = (calificaciones) => {
     });
 
     orderedTipos.forEach((tipo) => {
-        tableColumnHeaders.push(`${tipo.label} (${tipo.fecha})`);
+        tableColumnHeaders.push(`${tipo.label}\n\n${tipo.fecha}`);
     });
 
     return { tableColumnHeaders, uniqueTipos: orderedTipos };
@@ -66,7 +66,7 @@ export async function generarReportePDF({ curso = null, calificaciones = [], mat
     });
 
     try{
-        const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+        const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
         // ——— Encabezado institucional (logo) ———
         try {
@@ -88,15 +88,15 @@ export async function generarReportePDF({ curso = null, calificaciones = [], mat
         doc.setFontSize(12);
         doc.text("Reporte de Calificaciones", 40, 27);
         doc.setFontSize(10);
-        doc.text(`Curso: ${curso.name}`, 14, 40);
+        doc.text(`Curso: ${curso.name}`, 40, 35);
 
-        let lastYIndex = 45;
+        let lastYIndex = 40;
         if(materia) {
-            doc.text(`Materia: ${materia.nombre}`, 14, lastYIndex);
+            doc.text(`Materia: ${materia.nombre}`, 40, lastYIndex);
             lastYIndex += 5;
         }
         if(alumno) {
-            doc.text(`Alumno: ${alumno.usuario.apellido} ${alumno.usuario.nombre}`, 14, lastYIndex)
+            doc.text(`Alumno: ${alumno.usuario.apellido} ${alumno.usuario.nombre}`, 40, lastYIndex)
             lastYIndex += 5;
         };
 
@@ -126,21 +126,26 @@ export async function generarReportePDF({ curso = null, calificaciones = [], mat
                     startY: currentY,
                     head: [tableColumnHeaders],
                     body: mappedRows,
-                    tableWidth: 'auto',
-                        styles: { 
-                            fontSize: 10, 
-                            halign: "center",
-                            cellWidth: 'auto', 
-                            overflow: 'linebreak',
-                            cellPadding: 2,
-                        },
+                    tableWidth: 'auto', // o 'auto'
+                    styles: {
+                        fontSize: 9,
+                        halign: "center",
+                        cellPadding: 2,
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 30 }, // columna "Alumno"
+                        // otras columnas se ajustan automáticamente
+                    },
                     headStyles: { fillColor: [43, 62, 76], textColor: 255 },
                     alternateRowStyles: { fillColor: [245, 247, 250] },
                 });
+
             }else{
                 uniqueMaterias.forEach((mat) => {
                     doc.setFontSize(11);
                     doc.text(`Materia: ${mat.nombre}`, 14, currentY);
+
+                    currentY += 5; // espacio debajo del título de la materia
 
                     const filteredRows = calificaciones
                         .filter(c => c.curso.cicloLectivo === anio && 
@@ -152,16 +157,18 @@ export async function generarReportePDF({ curso = null, calificaciones = [], mat
                     const mappedRows = mapRows(filteredRows, uniqueTipos);
 
                     autoTable(doc, {
-                        startY: currentY + 5,
+                        startY: currentY,
                         head: [tableColumnHeaders],
                         body: mappedRows,
-                        tableWidth: 'auto',
-                        styles: { 
-                            fontSize: 10, 
+                        tableWidth: 'auto', // o 'auto'
+                        styles: {
+                            fontSize: 9,
                             halign: "center",
-                            cellWidth: 'auto', 
-                            overflow: 'linebreak',
                             cellPadding: 2,
+                        },
+                        columnStyles: {
+                            0: { cellWidth: 30 }, // columna "Alumno"
+                            // otras columnas se ajustan automáticamente
                         },
                         headStyles: { fillColor: [43, 62, 76], textColor: 255 },
                         alternateRowStyles: { fillColor: [245, 247, 250] },
@@ -181,6 +188,31 @@ export async function generarReportePDF({ curso = null, calificaciones = [], mat
             currentY += 20;
         });
 
+        const pageCount = doc.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+
+            // Altura dinámica según orientación
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const footerY = pageHeight - 10; // margen de 10 mm desde el borde inferior
+
+            doc.text(
+                `Generado por MiEscuela 4.0 — ${formatearFecha(new Date().toISOString())}`,
+                14,
+                footerY
+            );
+
+            // Usar el ancho dinámico para alinear a la derecha
+            const pageWidth = doc.internal.pageSize.getWidth();
+            doc.text(
+                `Página ${i} de ${pageCount}`,
+                pageWidth - 14,
+                footerY,
+                { align: "right" }
+            );
+        }
+
         // ——— Guardar PDF ———
         const fileNameParts = ["Reporte_Calificaciones"];
         if(curso) fileNameParts.push(`Curso_${curso.name}`);
@@ -191,4 +223,16 @@ export async function generarReportePDF({ curso = null, calificaciones = [], mat
     }catch(error){
         console.error("Error generando reporte PDF de calificaciones:", error);
     }
+}
+
+// ——— Helpers ———
+function formatearFecha(fechaISO) {
+    if (!fechaISO) return "—";
+    const d = new Date(fechaISO);
+    if (isNaN(d)) return "—";
+    return d.toLocaleDateString("es-AR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    });
 }
